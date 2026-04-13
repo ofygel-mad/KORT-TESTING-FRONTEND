@@ -108,6 +108,7 @@ interface Props {
   draftTitle?: string | null;
   loading?: boolean;
   onDraftSave?: (document: InvoiceDocumentPayload) => Promise<void> | void;
+  footer?: React.ReactNode;
 }
 
 export default function ChapanInvoicePreviewModal({
@@ -118,6 +119,7 @@ export default function ChapanInvoicePreviewModal({
   draftTitle,
   loading = false,
   onDraftSave,
+  footer,
 }: Props) {
   const invoiceMode = Boolean(invoiceId);
   const { data: invoice, isLoading: invoiceLoading } = useInvoice(invoiceId ?? '');
@@ -549,6 +551,12 @@ export default function ChapanInvoicePreviewModal({
             </div>
           )}
         </div>
+
+        {footer && (
+          <div className={styles.modalFooter}>
+            {footer}
+          </div>
+        )}
 
         {confirmCloseOpen && (
           <div className={styles.confirmOverlay}>

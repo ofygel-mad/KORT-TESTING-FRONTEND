@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useRef, useState, type CSSProperties, type ElementType } from 'react';
-import { AlertTriangle, Archive, Bell, Check, CheckCheck, CheckCircle2, CheckSquare, Clock, Download, Eye, FileText, LayoutGrid, Layers, List, Plus, Search, Warehouse, X } from 'lucide-react';
+import { AlertTriangle, Archive, Bell, Check, CheckCheck, CheckCircle2, CheckSquare, Clock, Download, Eye, FileText, LayoutGrid, Layers, List, Plus, RotateCcw, Search, Warehouse, X, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useArchiveOrder, useChangeOrderStatus, useCreateInvoice, useOrders, usePreviewInvoiceDocument, useInvoices } from '../../../../entities/order/queries';
 import type { ChapanOrder, InvoiceDocumentPayload, OrderStatus, Priority, Urgency } from '../../../../entities/order/types';
@@ -96,6 +96,10 @@ function hasPendingRouting(order: ReadyOrder): boolean {
 
 function pendingRoutingCount(order: ReadyOrder): number {
   return (order.items ?? []).filter(item => !item.fulfillmentMode || item.fulfillmentMode === 'unassigned').length;
+}
+
+function getRejectedInvoice(order: ReadyOrder) {
+  return order.invoiceOrders?.find(io => io.invoice?.status === 'rejected')?.invoice ?? null;
 }
 
 function buildItemSignature(orderItem: ChapanOrder['items'][number]) {
@@ -788,6 +792,7 @@ function ReadyCard({
   const isPendingWorkshop = hasPendingProduction(order);
   const isPendingRouting = hasPendingRouting(order);
   const pendingCount = pendingRoutingCount(order);
+  const rejectedInvoice = getRejectedInvoice(order);
 
   const handleClick = selectMode && onToggleSelect ? onToggleSelect : onOpen;
 
@@ -822,6 +827,16 @@ function ReadyCard({
           <span className={styles.priorityBadge}>{DEMANDING_LABEL}</span>
         )}
       </div>
+
+      {rejectedInvoice && (
+        <div className={styles.rejectedInvoiceBanner}>
+          <XCircle size={14} />
+          <span>Склад отклонил накладную {rejectedInvoice.invoiceNumber}</span>
+          {rejectedInvoice.rejectionReason && (
+            <span className={styles.rejectedReason}>Причина: {rejectedInvoice.rejectionReason}</span>
+          )}
+        </div>
+      )}
 
       {firstItem && (
         <div className={styles.itemBlock}>
@@ -875,9 +890,22 @@ function ReadyCard({
 
       {!selectMode && (
         <div className={styles.actions} onClick={(event) => event.stopPropagation()}>
-          <button className={styles.primaryAction} onClick={onAdvance} disabled={isPendingWorkshop || isPendingRouting}>
-            {isPendingRouting ? 'Назначьте маршрут' : isPendingWorkshop ? 'Ждём цех' : nextStageLabel}
-          </button>
+          {rejectedInvoice ? (
+            <button
+              className={styles.primaryAction}
+              onClick={onAdvance}
+              disabled={isPendingWorkshop || isPendingRouting}
+              style={{ background: '#D94F4F' }}
+              title={`Переправить накладную #${rejectedInvoice.invoiceNumber}`}
+            >
+              <RotateCcw size={14} style={{ marginRight: 6 }} />
+              Переправить накладную
+            </button>
+          ) : (
+            <button className={styles.primaryAction} onClick={onAdvance} disabled={isPendingWorkshop || isPendingRouting}>
+              {isPendingRouting ? 'Назначьте маршрут' : isPendingWorkshop ? 'Ждём цех' : nextStageLabel}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -993,6 +1021,7 @@ function ReadyRow({
   const isPendingWorkshop = hasPendingProduction(order);
   const isPendingRouting = hasPendingRouting(order);
   const pendingCount = pendingRoutingCount(order);
+  const rejectedInvoice = getRejectedInvoice(order);
 
   const handleClick = selectMode && onToggleSelect ? onToggleSelect : onOpen;
 
@@ -1026,6 +1055,15 @@ function ReadyRow({
             {PAY_LABEL[order.paymentStatus]}
           </span>
         </div>
+        {rejectedInvoice && (
+          <div className={styles.rejectedInvoiceBanner}>
+            <XCircle size={14} />
+            <span>Склад отклонил накладную {rejectedInvoice.invoiceNumber}</span>
+            {rejectedInvoice.rejectionReason && (
+              <span className={styles.rejectedReason}>Причина: {rejectedInvoice.rejectionReason}</span>
+            )}
+          </div>
+        )}
         <div className={styles.rowClient}>{order.clientName}</div>
         <div className={styles.rowMeta}>
           <span>
@@ -1045,9 +1083,22 @@ function ReadyRow({
 
       {!selectMode && (
         <div className={styles.actions} onClick={(event) => event.stopPropagation()}>
-          <button className={styles.primaryAction} onClick={onAdvance} disabled={isPendingWorkshop || isPendingRouting}>
-            {isPendingRouting ? 'Назначьте маршрут' : isPendingWorkshop ? 'Ждём цех' : nextStageLabel}
-          </button>
+          {rejectedInvoice ? (
+            <button
+              className={styles.primaryAction}
+              onClick={onAdvance}
+              disabled={isPendingWorkshop || isPendingRouting}
+              style={{ background: '#D94F4F' }}
+              title={`Переправить накладную #${rejectedInvoice.invoiceNumber}`}
+            >
+              <RotateCcw size={14} style={{ marginRight: 4 }} />
+              Переправить
+            </button>
+          ) : (
+            <button className={styles.primaryAction} onClick={onAdvance} disabled={isPendingWorkshop || isPendingRouting}>
+              {isPendingRouting ? 'Назначьте маршрут' : isPendingWorkshop ? 'Ждём цех' : nextStageLabel}
+            </button>
+          )}
         </div>
       )}
     </div>

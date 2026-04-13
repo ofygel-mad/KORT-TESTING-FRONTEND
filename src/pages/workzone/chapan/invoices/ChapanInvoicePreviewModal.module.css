@@ -13,7 +13,8 @@
 
 .modal {
   position: relative;
-  width: min(1360px, 98vw);
+  width: min(90vw, calc(100vw - 48px));
+  max-width: 1600px;
   height: min(90vh, 940px);
   display: flex;
   flex-direction: column;
@@ -173,7 +174,7 @@
 
 .workspace {
   display: grid;
-  grid-template-columns: 320px minmax(0, 1fr);
+  grid-template-columns: 300px minmax(0, 1fr);
   gap: 0;
   height: 100%;
 }
@@ -182,11 +183,11 @@
   border-right: 1px solid rgba(214, 220, 214, 0.9);
   background:
     linear-gradient(180deg, rgba(248, 249, 245, 0.96), rgba(244, 247, 243, 1));
-  padding: 20px 16px 20px 20px;
+  padding: 16px 14px 16px 16px;
   overflow: auto;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .panelHead {
@@ -270,10 +271,10 @@
 .content {
   min-width: 0;
   overflow: auto;
-  padding: 20px 24px 28px;
+  padding: 18px 20px 24px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .summaryGrid {
@@ -631,9 +632,25 @@
   margin-top: 20px;
 }
 
-@media (max-width: 1180px) {
+.modalFooter {
+  border-top: 1px solid rgba(214, 220, 214, 0.9);
+  padding: 14px 20px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.96);
+  flex-shrink: 0;
+}
+
+@media (min-width: 1600px) {
   .workspace {
     grid-template-columns: 280px minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 1180px) {
+  .workspace {
+    grid-template-columns: 270px minmax(0, 1fr);
   }
 
   .summaryGrid {
@@ -670,6 +687,12 @@
     border-right: none;
     border-bottom: 1px solid rgba(214, 220, 214, 0.9);
   }
+
+  .modalFooter {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 12px 16px;
+  }
 }
 
 @media (max-width: 720px) {
@@ -694,6 +717,17 @@
 
   .sectionHeader {
     flex-direction: column;
+  }
+
+  .modalFooter {
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .modalFooter > button,
+  .modalFooter > div {
+    width: 100%;
   }
 }
 

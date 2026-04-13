@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { FileText, Check, Clock, X, Download, AlertTriangle } from 'lucide-react';
 import {
   useInvoices,
-  useConfirmSeamstress,
   useConfirmWarehouse,
   useRejectInvoice,
 } from '../../../../entities/order/queries';
@@ -58,7 +57,6 @@ export default function ChapanInvoicesPage() {
 
   const invoices: ChapanInvoice[] = data?.results ?? [];
 
-  const confirmSeamstress = useConfirmSeamstress();
   const confirmWarehouse = useConfirmWarehouse();
   const rejectInvoice = useRejectInvoice();
 
@@ -170,12 +168,10 @@ export default function ChapanInvoicesPage() {
             <InvoiceRow
               key={inv.id}
               invoice={inv}
-              onConfirmSeamstress={() => confirmSeamstress.mutate(inv.id)}
               onConfirmWarehouse={() => confirmWarehouse.mutate(inv.id)}
               onReject={() => { setRejectTarget(inv.id); setRejectReason(''); }}
               onDownload={() => handleDownload(inv.id, inv.invoiceNumber)}
-              isConfirming={confirmSeamstress.isPending || confirmWarehouse.isPending}
-              canConfirmInvoice={canConfirmInvoice}
+              isConfirming={confirmWarehouse.isPending}
               canConfirmWarehouseInvoice={canAccessWarehouseNav}
             />
           ))}
@@ -221,21 +217,17 @@ export default function ChapanInvoicesPage() {
 
 function InvoiceRow({
   invoice,
-  onConfirmSeamstress,
   onConfirmWarehouse,
   onReject,
   onDownload,
   isConfirming,
-  canConfirmInvoice,
   canConfirmWarehouseInvoice,
 }: {
   invoice: ChapanInvoice;
-  onConfirmSeamstress: () => void;
   onConfirmWarehouse: () => void;
   onReject: () => void;
   onDownload: () => void;
   isConfirming: boolean;
-  canConfirmInvoice: boolean;
   canConfirmWarehouseInvoice: boolean;
 }) {
   const orderCount = invoice.items?.length ?? 0;
@@ -302,18 +294,6 @@ function InvoiceRow({
         <button type="button" className={styles.downloadBtn} onClick={onDownload} title="Скачать XLSX">
           <Download size={13} />
         </button>
-
-        {isPending && !invoice.seamstressConfirmed && canConfirmInvoice && (
-          <button
-            type="button"
-            className={`${styles.actionBtn} ${styles.actionBtnSuccess}`}
-            onClick={(e) => { e.stopPropagation(); onConfirmSeamstress(); }}
-            disabled={isConfirming}
-          >
-            <Check size={12} />
-            Отправлено
-          </button>
-        )}
 
         {isPending && !invoice.warehouseConfirmed && canConfirmWarehouseInvoice && (
           <button

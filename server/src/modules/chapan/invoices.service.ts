@@ -184,6 +184,9 @@ export async function createInvoice(
               createdByName,
               notes,
               createdAt,
+              seamstressConfirmed: true,
+              seamstressConfirmedAt: createdAt,
+              seamstressConfirmedBy: createdByName,
               ...({ documentPayload: normalizedDocument } as Record<string, unknown>),
               items: {
                 create: orderIds.map((orderId) => ({ orderId })),

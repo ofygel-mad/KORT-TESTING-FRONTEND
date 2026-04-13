@@ -1,7 +1,7 @@
 ﻿import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { CheckCircle2, Clock, CreditCard, MessageSquare, AlertTriangle, Pencil, ArchiveIcon, RotateCcw, Download, Package, XCircle, FileText, Paperclip, Trash2, Upload, Undo2 } from 'lucide-react';
-import { useOrder, useChangeOrderStatus, useAddPayment, useAddOrderActivity, useRestoreOrder, useCloseOrder, useCreateInvoice, useSetRequiresInvoice, useConfirmSeamstress, useRouteSingleItem, useUploadAttachment, useDeleteAttachment, useReassignManager, useOrgManagers, useReturns, useCreateReturn, useConfirmReturn, useDeleteReturnDraft } from '../../../../entities/order/queries';
+import { useOrder, useChangeOrderStatus, useAddPayment, useAddOrderActivity, useRestoreOrder, useCloseOrder, useCreateInvoice, useSetRequiresInvoice, useRouteSingleItem, useUploadAttachment, useDeleteAttachment, useReassignManager, useOrgManagers, useReturns, useCreateReturn, useConfirmReturn, useDeleteReturnDraft } from '../../../../entities/order/queries';
 import { useChapanPermissions } from '../../../../shared/hooks/useChapanPermissions';
 import { useProductsAvailability } from '../../../../entities/warehouse/queries';
 import type { OrderItem, OrderItemFulfillmentMode, OrderStatus, Priority, Urgency, OrderAttachment, ReturnReason, ReturnRefundMethod, ReturnItemCondition, RETURN_REASON_LABELS, RETURN_REFUND_METHOD_LABELS } from '../../../../entities/order/types';
@@ -170,7 +170,6 @@ export default function ChapanOrderDetailPage() {
   const closeOrder = useCloseOrder();
   const createInvoice = useCreateInvoice();
   const setRequiresInvoice = useSetRequiresInvoice();
-  const confirmSeamstress = useConfirmSeamstress();
   const routeSingleItem = useRouteSingleItem();
   const uploadAttachment = useUploadAttachment(id!);
   const deleteAttachment = useDeleteAttachment(id!);
@@ -651,18 +650,8 @@ export default function ChapanOrderDetailPage() {
                       Склад
                     </span>
                   </div>
-                  {!pendingInvoice.seamstressConfirmed && (
-                    <button
-                      className={styles.invoiceConfirmBtn}
-                      onClick={() => confirmSeamstress.mutate(pendingInvoice.id)}
-                      disabled={confirmSeamstress.isPending}
-                    >
-                      <CheckCircle2 size={13} />
-                      {confirmSeamstress.isPending ? 'Подтверждение...' : 'Подтвердить отправку'}
-                    </button>
-                  )}
                   <div className={styles.invoicePanelHint}>
-                    Заказ перейдёт на склад после двустороннего подтверждения
+                    Заказ перейдёт на склад в ожидании подтверждения от склада
                   </div>
                 </div>
               )}

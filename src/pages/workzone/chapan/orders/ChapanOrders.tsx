@@ -469,7 +469,11 @@ const setViewMode = (mode: ViewMode) => {
 
           <button
             className={styles.filterToggle}
-            onClick={handleSeedOrders}
+            onClick={() => {
+              if (window.confirm('⚠️ Создать 3 тестовых заказа?\n\nУбедитесь, что вы не на продакшене.')) {
+                handleSeedOrders();
+              }
+            }}
             disabled={isSeedingOrders}
             title="Создать 3 тестовых заказа"
           >

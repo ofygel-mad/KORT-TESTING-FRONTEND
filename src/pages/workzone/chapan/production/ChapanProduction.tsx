@@ -1,5 +1,5 @@
 import { useDeferredValue, useEffect, useMemo, useState, type CSSProperties } from 'react';
-import { AlertTriangle, CheckCircle2, Factory, FileText, Flag, Layers, MessageSquare, Search, User, X } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, Factory, Flag, Layers, MessageSquare, Search, User, X } from 'lucide-react';
 import {
   useAssignWorker,
   useChapanCatalogs,
@@ -12,11 +12,9 @@ import {
   useUnflagTask,
   useUpdateProductionStatus,
   useWorkshopTasks,
-  useInvoices,
 } from '../../../../entities/order/queries';
 import type { ChapanChangeRequest, Priority, ProductionStatus, ProductionTask, Urgency } from '../../../../entities/order/types';
 import { useAuthStore } from '@/shared/stores/auth';
-import { useChapanUiStore } from '../../../../features/workzone/chapan/store';
 import { buildItemLine, buildTaskMetaLine } from '../../../../shared/utils/itemLine';
 import styles from './ChapanProduction.module.css';
 
@@ -152,9 +150,6 @@ export default function ChapanProductionPage() {
   const [flagReason, setFlagReason] = useState('');
   const [rejectModal, setRejectModal] = useState<{ crId: string; orderNumber: string } | null>(null);
   const [rejectReason, setRejectReason] = useState('');
-  const openInvoicesDrawer = useChapanUiStore((s) => s.openInvoicesDrawer);
-  const { data: pendingData } = useInvoices({ status: 'pending_confirmation', limit: 1 });
-  const pendingCount = pendingData?.count ?? 0;
 
   useEffect(() => {
     setView(workshopDefault ? 'workshop' : 'manager');
@@ -274,15 +269,6 @@ export default function ChapanProductionPage() {
               placeholder="ЧП-номер или товар..."
             />
           </div>
-          <button
-            className={`${styles.groupToggle} ${styles.invoiceQueueBtn}`}
-            onClick={() => openInvoicesDrawer('pending_confirmation')}
-          >
-            <FileText size={13} />
-            <span>Накладная Ожидает приёмки</span>
-            {pendingCount > 0 && <span className={styles.pendingBadge}>{pendingCount}</span>}
-          </button>
-
           <button
             className={`${styles.groupToggle} ${grouped ? styles.groupToggleActive : ''}`}
             onClick={toggleGrouped}

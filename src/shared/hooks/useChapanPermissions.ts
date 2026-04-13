@@ -31,6 +31,14 @@ export function useChapanPermissions() {
   const canRestoreArchive = canCreateOrder;
   // Переназначение менеджера: admin/owner или сотрудник с chapan_full_access / full_access
   const canReassignManager = isAdmin || isChapanAdmin;
+
+  // Warehouse operator permissions
+  const isWarehouseOperator =
+    isAbsolute || isChapanAdmin || has('chapan_warehouse_operator') || canAccessWarehouse;
+  const canConfirmInvoiceReceipt = isWarehouseOperator;
+  const canShipOrders = isWarehouseOperator;
+  const canRejectInvoice = isWarehouseOperator;
+
   const hasAnyAccess =
     canAccessOrders
     || canAccessProduction
@@ -52,6 +60,10 @@ export function useChapanPermissions() {
     canConfirmInvoice,
     canRestoreArchive,
     canReassignManager,
+    isWarehouseOperator,
+    canConfirmInvoiceReceipt,
+    canShipOrders,
+    canRejectInvoice,
     hasAnyAccess,
   };
 }

@@ -1060,3 +1060,52 @@
   letter-spacing: 0.04em;
   opacity: 0.8;
 }
+
+.positionList {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(180,192,210,.15);
+}
+
+.positionRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.positionName {
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.positionStatus {
+  white-space: nowrap;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.rejectedInvoiceBanner {
+  background: color-mix(in srgb, #D94F4F 12%, transparent);
+  border: 1px solid color-mix(in srgb, #D94F4F 40%, transparent);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 12px;
+  color: #D94F4F;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 4px 0;
+}
+
+.rejectedReason {
+  font-size: 11px;
+  opacity: 0.85;
+}

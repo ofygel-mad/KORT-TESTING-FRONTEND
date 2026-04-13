@@ -22,6 +22,7 @@ export type EmployeePermission =
   | 'chapan_access_warehouse_nav'
   | 'chapan_manage_production'
   | 'chapan_confirm_invoice'
+  | 'chapan_warehouse_operator'
   | 'chapan_manage_settings';
 
 export type EmployeeAccountStatus = 'active' | 'pending_first_login' | 'dismissed';

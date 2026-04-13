@@ -17,6 +17,7 @@ export type EmployeePermission =
   | 'chapan_access_warehouse_nav'
   | 'chapan_manage_production'
   | 'chapan_confirm_invoice'
+  | 'chapan_warehouse_operator'
   | 'chapan_manage_settings';
 
 export interface Employee {
@@ -46,6 +47,7 @@ export const PERMISSION_LABEL: Record<EmployeePermission, string> = {
   chapan_access_warehouse_nav: 'Чапан: Ссылка на Склад',
   chapan_manage_production: 'Чапан: Управление производством',
   chapan_confirm_invoice: 'Чапан: Подтверждение накладных',
+  chapan_warehouse_operator: 'Чапан: Сотрудник склада',
   chapan_manage_settings: 'Чапан: Настройки модуля',
 };
 
@@ -64,6 +66,7 @@ export const PERMISSION_DESCRIPTION: Record<EmployeePermission, string> = {
   chapan_access_warehouse_nav: 'Видит кнопку перехода на Склад из модуля Чапан.',
   chapan_manage_production: 'Назначение исполнителей и управление этапами.',
   chapan_confirm_invoice: 'Подтверждение отгрузок по накладным со стороны Чапана.',
+  chapan_warehouse_operator: 'Приёмка и отправка заказов на складе.',
   chapan_manage_settings: 'Изменение настроек рабочего модуля Чапан.',
 };
 
@@ -74,7 +77,8 @@ export const BASE_PERMISSIONS: EmployeePermission[] = [
 export const CHAPAN_PERMISSIONS: EmployeePermission[] = [
   'chapan_full_access', 'chapan_access_orders', 'chapan_access_production',
   'chapan_access_ready', 'chapan_access_archive', 'chapan_access_warehouse_nav',
-  'chapan_manage_production', 'chapan_confirm_invoice', 'chapan_manage_settings',
+  'chapan_manage_production', 'chapan_confirm_invoice', 'chapan_warehouse_operator',
+  'chapan_manage_settings',
 ];
 
 export interface CreateEmployeeDto {

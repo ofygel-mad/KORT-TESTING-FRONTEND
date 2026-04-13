@@ -5,6 +5,8 @@ import {
   FileText, Package, PackageCheck, Phone, Plus, RotateCcw, Search, Send, TrendingDown, User, Upload, X, XCircle, CheckSquare, BookOpen,
 } from 'lucide-react';
 import { WarehouseCatalog } from '../../../warehouse/WarehouseCatalog';
+import ChapanInvoicePreviewModal from '../invoices/ChapanInvoicePreviewModal';
+import ChapanOrderDetailModal from './ChapanOrderDetailModal';
 import {
   useWarehouseItems, useWarehouseMovements, useWarehouseAlerts,
   useWarehouseCategories, useCreateItem, useAddMovement, useDeleteItem, useResolveAlert,
@@ -23,7 +25,7 @@ import { exportToCSV } from '../../../../shared/lib/export';
 import { toast } from 'sonner';
 import styles from '../../../warehouse/Warehouse.module.css';
 
-type Tab = 'incoming' | 'invoice_archive' | 'orders_wh' | 'to_ship' | 'shipped' | 'items' | 'movements' | 'alerts' | 'catalog';
+type Tab = 'incoming' | 'invoice_archive' | 'orders_wh' | 'shipped' | 'items' | 'movements' | 'alerts' | 'catalog';
 
 const MOVEMENT_LABEL: Record<MovementType, string> = {
   in: 'Приход', out: 'Расход', adjustment: 'Корректировка', write_off: 'Списание', return: 'Возврат',
@@ -273,311 +275,6 @@ function InvoiceDetailDrawer({ invoice, onClose }: { invoice: ChapanInvoice; onC
   );
 }
 
-// ── Order Detail Drawer (warehouse view) ──────────────────────────────────────
-
-function OrderDetailDrawer({ orderId, onClose }: { orderId: string; onClose: () => void }) {
-  const { data: order, isLoading } = useOrder(orderId);
-  const shipOrder = useShipOrder();
-  const closeOrder = useCloseOrder();
-  const returnToReady = useReturnToReady();
-  const [closeUnpaidWarning, setCloseUnpaidWarning] = useState(false);
-  const [showShipForm, setShowShipForm] = useState(false);
-  const [showReturnForm, setShowReturnForm] = useState(false);
-  const [returnReason, setReturnReason] = useState('');
-  const [shipFormData, setShipFormData] = useState({
-    courierType: '',
-    recipientName: '',
-    recipientAddress: '',
-    shippingNote: '',
-  });
-
-  return (
-    <div className={styles.drawerOverlay} onClick={onClose}>
-      <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
-        {isLoading || !order ? (
-          <>
-            <div className={styles.drawerHeader}>
-              <span className={styles.drawerTitle}>Загрузка...</span>
-              <button className={styles.drawerClose} onClick={onClose}><X size={14} /></button>
-            </div>
-            <div className={styles.drawerBody}>
-              {[...Array(4)].map((_, i) => <Skeleton key={i} height={48} radius={8} />)}
-            </div>
-          </>
-        ) : (
-          <>
-            <div className={styles.drawerHeader}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-                  <div className={styles.drawerTitle}>#{order.orderNumber}</div>
-                  {(order.urgency ?? order.priority) === 'urgent' && (
-                    <span style={{ fontSize: 11, color: URGENCY_COLOR['urgent'], fontWeight: 600, padding: '2px 8px', borderRadius: 6, background: `${URGENCY_COLOR['urgent']}1a`, flexShrink: 0 }}>
-                      {URGENCY_LABEL['urgent']}
-                    </span>
-                  )}
-                  {(order.isDemandingClient ?? (order.priority === 'vip')) && (
-                    <span style={{ fontSize: 11, color: DEMANDING_COLOR, fontWeight: 600, padding: '2px 8px', borderRadius: 6, background: `${DEMANDING_COLOR}1a`, flexShrink: 0 }}>
-                      {DEMANDING_LABEL}
-                    </span>
-                  )}
-                </div>
-                <div className={styles.drawerSubtitle} style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><User size={11} /> {order.clientName}</span>
-                  {order.clientPhone && <a href={`tel:${order.clientPhone}`} style={{ display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-tertiary)', textDecoration: 'none' }}><Phone size={11} /> {order.clientPhone}</a>}
-                  {order.dueDate && <span>Срок: {fmtDate(order.dueDate)}</span>}
-                </div>
-              </div>
-              <button className={styles.drawerClose} onClick={onClose}><X size={14} /></button>
-            </div>
-
-            <div className={styles.drawerBody}>
-              {/* Items */}
-              <div>
-                <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>
-                  Позиции — {order.items?.length ?? 0} шт.
-                </div>
-                <div className={styles.drawerTableWrap}>
-                  <table>
-                    <tbody>
-                      {(order.items ?? []).map((item, idx) => (
-                        <tr key={item.id} style={{ borderTop: idx > 0 ? '1px solid var(--border-subtle)' : 'none' }}>
-                          <td style={{ padding: '9px 14px', fontSize: 13, fontWeight: 500, color: 'var(--text-primary)' }}>
-                            {item.productName}
-                            {item.fabric ? <span style={{ color: 'var(--text-tertiary)', fontWeight: 400 }}> · {item.fabric}</span> : null}
-                          </td>
-                          <td style={{ padding: '9px 12px', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>р.{item.size}</td>
-                          <td style={{ padding: '9px 12px', fontSize: 12, color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>×{item.quantity}</td>
-                          <td style={{ padding: '9px 14px', fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                            {fmtMoney(item.unitPrice * item.quantity)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                  <div style={{ padding: '9px 14px', borderTop: '1px solid var(--border-subtle)', display: 'flex', justifyContent: 'flex-end', background: 'var(--bg-surface)' }}>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)' }}>Итого: {fmtMoney(order.totalAmount)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Payment */}
-              <div className={styles.drawerCard}>
-                <div className={styles.drawerCardLabel}>Оплата</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 6 }}>
-                  <span style={{ fontSize: 13, color: PAY_COLOR[order.paymentStatus], fontWeight: 700 }}>
-                    {PAY_LABEL[order.paymentStatus]}
-                  </span>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 2 }}>
-                    <span style={{ fontSize: 12, color: 'var(--fill-positive)' }}>Оплачено: {fmtMoney(order.paidAmount)}</span>
-                    {order.paidAmount < order.totalAmount && (
-                      <span style={{ fontSize: 12, color: 'var(--fill-negative)' }}>Остаток: {fmtMoney(order.totalAmount - order.paidAmount)}</span>
-                    )}
-                  </div>
-                </div>
-                {order.expectedPaymentMethod && (
-                  <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-secondary)' }}>
-                    Ожидаемый способ доплаты: <strong style={{ color: 'var(--text-primary)' }}>{order.expectedPaymentMethod}</strong>
-                  </div>
-                )}
-              </div>
-
-              {/* Invoice link */}
-              {(order.invoiceOrders ?? []).length > 0 && (
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 6 }}>Накладная</div>
-                  {order.invoiceOrders!.map((io) => (
-                    <div key={io.id} style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)', padding: '9px 12px', background: 'var(--bg-surface-inset)', borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
-                      <FileText size={13} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                      <span>Накладная #{io.invoice.invoiceNumber}</span>
-                      <span style={{ marginLeft: 'auto', color: io.invoice.warehouseConfirmed ? 'var(--fill-positive)' : 'var(--fill-warning)', fontWeight: 600, flexShrink: 0 }}>
-                        {io.invoice.warehouseConfirmed ? 'Принята' : 'Ожидает приёмки'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {/* requiresInvoice flag */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--text-secondary)', padding: '8px 12px', background: 'var(--bg-surface-inset)', borderRadius: 8, border: '1px solid var(--border-subtle)' }}>
-                <FileText size={12} style={{ color: 'var(--text-tertiary)', flexShrink: 0 }} />
-                <span>Накладная обязательна:</span>
-                <strong style={{ marginLeft: 'auto', color: order.requiresInvoice ? 'var(--fill-warning)' : 'var(--fill-positive)', flexShrink: 0 }}>
-                  {order.requiresInvoice ? 'Да' : 'Нет'}
-                </strong>
-              </div>
-            </div>
-
-            <div className={styles.drawerFooter}>
-              {/* Return-to-Ready form (replaces all other actions when active) */}
-              {showReturnForm ? (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
-                    Причина возврата в «Готово»
-                  </div>
-                  <input
-                    className={styles.input}
-                    value={returnReason}
-                    onChange={(e) => setReturnReason(e.target.value)}
-                    placeholder="Несоответствие состава, расхождение по количеству, нет накладной..."
-                    autoFocus
-                    onKeyDown={(e) => {
-                      if (e.key === 'Escape') { setShowReturnForm(false); setReturnReason(''); }
-                    }}
-                  />
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      className={styles.drawerSecondaryBtn}
-                      style={{ flex: 1 }}
-                      onClick={() => { setShowReturnForm(false); setReturnReason(''); }}
-                    >
-                      Отмена
-                    </button>
-                    <button
-                      className={`${styles.drawerActionBtn} ${styles.drawerActionBtnDanger}`}
-                      style={{ flex: 2 }}
-                      onClick={() => {
-                        if (!returnReason.trim()) return;
-                        returnToReady.mutate({ id: order.id, reason: returnReason.trim() }, { onSuccess: onClose });
-                      }}
-                      disabled={returnToReady.isPending || !returnReason.trim()}
-                    >
-                      <RotateCcw size={14} />
-                      {returnToReady.isPending ? 'Возврат...' : 'Вернуть в «Готово»'}
-                    </button>
-                  </div>
-                </div>
-              ) : order.status === 'shipped' ? (
-                <>
-                  <button
-                    className={`${styles.drawerActionBtn} ${styles.drawerActionBtnSuccess}`}
-                    onClick={() => {
-                      if (order.paymentStatus !== 'paid') setCloseUnpaidWarning(true);
-                      else { closeOrder.mutate(order.id); onClose(); }
-                    }}
-                    disabled={closeOrder.isPending}
-                  >
-                    <CheckSquare size={16} />
-                    {closeOrder.isPending ? 'Закрытие...' : 'Завершить сделку'}
-                  </button>
-                  {closeUnpaidWarning && (
-                    <div className={styles.drawerUnpaidNote}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <AlertTriangle size={15} style={{ flexShrink: 0 }} />
-                        <strong>Остаток: {fmtMoney(order.totalAmount - order.paidAmount)}</strong>
-                      </div>
-                      <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-                        <button className={styles.drawerSecondaryBtn} style={{ flex: 1, fontSize: 12 }} onClick={() => setCloseUnpaidWarning(false)}>Отмена</button>
-                        <button className={`${styles.drawerActionBtn} ${styles.drawerActionBtnSuccess}`} style={{ flex: 1, fontSize: 12 }} onClick={() => { closeOrder.mutate(order.id); onClose(); }}>Закрыть всё равно</button>
-                      </div>
-                    </div>
-                  )}
-                </>
-              ) : order.paymentStatus === 'paid' ? (
-                <>
-                  {showShipForm ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                      <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)', marginBottom: 2 }}>
-                        Пометки к отгрузке
-                      </div>
-                      {[
-                        { key: 'courierType',      label: 'Способ доставки',         placeholder: 'Курьер, самовывоз, СДЭК…' },
-                        { key: 'recipientName',    label: 'ФИО получателя',          placeholder: 'Иванов Иван Иванович' },
-                        { key: 'recipientAddress', label: 'Адрес доставки',          placeholder: 'ул. Абая 10, кв. 5' },
-                        { key: 'shippingNote',     label: 'Комментарий по доставке', placeholder: 'Любые дополнительные пометки' },
-                      ].map(({ key, label, placeholder }) => (
-                        <div key={key}>
-                          <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginBottom: 3 }}>{label}</div>
-                          <input
-                            style={{
-                              width: '100%', boxSizing: 'border-box',
-                              padding: '7px 10px', fontSize: 13,
-                              background: 'var(--bg-surface-inset)',
-                              border: '1px solid var(--border-default)',
-                              borderRadius: 6, color: 'var(--text-primary)',
-                            }}
-                            placeholder={placeholder}
-                            value={shipFormData[key as keyof typeof shipFormData]}
-                            onChange={(e) => setShipFormData((prev) => ({ ...prev, [key]: e.target.value }))}
-                          />
-                        </div>
-                      ))}
-                      <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-                        <button
-                          className={styles.drawerSecondaryBtn}
-                          style={{ flex: 1, fontSize: 12 }}
-                          onClick={() => setShowShipForm(false)}
-                        >
-                          Отмена
-                        </button>
-                        <button
-                          className={`${styles.drawerActionBtn} ${styles.drawerActionBtnSuccess}`}
-                          style={{ flex: 2, fontSize: 12 }}
-                          disabled={shipOrder.isPending}
-                          onClick={() => {
-                            shipOrder.mutate({
-                              id: order.id,
-                              courierType:      shipFormData.courierType.trim()      || undefined,
-                              recipientName:    shipFormData.recipientName.trim()    || undefined,
-                              recipientAddress: shipFormData.recipientAddress.trim() || undefined,
-                              shippingNote:     shipFormData.shippingNote.trim()     || undefined,
-                            }, { onSuccess: onClose });
-                          }}
-                        >
-                          <Send size={14} />
-                          {shipOrder.isPending ? 'Отправка...' : 'Подтвердить отгрузку'}
-                        </button>
-                      </div>
-                    </div>
-                  ) : (
-                    <button
-                      className={`${styles.drawerActionBtn} ${styles.drawerActionBtnSuccess}`}
-                      onClick={() => setShowShipForm(true)}
-                    >
-                      <Send size={16} />
-                      Отправить клиенту
-                    </button>
-                  )}
-                  {!showShipForm && order.status === 'on_warehouse' && (
-                    <button
-                      className={`${styles.drawerActionBtn} ${styles.drawerActionBtnDanger}`}
-                      style={{ fontSize: 12 }}
-                      onClick={() => setShowReturnForm(true)}
-                    >
-                      <RotateCcw size={14} />
-                      Вернуть в «Готово»
-                    </button>
-                  )}
-                </>
-              ) : (
-                <>
-                  <div className={styles.drawerUnpaidNote}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <AlertTriangle size={15} style={{ flexShrink: 0 }} />
-                      <strong>Заказ не оплачен</strong>
-                    </div>
-                    <div style={{ marginTop: 4, paddingLeft: 23 }}>
-                      Остаток: {fmtMoney(order.totalAmount - order.paidAmount)} — свяжитесь с менеджером
-                    </div>
-                  </div>
-                  {order.status === 'on_warehouse' && (
-                    <button
-                      className={`${styles.drawerActionBtn} ${styles.drawerActionBtnDanger}`}
-                      style={{ fontSize: 12 }}
-                      onClick={() => setShowReturnForm(true)}
-                    >
-                      <RotateCcw size={14} />
-                      Вернуть в «Готово»
-                    </button>
-                  )}
-                </>
-              )}
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  );
-}
 
 // ── Add Item Drawer ────────────────────────────────────────────────────────────
 
@@ -923,6 +620,211 @@ function ImportBalanceDrawer({ onClose }: { onClose: () => void }) {
   );
 }
 
+// ── Warehouse Invoice Footer ─────────────────────────────────────────────────
+
+function WarehouseInvoiceFooter({
+  invoice,
+  onClose,
+}: {
+  invoice: ChapanInvoice;
+  onClose: () => void;
+}) {
+  const confirmWarehouse = useConfirmWarehouse();
+  const rejectInvoice = useRejectInvoice();
+  const archiveInvoice = useArchiveInvoice();
+  const [downloading, setDownloading] = useState(false);
+  const [showRejectForm, setShowRejectForm] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const alreadyConfirmed = invoice.warehouseConfirmed;
+  const alreadyRejected = invoice.status === 'rejected';
+
+  async function handleDownload() {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const { apiClient } = await import('../../../../shared/api/client');
+      const response = await apiClient.get(`/chapan/invoices/${invoice.id}/download`, {
+        params: { style: 'branded' },
+        responseType: 'blob',
+      });
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `nakladnaya-${invoice.invoiceNumber}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      archiveInvoice.mutate(invoice.id);
+    } finally {
+      setDownloading(false);
+    }
+  }
+
+  function handleReject() {
+    if (!rejectReason.trim()) return;
+    rejectInvoice.mutate(
+      { id: invoice.id, reason: rejectReason.trim() },
+      { onSuccess: () => { setShowRejectForm(false); setRejectReason(''); onClose(); } },
+    );
+  }
+
+  if (alreadyRejected) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--fill-negative)' }}>
+        <XCircle size={16} />
+        <span>Накладная отклонена{invoice.rejectionReason ? `: ${invoice.rejectionReason}` : ''}</span>
+      </div>
+    );
+  }
+
+  if (alreadyConfirmed) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--fill-positive)' }}>
+        <CheckCircle2 size={16} />
+        <span>Накладная принята — товар поступил на склад</span>
+      </div>
+    );
+  }
+
+  if (showRejectForm) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: '100%' }}>
+        <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.05em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>
+          Причина отклонения
+        </div>
+        <input
+          style={{
+            padding: '8px 12px',
+            border: '1px solid var(--border-default)',
+            borderRadius: 8,
+            fontSize: 13,
+            color: 'var(--text-primary)',
+            background: 'var(--bg-surface-inset)',
+            width: '100%',
+            boxSizing: 'border-box',
+          }}
+          value={rejectReason}
+          onChange={(e) => setRejectReason(e.target.value)}
+          placeholder="Несоответствие состава, брак, нет сопроводительных документов..."
+          autoFocus
+          onKeyDown={(e) => { if (e.key === 'Enter') handleReject(); if (e.key === 'Escape') setShowRejectForm(false); }}
+        />
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <button
+            style={{
+              flex: '1 1 100px',
+              minWidth: '80px',
+              padding: '8px 12px',
+              border: '1px solid var(--border-default)',
+              borderRadius: 8,
+              background: 'var(--bg-surface-inset)',
+              color: 'var(--text-primary)',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+            onClick={() => { setShowRejectForm(false); setRejectReason(''); }}
+          >
+            Отмена
+          </button>
+          <button
+            style={{
+              flex: '2 1 100px',
+              minWidth: '80px',
+              padding: '8px 12px',
+              border: '1px solid var(--fill-negative)',
+              borderRadius: 8,
+              background: 'rgba(239,68,68,0.08)',
+              color: 'var(--fill-negative)',
+              cursor: 'pointer',
+              fontSize: 13,
+              fontWeight: 600,
+            }}
+            onClick={handleReject}
+            disabled={rejectInvoice.isPending || !rejectReason.trim()}
+          >
+            <XCircle size={14} style={{ display: 'inline', marginRight: 4 }} />
+            {rejectInvoice.isPending ? 'Отклонение...' : 'Отклонить накладную'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 10, width: '100%', flexWrap: 'wrap', alignItems: 'stretch' }}>
+      <button
+        style={{
+          padding: '8px 14px',
+          border: '1px solid var(--border-subtle)',
+          borderRadius: 8,
+          background: 'var(--bg-surface-inset)',
+          color: 'var(--text-secondary)',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          flexShrink: 0,
+        }}
+        onClick={() => void handleDownload()}
+        disabled={downloading}
+      >
+        <Download size={14} />
+        {downloading ? 'Скачивание...' : 'Скачать'}
+      </button>
+      <button
+        style={{
+          flex: '1 1 120px',
+          minWidth: '100px',
+          padding: '8px 14px',
+          border: '1px solid rgba(26,107,60,0.34)',
+          borderRadius: 8,
+          background: 'linear-gradient(180deg, rgba(38,174,102,0.16), rgba(26,107,60,0.12))',
+          color: '#1A6B3C',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 6,
+        }}
+        onClick={() => { confirmWarehouse.mutate(invoice.id); onClose(); }}
+        disabled={confirmWarehouse.isPending}
+      >
+        <PackageCheck size={14} />
+        {confirmWarehouse.isPending ? 'Подтверждение...' : 'Подтвердить'}
+      </button>
+      <button
+        style={{
+          padding: '8px 14px',
+          border: '1px solid var(--fill-negative)',
+          borderRadius: 8,
+          background: 'rgba(239,68,68,0.08)',
+          color: 'var(--fill-negative)',
+          cursor: 'pointer',
+          fontSize: 13,
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          flexShrink: 0,
+        }}
+        onClick={() => setShowRejectForm(true)}
+      >
+        <XCircle size={14} />
+        Отклонить
+      </button>
+    </div>
+  );
+}
+
 // ── Clickable table row helper ────────────────────────────────────────────────
 
 function ClickRow({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
@@ -951,6 +853,8 @@ export default function ChapanWarehousePage() {
 
   // Detail drawers
   const [selectedInvoice, setSelectedInvoice] = useState<ChapanInvoice | null>(null);
+  const [previewInvoiceId, setPreviewInvoiceId] = useState<string | null>(null);
+  const [previewInvoice, setPreviewInvoice] = useState<ChapanInvoice | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
 
   // Inventory data
@@ -1050,19 +954,16 @@ export default function ChapanWarehousePage() {
             <span className={styles.tabGroupLabel}>Чапан</span>
 
             <button className={`${styles.tab} ${tab === 'incoming' ? styles.tabActive : ''}`} onClick={() => setTab('incoming')}>
-              <FileText size={13} /> Приёмка {incomingCount > 0 && <span className={styles.alertBadge}>{incomingCount}</span>}
+              <FileText size={13} /> Приёмка от цеха {incomingCount > 0 && <span className={styles.alertBadge}>{incomingCount}</span>}
             </button>
             <button className={`${styles.tab} ${tab === 'invoice_archive' ? styles.tabActive : ''}`} onClick={() => setTab('invoice_archive')}>
-              <Archive size={13} /> Архив накладных
+              <Archive size={13} /> Журнал накладных
             </button>
             <button className={`${styles.tab} ${tab === 'orders_wh' ? styles.tabActive : ''}`} onClick={() => setTab('orders_wh')}>
-              <Package size={13} /> Заказы {(warehouseOrders.length + partialWarehouseOrders.length) > 0 && <span className={styles.alertBadge}>{warehouseOrders.length + partialWarehouseOrders.length}</span>}
-            </button>
-            <button className={`${styles.tab} ${tab === 'to_ship' ? styles.tabActive : ''}`} onClick={() => setTab('to_ship')}>
-              <Send size={13} /> К отправке {toShipOrders.length > 0 && <span className={styles.alertBadge}>{toShipOrders.length}</span>}
+              <Package size={13} /> Заказы на складе {(warehouseOrders.length + partialWarehouseOrders.length) > 0 && <span className={styles.alertBadge}>{warehouseOrders.length + partialWarehouseOrders.length}</span>}
             </button>
             <button className={`${styles.tab} ${tab === 'shipped' ? styles.tabActive : ''}`} onClick={() => setTab('shipped')}>
-              <CheckSquare size={13} /> Отгружено {shippedOrders.length > 0 && <span className={styles.alertBadge}>{shippedOrders.length}</span>}
+              <CheckSquare size={13} /> Отправленные {shippedOrders.length > 0 && <span className={styles.alertBadge}>{shippedOrders.length}</span>}
             </button>
           </div>
         </div>
@@ -1120,7 +1021,7 @@ export default function ChapanWarehousePage() {
                     : 0;
                   const isStale = oneConfirmed && ageHours >= 24;
                   return (
-                  <ClickRow key={inv.id} onClick={() => setSelectedInvoice(inv)}>
+                  <ClickRow key={inv.id} onClick={() => { setPreviewInvoiceId(inv.id); setPreviewInvoice(inv); }}>
                     <td className={styles.tdName}>
                       #{inv.invoiceNumber}
                       {isStale && (
@@ -1138,7 +1039,7 @@ export default function ChapanWarehousePage() {
                         : <span style={{ color: 'var(--fill-warning)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}><AlertCircle size={12} /> Ожидает цех</span>}
                     </td>
                     <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
-                      <button className={styles.incomBtn} onClick={() => setSelectedInvoice(inv)}>
+                      <button className={styles.incomBtn} onClick={() => { setPreviewInvoiceId(inv.id); setPreviewInvoice(inv); }}>
                         <FileText size={12} /> Открыть
                       </button>
                     </td>
@@ -1171,13 +1072,13 @@ export default function ChapanWarehousePage() {
               </thead>
               <tbody>
                 {archivedInvoices.map((inv) => (
-                  <ClickRow key={inv.id} onClick={() => setSelectedInvoice(inv)}>
+                  <ClickRow key={inv.id} onClick={() => { setPreviewInvoiceId(inv.id); setPreviewInvoice(inv); }}>
                     <td className={styles.tdName}>#{inv.invoiceNumber}</td>
                     <td className={styles.tdDate}>{fmtDate(inv.createdAt)}</td>
                     <td className={styles.tdNum}>{inv.items?.length ?? 0} заказ(а)</td>
                     <td className={styles.tdSecondary}>{inv.createdByName}</td>
                     <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
-                      <button className={styles.incomBtn} onClick={() => setSelectedInvoice(inv)}>
+                      <button className={styles.incomBtn} onClick={() => { setPreviewInvoiceId(inv.id); setPreviewInvoice(inv); }}>
                         <FileText size={12} /> Открыть
                       </button>
                     </td>
@@ -1201,14 +1102,19 @@ export default function ChapanWarehousePage() {
           </div>
         ) : (
           <>
-            {warehouseOrders.length > 0 && (
+            <p style={{ fontSize: 12, color: 'var(--text-tertiary)', marginBottom: 12, lineHeight: 1.5 }}>Все заказы на складе. Оплаченные можно отправить клиенту.</p>
+
+            {toShipOrders.length > 0 && (
               <div className={styles.tableWrap}>
+                <div className={styles.sectionLabel} style={{ background: 'rgba(79,201,153,.1)', color: '#4FC999' }}>
+                  Готовы к отправке — {toShipOrders.length} {toShipOrders.length === 1 ? 'заказ' : toShipOrders.length < 5 ? 'заказа' : 'заказов'}
+                </div>
                 <table className={styles.table}>
                   <thead>
                     <tr><th>Заказ</th><th>Клиент</th><th>Телефон</th><th>Позиции</th><th>Сумма</th><th>Оплата</th><th></th></tr>
                   </thead>
                   <tbody>
-                    {warehouseOrders.map((order) => (
+                    {toShipOrders.map((order) => (
                       <ClickRow key={order.id} onClick={() => setSelectedOrderId(order.id)}>
                         <td className={styles.tdMono}>#{order.orderNumber}</td>
                         <td className={styles.tdName}>{order.clientName}</td>
@@ -1218,11 +1124,7 @@ export default function ChapanWarehousePage() {
                           {(order.items ?? []).length > 2 ? ` +${(order.items ?? []).length - 2}` : ''}
                         </td>
                         <td className={styles.tdNum}>{fmtMoney(order.totalAmount)}</td>
-                        <td>
-                          <span style={{ color: PAY_COLOR[order.paymentStatus], fontWeight: 500, fontSize: 12 }}>
-                            {order.paymentStatus === 'paid' ? 'Оплачен' : order.paymentStatus === 'partial' ? 'Частично' : 'Не оплачен'}
-                          </span>
-                        </td>
+                        <td><span style={{ color: 'var(--fill-positive)', fontWeight: 500, fontSize: 12 }}>Оплачен</span></td>
                         <td className={styles.tdActions} style={{ color: 'var(--text-tertiary)' }}>
                           <ChevronRight size={14} />
                         </td>
@@ -1230,6 +1132,40 @@ export default function ChapanWarehousePage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+            )}
+
+            {unpaidOrders.length > 0 && (
+              <div className={styles.tableWrap}>
+                <div className={styles.sectionLabel} style={{ background: 'rgba(229,146,42,.1)', color: '#E5922A' }}>
+                  Ожидают оплаты — {unpaidOrders.length} {unpaidOrders.length === 1 ? 'заказ' : unpaidOrders.length < 5 ? 'заказа' : 'заказов'}
+                </div>
+                <table className={styles.table}>
+                  <thead>
+                    <tr><th>Заказ</th><th>Клиент</th><th>Телефон</th><th>Позиции</th><th>Сумма</th><th>Оплата</th><th></th></tr>
+                  </thead>
+                  <tbody>
+                    {unpaidOrders.map((order) => (
+                      <ClickRow key={order.id} onClick={() => setSelectedOrderId(order.id)}>
+                        <td className={styles.tdMono}>#{order.orderNumber}</td>
+                        <td className={styles.tdName}>{order.clientName}</td>
+                        <td className={styles.tdSecondary} style={{ fontSize: 12 }}>{order.clientPhone}</td>
+                        <td className={styles.tdSecondary}>
+                          {(order.items ?? []).slice(0, 2).map((i) => i.productName).join(', ')}
+                          {(order.items ?? []).length > 2 ? ` +${(order.items ?? []).length - 2}` : ''}
+                        </td>
+                        <td className={styles.tdNum}>{fmtMoney(order.totalAmount)}</td>
+                        <td><span style={{ color: 'var(--fill-negative)', fontWeight: 500, fontSize: 12 }}>Не оплачен</span></td>
+                        <td className={styles.tdActions} style={{ color: 'var(--text-tertiary)' }}>
+                          <ChevronRight size={14} />
+                        </td>
+                      </ClickRow>
+                    ))}
+                  </tbody>
+                </table>
+                <div style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '0 16px 12px', lineHeight: 1.5 }}>
+                  Оплата ещё не поступила — свяжитесь с менеджером
+                </div>
               </div>
             )}
 
@@ -1283,63 +1219,6 @@ export default function ChapanWarehousePage() {
               </>
             )}
           </>
-        )
-      )}
-
-      {/* ── К отправке tab ── */}
-      {tab === 'to_ship' && (
-        whOrdersLoading ? (
-          <div className={styles.skeletons}>{[...Array(4)].map((_, i) => <Skeleton key={i} height={52} radius={8} />)}</div>
-        ) : toShipOrders.length === 0 && unpaidOrders.length === 0 ? (
-          <div className={styles.empty}>
-            <Send size={32} className={styles.emptyIcon} />
-            <p>Нет заказов к отправке</p>
-            <span className={styles.emptyNote}>Оплаченные заказы со склада будут готовы к отгрузке</span>
-          </div>
-        ) : (
-          <div className={styles.tableWrap}>
-            <table className={styles.table}>
-              <thead>
-                <tr><th>Заказ</th><th>Клиент</th><th>Телефон</th><th>Позиции</th><th>Сумма</th><th>Оплата</th><th></th></tr>
-              </thead>
-              <tbody>
-                {toShipOrders.map((order) => (
-                  <ClickRow key={order.id} onClick={() => setSelectedOrderId(order.id)}>
-                    <td className={styles.tdMono}>#{order.orderNumber}</td>
-                    <td className={styles.tdName}>{order.clientName}</td>
-                    <td className={styles.tdSecondary} style={{ fontSize: 12 }}>{order.clientPhone}</td>
-                    <td className={styles.tdSecondary}>
-                      {(order.items ?? []).slice(0, 2).map((i) => i.productName).join(', ')}
-                      {(order.items ?? []).length > 2 ? ` +${(order.items ?? []).length - 2}` : ''}
-                    </td>
-                    <td className={styles.tdNum}>{fmtMoney(order.totalAmount)}</td>
-                    <td><span style={{ color: 'var(--fill-positive)', fontWeight: 500, fontSize: 12 }}>Оплачен</span></td>
-                    <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
-                      <button className={styles.incomBtn} onClick={() => setSelectedOrderId(order.id)}>
-                        <Send size={12} /> Открыть
-                      </button>
-                    </td>
-                  </ClickRow>
-                ))}
-                {unpaidOrders.map((order) => (
-                  <ClickRow key={order.id} onClick={() => setSelectedOrderId(order.id)}>
-                    <td className={styles.tdMono}>#{order.orderNumber}</td>
-                    <td className={styles.tdName}>{order.clientName}</td>
-                    <td className={styles.tdSecondary} style={{ fontSize: 12 }}>{order.clientPhone}</td>
-                    <td className={styles.tdSecondary}>
-                      {(order.items ?? []).slice(0, 2).map((i) => i.productName).join(', ')}
-                      {(order.items ?? []).length > 2 ? ` +${(order.items ?? []).length - 2}` : ''}
-                    </td>
-                    <td className={styles.tdNum}>{fmtMoney(order.totalAmount)}</td>
-                    <td><span style={{ color: 'var(--fill-negative)', fontWeight: 500, fontSize: 12 }}>Не оплачен</span></td>
-                    <td className={styles.tdActions} style={{ color: 'var(--text-tertiary)' }}>
-                      <ChevronRight size={14} />
-                    </td>
-                  </ClickRow>
-                ))}
-              </tbody>
-            </table>
-          </div>
         )
       )}
 
@@ -1621,12 +1500,27 @@ export default function ChapanWarehousePage() {
         <AddMovementDrawer items={items} preselectItemId={preselectItem} onClose={() => { setAddMovOpen(false); setPreselectItem(undefined); }} />
       )}
       {importBalanceOpen && <ImportBalanceDrawer onClose={() => setImportBalanceOpen(false)} />}
+      <ChapanInvoicePreviewModal
+        open={Boolean(previewInvoiceId)}
+        invoiceId={previewInvoiceId}
+        onClose={() => { setPreviewInvoiceId(null); setPreviewInvoice(null); }}
+        footer={
+          previewInvoice ? (
+            <WarehouseInvoiceFooter
+              invoice={previewInvoice}
+              onClose={() => { setPreviewInvoiceId(null); setPreviewInvoice(null); }}
+            />
+          ) : undefined
+        }
+      />
       {selectedInvoice && (
         <InvoiceDetailDrawer invoice={selectedInvoice} onClose={() => setSelectedInvoice(null)} />
       )}
-      {selectedOrderId && (
-        <OrderDetailDrawer orderId={selectedOrderId} onClose={() => setSelectedOrderId(null)} />
-      )}
+      <ChapanOrderDetailModal
+        open={Boolean(selectedOrderId)}
+        orderId={selectedOrderId}
+        onClose={() => setSelectedOrderId(null)}
+      />
     </div>
   );
 }
