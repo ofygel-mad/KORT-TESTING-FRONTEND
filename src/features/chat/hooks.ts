@@ -172,7 +172,7 @@ export function useSendAttachment(conversationId: string | null) {
       const form = new FormData();
       form.append('file', file, file.name);
       const res = await apiClient.post<ChatMessage>(
-        `/api/v1/chat/conversations/${conversationId}/attachments`,
+        `/chat/conversations/${conversationId}/attachments`,
         form,
         { headers: { 'Content-Type': 'multipart/form-data' } },
       );
