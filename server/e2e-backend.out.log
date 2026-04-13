@@ -1,0 +1,450 @@
+[dotenv@17.3.1] injecting env (11) from .env -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+Server running at http://127.0.0.1:8001
+[22:54:12.490] [32mINFO[39m (22104): [36mServer listening at http://127.0.0.1:8001[39m
+[22:54:12.491] [32mINFO[39m (22104): [36mCORS origins configured[39m
+    [35morigins[39m: [
+      "http://127.0.0.1:4173",
+      "http://localhost:4173",
+      "http://127.0.0.1:3000",
+      "http://localhost:3000"
+    ]
+[22:54:12.492] [32mINFO[39m (22104): [36mChat WebSocket attached at /api/v1/ws/chat[39m
+[22:54:12.493] [32mINFO[39m (22104): [36mWarehouse outbox worker started[39m
+[22:54:13.811] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-1"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/health",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 62547
+    }
+[22:54:13.817] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-1"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 5.177999999374151
+[22:55:31.390] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-2"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61743
+    }
+[22:55:31.604] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-2"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 213.4336999990046
+[22:55:31.624] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-3"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61743
+    }
+[22:55:31.642] [32mINFO[39m (22104): [36mstream closed prematurely[39m
+    [35mreqId[39m: "req-3"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+[22:55:31.643] [31mERROR[39m (22104): [36mpremature close[39m
+    [35mreqId[39m: "req-3"
+    err: {
+      "type": "Error",
+      "message": "premature close",
+      "stack":
+          Error: premature close
+              at onclosenexttick (C:\Users\user\Documents\KORT\server\node_modules\.pnpm\end-of-stream@1.4.5\node_modules\end-of-stream\index.js:56:86)
+              at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+    }
+[22:55:31.659] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-4"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61744
+    }
+[22:55:31.670] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-4"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 10.46879999898374
+[22:55:31.791] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-5"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61744
+    }
+[22:55:31.805] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-6"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59099
+    }
+[22:55:31.807] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-7"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59100
+    }
+[22:55:31.811] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-5"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 19.720200000330806
+[22:55:31.813] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-8"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcwOTMxLCJleHAiOjE3NzU2NzE4MzF9.dflVW1Jj6FegyEm5uoPShndu_3gMduWe3_MrFQ5JhV4",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59101
+    }
+[22:55:31.843] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-6"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 37.5304000005126
+[22:55:31.878] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-9"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcwOTMxLCJleHAiOjE3NzU2NzE4MzF9.dflVW1Jj6FegyEm5uoPShndu_3gMduWe3_MrFQ5JhV4",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59099
+    }
+[22:55:31.884] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-7"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 76.59369999915361
+[22:55:31.893] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-a"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcwOTMxLCJleHAiOjE3NzU2NzE4MzF9.dflVW1Jj6FegyEm5uoPShndu_3gMduWe3_MrFQ5JhV4",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 59100
+    }
+[22:55:32.226] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-b"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/leads?limit=50",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 61744
+    }
+[22:55:32.243] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-b"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.32509999908507
+[22:56:22.735] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-c"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56948
+    }
+[22:56:22.864] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-c"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 128.54570000059903
+[22:56:22.881] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-d"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56948
+    }
+[22:56:22.896] [32mINFO[39m (22104): [36mstream closed prematurely[39m
+    [35mreqId[39m: "req-d"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+[22:56:22.896] [31mERROR[39m (22104): [36mpremature close[39m
+    [35mreqId[39m: "req-d"
+    err: {
+      "type": "Error",
+      "message": "premature close",
+      "stack":
+          Error: premature close
+              at onclosenexttick (C:\Users\user\Documents\KORT\server\node_modules\.pnpm\end-of-stream@1.4.5\node_modules\end-of-stream\index.js:56:86)
+              at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+    }
+[22:56:22.918] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-e"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56949
+    }
+[22:56:22.927] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-e"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 8.516799999400973
+[22:56:23.000] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-f"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56949
+    }
+[22:56:23.004] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-g"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63430
+    }
+[22:56:23.014] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-f"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 14.017900001257658
+[22:56:23.017] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-h"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63431
+    }
+[22:56:23.027] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-i"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcwOTgyLCJleHAiOjE3NzU2NzE4ODJ9.X8U5SU7mjEugQzNMIZyOqALl0aXnzKX4e7fAeDe-szU",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63433
+    }
+[22:56:23.032] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-g"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27.60059999860823
+[22:56:23.033] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-h"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.010199999436736
+[22:56:23.097] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-j"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcwOTgyLCJleHAiOjE3NzU2NzE4ODJ9.X8U5SU7mjEugQzNMIZyOqALl0aXnzKX4e7fAeDe-szU",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63431
+    }
+[22:56:23.119] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-k"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcwOTgyLCJleHAiOjE3NzU2NzE4ODJ9.X8U5SU7mjEugQzNMIZyOqALl0aXnzKX4e7fAeDe-szU",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 63430
+    }
+[22:56:23.591] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-l"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/leads?limit=50",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 56949
+    }
+[22:56:23.608] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-l"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 16.65089999884367
+[22:59:02.654] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-m"
+    [35mreq[39m: {
+      "method": "POST",
+      "url": "/api/v1/auth/login/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 64255
+    }
+[22:59:03.235] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-m"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 580.0717000011355
+[22:59:03.298] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-n"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 64255
+    }
+[22:59:03.388] [32mINFO[39m (22104): [36mstream closed prematurely[39m
+    [35mreqId[39m: "req-n"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+[22:59:03.388] [31mERROR[39m (22104): [36mpremature close[39m
+    [35mreqId[39m: "req-n"
+    err: {
+      "type": "Error",
+      "message": "premature close",
+      "stack":
+          Error: premature close
+              at onclosenexttick (C:\Users\user\Documents\KORT\server\node_modules\.pnpm\end-of-stream@1.4.5\node_modules\end-of-stream\index.js:56:86)
+              at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+    }
+[22:59:03.506] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-o"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/auth/bootstrap/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54518
+    }
+[22:59:03.572] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-o"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 65.06989999860525
+[22:59:03.915] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-p"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/notifications/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54518
+    }
+[22:59:04.007] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-p"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 90.0715999994427
+[22:59:04.007] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-q"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/users/team",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60884
+    }
+[22:59:04.032] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-r"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/chat/conversations/",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60885
+    }
+[22:59:04.067] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-s"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcxMTQzLCJleHAiOjE3NzU2NzIwNDN9.yXkFIadl8kQDJvc7aPCmmm3zth3RK662XFHazWoxLNM",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60887
+    }
+[22:59:04.089] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-q"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 80.56390000134706
+[22:59:04.095] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-r"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 60.33090000040829
+[22:59:04.150] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-t"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcxMTQzLCJleHAiOjE3NzU2NzIwNDN9.yXkFIadl8kQDJvc7aPCmmm3zth3RK662XFHazWoxLNM",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60885
+    }
+[22:59:04.183] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-u"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc1NjcxMTQzLCJleHAiOjE3NzU2NzIwNDN9.yXkFIadl8kQDJvc7aPCmmm3zth3RK662XFHazWoxLNM",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 60884
+    }
+[22:59:05.534] [32mINFO[39m (22104): [36mincoming request[39m
+    [35mreqId[39m: "req-v"
+    [35mreq[39m: {
+      "method": "GET",
+      "url": "/api/v1/leads?limit=50",
+      "host": "127.0.0.1:8001",
+      "remoteAddress": "127.0.0.1",
+      "remotePort": 54518
+    }
+[22:59:05.557] [32mINFO[39m (22104): [36mrequest completed[39m
+    [35mreqId[39m: "req-v"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 22.998800000175834
