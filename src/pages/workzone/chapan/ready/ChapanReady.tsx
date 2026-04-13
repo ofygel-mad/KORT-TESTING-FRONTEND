@@ -1,10 +1,9 @@
 import { useDeferredValue, useEffect, useRef, useState, type CSSProperties, type ElementType } from 'react';
 import { AlertTriangle, Archive, Bell, Check, CheckCheck, CheckCircle2, CheckSquare, Clock, Download, Eye, FileText, LayoutGrid, Layers, List, Plus, Search, Warehouse, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useArchiveOrder, useChangeOrderStatus, useCloseOrder, useCreateInvoice, useOrders, usePreviewInvoiceDocument, useInvoices } from '../../../../entities/order/queries';
+import { useArchiveOrder, useChangeOrderStatus, useCreateInvoice, useOrders, usePreviewInvoiceDocument, useInvoices } from '../../../../entities/order/queries';
 import type { ChapanOrder, InvoiceDocumentPayload, OrderStatus, Priority, Urgency } from '../../../../entities/order/types';
 import { useAuthStore } from '@/shared/stores/auth';
-import { useCreateUnpaidAlert } from '../../../../entities/alert/queries';
 import { buildItemLine } from '../../../../shared/utils/itemLine';
 import { useChapanUiStore } from '../../../../features/workzone/chapan/store';
 import ChapanInvoicePreviewModal from '../invoices/ChapanInvoicePreviewModal';
@@ -79,6 +78,12 @@ function isOverdue(date: string | null) {
 
 function hasPendingProduction(order: ReadyOrder): boolean {
   return (order.productionTasks ?? []).some(task => task.status !== 'done');
+}
+
+function getItemTaskMap(order: ReadyOrder) {
+  return new Map(
+    (order.productionTasks ?? []).map(task => [task.orderItemId, task])
+  );
 }
 
 function hasWarehouseFulfillment(order: ChapanOrder): boolean {
@@ -192,7 +197,6 @@ export default function ChapanReadyPage() {
   const [showViewMenu, setShowViewMenu] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [closeUnpaidTarget, setCloseUnpaidTarget] = useState<{ ids: string[]; labels: string[]; balance: number } | null>(null);
   const [workshopBlockedOrders, setWorkshopBlockedOrders] = useState<string[] | null>(null);
   const [batchPreviewOpen, setBatchPreviewOpen] = useState(false);
   const [batchPreviewDocument, setBatchPreviewDocument] = useState<InvoiceDocumentPayload | null>(null);
@@ -251,15 +255,13 @@ export default function ChapanReadyPage() {
   });
   const { data: partialData, isLoading: partialLoading, isError: partialError } = useOrders({
     archived: false,
-    hasWarehouseItems: true,
+    statuses: 'confirmed,in_production',
     search: deferredSearch || undefined,
     limit: 200,
   });
 
   const changeStatus = useChangeOrderStatus();
-  const closeOrder = useCloseOrder();
   const archiveOrder = useArchiveOrder();
-  const notifyManager = useCreateUnpaidAlert();
   const createInvoice = useCreateInvoice();
   const previewInvoiceDocument = usePreviewInvoiceDocument();
 
@@ -273,7 +275,10 @@ export default function ChapanReadyPage() {
     }
   }
   for (const order of partialData?.results ?? []) {
-    if ((order.status === 'confirmed' || order.status === 'in_production') && hasWarehouseFulfillment(order)) {
+    if (
+      (order.status === 'confirmed' || order.status === 'in_production') &&
+      (hasWarehouseFulfillment(order) || (order.productionTasks ?? []).some(t => t.status === 'done'))
+    ) {
       orderMap.set(order.id, order as ReadyOrder);
     }
   }
@@ -326,43 +331,8 @@ export default function ChapanReadyPage() {
     void dispatchReadyOrders([order]);
   }
 
-  function requestClose(order: ReadyOrder) {
-    if (order.paymentStatus !== 'paid') {
-      setCloseUnpaidTarget({
-        ids: [order.id],
-        labels: [`#${order.orderNumber} — остаток: ${formatMoney(getOrderBalance(order))}`],
-        balance: getOrderBalance(order),
-      });
-    } else {
-      void closeOrder.mutateAsync(order.id);
-    }
-  }
-
   function handleAdvanceMany(batchOrders: ReadyOrder[]) {
     void dispatchReadyOrders(batchOrders);
-  }
-
-  function requestCloseMany(batchOrders: ReadyOrder[]) {
-    const unpaid = batchOrders.filter((o) => o.paymentStatus !== 'paid');
-    if (unpaid.length > 0) {
-      setCloseUnpaidTarget({
-        ids: batchOrders.map((o) => o.id),
-        labels: unpaid.map((o) => `#${o.orderNumber} — остаток: ${formatMoney(getOrderBalance(o))}`),
-        balance: unpaid.reduce((sum, o) => sum + getOrderBalance(o), 0),
-      });
-    } else {
-      for (const order of batchOrders) {
-        void closeOrder.mutateAsync(order.id);
-      }
-    }
-  }
-
-  async function forceCloseUnpaid() {
-    if (!closeUnpaidTarget) return;
-    for (const id of closeUnpaidTarget.ids) {
-      await closeOrder.mutateAsync(id);
-    }
-    setCloseUnpaidTarget(null);
   }
 
   function toggleSelect(id: string) {
@@ -561,7 +531,6 @@ export default function ChapanReadyPage() {
                   order={group.order}
                   onOpen={() => isWorkshopUser ? setDetailOrder(group.order) : navigate(`/workzone/chapan/ready/${group.order.id}`)}
                   onAdvance={() => handleAdvance(group.order)}
-                  onClose={() => requestClose(group.order)}
                   selectMode={selectMode}
                   isSelected={selectedIds.has(group.order.id)}
                   onToggleSelect={() => toggleSelect(group.order.id)}
@@ -572,7 +541,6 @@ export default function ChapanReadyPage() {
                   orders={group.orders}
                   onOpen={(id) => isWorkshopUser ? setDetailOrder(group.orders.find(o => o.id === id) ?? null) : navigate(`/workzone/chapan/ready/${id}`)}
                   onAdvance={() => handleAdvanceMany(group.orders)}
-                  onClose={() => requestCloseMany(group.orders)}
                   selectMode={selectMode}
                   selectedIds={selectedIds}
                   onToggleSelectMany={() => toggleSelectMany(group.orders.map((o) => o.id))}
@@ -589,7 +557,6 @@ export default function ChapanReadyPage() {
                   order={group.order}
                   onOpen={() => isWorkshopUser ? setDetailOrder(group.order) : navigate(`/workzone/chapan/ready/${group.order.id}`)}
                   onAdvance={() => handleAdvance(group.order)}
-                  onClose={() => requestClose(group.order)}
                   selectMode={selectMode}
                   isSelected={selectedIds.has(group.order.id)}
                   onToggleSelect={() => toggleSelect(group.order.id)}
@@ -600,7 +567,6 @@ export default function ChapanReadyPage() {
                   orders={group.orders}
                   onOpen={(id) => isWorkshopUser ? setDetailOrder(group.orders.find(o => o.id === id) ?? null) : navigate(`/workzone/chapan/ready/${id}`)}
                   onAdvance={() => handleAdvanceMany(group.orders)}
-                  onClose={() => requestCloseMany(group.orders)}
                   selectMode={selectMode}
                   selectedIds={selectedIds}
                   onToggleSelectMany={() => toggleSelectMany(group.orders.map((o) => o.id))}
@@ -685,51 +651,6 @@ export default function ChapanReadyPage() {
         </div>
       )}
 
-      {closeUnpaidTarget && (
-        <div className={styles.confirmOverlay} onClick={() => setCloseUnpaidTarget(null)}>
-          <div className={styles.confirmDialog} onClick={(e) => e.stopPropagation()}>
-            <div className={styles.confirmTitle}>
-              <AlertTriangle size={16} />
-              Заказ не полностью оплачен
-            </div>
-            <div className={styles.confirmText}>
-              <div style={{ marginBottom: '12px', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
-                Передача на склад невозможна, пока остаток не внесён полностью:
-              </div>
-              {closeUnpaidTarget.labels.map((label) => (
-                <div key={label} className={styles.unpaidLine}>{label}</div>
-              ))}
-            </div>
-            <div className={styles.confirmActions}>
-              <button
-                className={styles.confirmSecondary}
-                onClick={() => setCloseUnpaidTarget(null)}
-              >
-                Понятно
-              </button>
-              <button
-                className={styles.notifyBtn}
-                onClick={async () => {
-                  for (const id of closeUnpaidTarget.ids) {
-                    const order = orders.find(o => o.id === id);
-                    if (order) {
-                      await notifyManager.mutateAsync({
-                        orderId: id,
-                        orderNumber: order.orderNumber,
-                      });
-                    }
-                  }
-                  setCloseUnpaidTarget(null);
-                }}
-                disabled={notifyManager.isPending}
-              >
-                {notifyManager.isPending ? 'Отправка...' : 'Оповестить менеджера'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {detailOrder && (
         <ReadyProductionDetailModal
           order={detailOrder}
@@ -778,79 +699,68 @@ function ReadyProductionDetailModal({
             </div>
           </div>
 
-          {/* Order items */}
+          {/* Order items with production status */}
           <div className={styles.detailSection}>
             <div className={styles.detailSectionLabel}>Позиции</div>
             {order.items && order.items.length > 0 ? (
               <div className={styles.itemsList}>
-                {order.items.map((item) => (
-                  <div key={item.id} className={styles.itemRow}>
-                    <div className={styles.itemName}>
-                      {buildItemLine(item) || item.productName}
-                    </div>
-                    <div className={styles.itemMeta}>
-                      <span>{item.size}</span>
-                      <span>×{item.quantity}</span>
-                    </div>
-                    {item.workshopNotes && (
-                      <div className={styles.itemNote}>{item.workshopNotes}</div>
-                    )}
-                  </div>
-                ))}
+                {(() => {
+                  const taskByItemId = getItemTaskMap(order);
+                  return order.items.map((item) => {
+                    const task = taskByItemId.get(item.id);
+                    const mode = item.fulfillmentMode;
+                    let statusLabel = '';
+                    let statusColor = 'var(--text-secondary)';
+                    if (task) {
+                      if (task.status === 'done') { statusLabel = 'Готово'; statusColor = '#4FC999'; }
+                      else if (task.status === 'in_progress') { statusLabel = 'В работе'; statusColor = '#E5922A'; }
+                      else { statusLabel = 'В очереди'; statusColor = '#8B5CF6'; }
+                    } else if (mode === 'warehouse') {
+                      statusLabel = 'Склад'; statusColor = 'var(--text-secondary)';
+                    } else if (!mode || mode === 'unassigned') {
+                      statusLabel = 'Без маршрута'; statusColor = '#D94F4F';
+                    }
+                    return (
+                      <div key={item.id} className={styles.itemRow}>
+                        <div className={styles.itemName}>
+                          {buildItemLine(item) || item.productName}
+                        </div>
+                        <div className={styles.itemMeta}>
+                          <span>{item.size}</span>
+                          <span>×{item.quantity}</span>
+                          {statusLabel && <span style={{ color: statusColor, fontWeight: 500 }}>{statusLabel}</span>}
+                        </div>
+                        {item.workshopNotes && (
+                          <div className={styles.itemNote}>{item.workshopNotes}</div>
+                        )}
+                        {task && (
+                          <>
+                            {task.assignedTo && (
+                              <div className={styles.taskAssigned}>{task.assignedTo}</div>
+                            )}
+                            {task.notes && (
+                              <div className={styles.taskNote}>
+                                <span className={styles.noteLabel}>К заданию:</span>
+                                {task.notes}
+                              </div>
+                            )}
+                            {task.defects && (
+                              <div className={styles.taskDefects}>
+                                <span className={styles.noteLabel}>Дефекты:</span>
+                                {task.defects}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    );
+                  });
+                })()}
               </div>
             ) : (
               <div className={styles.emptyMessage}>Нет позиций</div>
             )}
           </div>
-
-          {/* Production tasks */}
-          {order.productionTasks && order.productionTasks.length > 0 && (
-            <div className={styles.detailSection}>
-              <div className={styles.detailSectionLabel}>Производство</div>
-              <div className={styles.tasksList}>
-                {order.productionTasks.map((task) => (
-                  <div key={task.id} className={styles.taskDetailRow}>
-                    <div className={styles.taskHeader}>
-                      <span className={styles.taskProduct}>{task.productName}</span>
-                      <span
-                        className={styles.taskStatus}
-                        style={{
-                          color: task.status === 'queued' ? '#8B5CF6' : task.status === 'in_progress' ? '#E5922A' : '#4FC999',
-                        }}
-                      >
-                        {task.status === 'queued' ? 'В очереди' : task.status === 'in_progress' ? 'В работе' : 'Готово'}
-                      </span>
-                    </div>
-
-                    <div className={styles.taskMeta}>
-                      <span>{task.size}</span>
-                      <span>×{task.quantity}</span>
-                      {task.fabric && <span>{task.fabric}</span>}
-                      {task.length && <span>дл. {task.length}</span>}
-                    </div>
-
-                    {task.assignedTo && (
-                      <div className={styles.taskAssigned}>{task.assignedTo}</div>
-                    )}
-
-                    {task.notes && (
-                      <div className={styles.taskNote}>
-                        <span className={styles.noteLabel}>К заданию:</span>
-                        {task.notes}
-                      </div>
-                    )}
-
-                    {task.defects && (
-                      <div className={styles.taskDefects}>
-                        <span className={styles.noteLabel}>Дефекты:</span>
-                        {task.defects}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     </div>
@@ -861,7 +771,6 @@ function ReadyCard({
   order,
   onOpen,
   onAdvance,
-  onClose,
   selectMode,
   isSelected,
   onToggleSelect,
@@ -869,7 +778,6 @@ function ReadyCard({
   order: ReadyOrder;
   onOpen: () => void;
   onAdvance: () => void;
-  onClose: () => void;
   selectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
@@ -925,6 +833,33 @@ function ReadyCard({
         </div>
       )}
 
+      {order.items.length > 1 && order.productionTasks && order.productionTasks.length > 0 && (() => {
+        const taskByItemId = getItemTaskMap(order);
+        return (
+          <div className={styles.positionList}>
+            {order.items.map((item) => {
+              const task = taskByItemId.get(item.id);
+              const mode = item.fulfillmentMode;
+              let label = 'Без маршрута';
+              let color = 'var(--text-secondary)';
+              if (task) {
+                if (task.status === 'done') { label = 'Готово'; color = '#4FC999'; }
+                else if (task.status === 'in_progress') { label = 'В работе'; color = '#E5922A'; }
+                else { label = 'В очереди'; color = '#8B5CF6'; }
+              } else if (mode === 'warehouse') {
+                label = 'Склад'; color = 'var(--text-secondary)';
+              }
+              return (
+                <div key={item.id} className={styles.positionRow}>
+                  <span className={styles.positionName}>{buildItemLine(item) || item.productName}</span>
+                  <span className={styles.positionStatus} style={{ color }}>{label}</span>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })()}
+
       <div className={styles.clientName}>{order.clientName}</div>
       <div className={styles.phone}>{order.clientPhone}</div>
 
@@ -953,7 +888,6 @@ function ReadyBatchCard({
   orders,
   onOpen,
   onAdvance,
-  onClose,
   selectMode,
   selectedIds,
   onToggleSelectMany,
@@ -961,7 +895,6 @@ function ReadyBatchCard({
   orders: ReadyOrder[];
   onOpen: (id: string) => void;
   onAdvance: () => void;
-  onClose: () => void;
   selectMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelectMany?: () => void;
@@ -1044,7 +977,6 @@ function ReadyRow({
   order,
   onOpen,
   onAdvance,
-  onClose,
   selectMode,
   isSelected,
   onToggleSelect,
@@ -1052,7 +984,6 @@ function ReadyRow({
   order: ReadyOrder;
   onOpen: () => void;
   onAdvance: () => void;
-  onClose: () => void;
   selectMode?: boolean;
   isSelected?: boolean;
   onToggleSelect?: () => void;
@@ -1097,9 +1028,18 @@ function ReadyRow({
         </div>
         <div className={styles.rowClient}>{order.clientName}</div>
         <div className={styles.rowMeta}>
-          <span>{buildItemLine(firstItem) || 'Без позиции'}</span>
+          <span>
+            {buildItemLine(firstItem) || 'Без позиции'}
+            {order.items.length > 1 && ` +${order.items.length - 1}`}
+          </span>
           <span>{formatMoney(order.totalAmount)}</span>
           <span>{formatDate(order.dueDate)}</span>
+          {order.productionTasks && order.productionTasks.length > 0 && (() => {
+            const done = order.productionTasks.filter(t => t.status === 'done').length;
+            const total = order.productionTasks.length;
+            const color = done === total ? '#4FC999' : done > 0 ? '#E5922A' : '#8B5CF6';
+            return <span style={{ color, fontWeight: 500 }}>{done}/{total} гот.</span>;
+          })()}
         </div>
       </div>
 
@@ -1118,7 +1058,6 @@ function ReadyBatchRow({
   orders,
   onOpen,
   onAdvance,
-  onClose,
   selectMode,
   selectedIds,
   onToggleSelectMany,
@@ -1126,7 +1065,6 @@ function ReadyBatchRow({
   orders: ReadyOrder[];
   onOpen: (id: string) => void;
   onAdvance: () => void;
-  onClose: () => void;
   selectMode?: boolean;
   selectedIds?: Set<string>;
   onToggleSelectMany?: () => void;
