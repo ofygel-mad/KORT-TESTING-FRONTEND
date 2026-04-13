@@ -119,18 +119,25 @@ async function recoverKnownFailedMigration() {
 
 async function main() {
   try {
+    console.log('🔄 Checking for failed migrations...');
     await recoverKnownFailedMigration();
   } finally {
     await prisma.$disconnect();
   }
 
+  console.log('📦 Deploying database migrations...');
   run('pnpm', ['exec', 'prisma', 'migrate', 'deploy']);
+
+  console.log('✅ Migrations deployed successfully');
+  console.log('🌱 Seeding database with demo data...');
   run('pnpm', ['run', 'db:seed']);
+
+  console.log('🚀 Starting application server...');
   run('node', ['dist/index.js']);
 }
 
 main().catch(async (error) => {
-  console.error(error);
+  console.error('❌ Startup error:', error);
   await prisma.$disconnect();
   process.exit(1);
 });
