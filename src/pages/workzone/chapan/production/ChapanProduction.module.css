@@ -977,7 +977,7 @@
 
 .taskListCardRow {
   display: grid;
-  grid-template-columns: 1fr auto auto auto auto auto auto;
+  grid-template-columns: minmax(200px, 1fr) 80px 70px 70px 70px 80px 90px;
   gap: 12px;
   align-items: center;
   font-size: 12px;
