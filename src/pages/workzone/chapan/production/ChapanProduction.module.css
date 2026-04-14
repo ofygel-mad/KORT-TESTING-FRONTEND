@@ -977,7 +977,7 @@
 
 .taskListCardRow {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) 80px 70px 70px 70px 80px 90px;
+  grid-template-columns: minmax(200px, 1fr) 60px 80px 70px 70px 70px 80px 90px;
   gap: 12px;
   align-items: center;
   font-size: 12px;
@@ -1050,7 +1050,7 @@
 /* ── Task List Header ── */
 .taskListHeader {
   display: grid;
-  grid-template-columns: minmax(200px, 1fr) 80px 70px 70px 70px 80px 90px;
+  grid-template-columns: minmax(200px, 1fr) 60px 80px 70px 70px 70px 80px 90px;
   gap: 12px;
   padding: 8px 14px 8px 17px;
   background: var(--ch-surface-dim, rgba(255, 255, 255, 0.03));

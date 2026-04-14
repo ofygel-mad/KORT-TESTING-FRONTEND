@@ -661,6 +661,7 @@ function TaskListCard({
       <div className={styles.taskListCardMain}>
         <div className={styles.taskListCardRow}>
           <div className={styles.taskListCardValue}>{itemLine}</div>
+          <div className={styles.taskListCardValue}>{task.color || '—'}</div>
           <div className={styles.taskListCardValue}>{task.fabric || '—'}</div>
           <div className={styles.taskListCardValue}>{task.size}</div>
           <div className={styles.taskListCardValue}>{task.length || '—'}</div>
@@ -769,6 +770,7 @@ function ProductionListView({
         {runningDisplayTasks.length > 0 && (
           <div className={styles.taskListHeader}>
             <div className={styles.taskListHeaderLabel}>Товар</div>
+            <div className={styles.taskListHeaderLabel}>Цвет</div>
             <div className={styles.taskListHeaderLabel}>Ткань</div>
             <div className={styles.taskListHeaderLabel}>Размер</div>
             <div className={styles.taskListHeaderLabel}>Длина</div>
@@ -798,6 +800,7 @@ function ProductionListView({
         {queuedDisplayTasks.length > 0 && (
           <div className={styles.taskListHeader}>
             <div className={styles.taskListHeaderLabel}>Товар</div>
+            <div className={styles.taskListHeaderLabel}>Цвет</div>
             <div className={styles.taskListHeaderLabel}>Ткань</div>
             <div className={styles.taskListHeaderLabel}>Размер</div>
             <div className={styles.taskListHeaderLabel}>Длина</div>
