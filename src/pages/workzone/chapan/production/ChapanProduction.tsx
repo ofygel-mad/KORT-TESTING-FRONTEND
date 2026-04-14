@@ -708,9 +708,8 @@ function TaskListCard({
             className={styles.taskListCardActionBtn}
             onClick={() => onClaim(task.id)}
             disabled={!canClaim}
-            title="Взять в работу"
           >
-            Взять
+            Взять в работу
           </button>
         )}
 
@@ -719,9 +718,8 @@ function TaskListCard({
             className={`${styles.taskListCardActionBtn} ${styles.taskListCardActionSuccess}`}
             onClick={() => onDone(task.id)}
             disabled={task.isBlocked}
-            title="Готово"
           >
-            Готово
+            ✓ Готово
           </button>
         )}
 
@@ -730,17 +728,15 @@ function TaskListCard({
             <button
               className={styles.taskListCardActionBtn}
               onClick={() => onUnflag(task)}
-              title="Снять блок"
             >
-              Блок
+              Снять блок
             </button>
           ) : (
             <button
               className={styles.taskListCardActionBtn}
               onClick={() => onFlag(task)}
-              title="Заблокировать"
             >
-              Флаг
+              🚩 Блок
             </button>
           )
         )}

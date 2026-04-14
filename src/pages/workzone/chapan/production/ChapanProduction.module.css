@@ -1021,25 +1021,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 10px;
+  gap: 6px;
+  padding: 8px 12px;
   border-left: 1px solid var(--ch-border);
-  min-width: 44px;
   background: var(--ch-surface);
+  flex-wrap: wrap;
 }
 
 .taskListCardActionBtn {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--ch-text-dim);
   background: none;
   border: none;
   cursor: pointer;
-  padding: 4px 6px;
+  padding: 6px 10px;
   border-radius: 4px;
   transition: background 140ms, color 140ms;
   line-height: 1.2;
+  white-space: nowrap;
 }
 
 .taskListCardActionBtn:hover:not(:disabled) {
