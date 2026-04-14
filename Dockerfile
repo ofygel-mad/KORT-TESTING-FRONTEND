@@ -19,7 +19,7 @@ RUN pnpm run build
 # ── Stage 2: Serve ───────────────────────────────────────────────────────────
 FROM nginx:1.27-alpine
 
-RUN apk add --no-cache gettext
+RUN apk add --no-cache gettext curl
 
 COPY nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY docker/start-nginx.sh /usr/local/bin/start-nginx.sh
@@ -33,6 +33,6 @@ ENV BACKEND_URL=http://127.0.0.1:8000
 EXPOSE 80
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
-  CMD wget --quiet --tries=1 --spider http://localhost:80/ || exit 1
+  CMD curl -f http://localhost:80/ || exit 1
 
-CMD ["/usr/local/bin/start-nginx.sh"]
+CMD sh -c "/usr/local/bin/start-nginx.sh"

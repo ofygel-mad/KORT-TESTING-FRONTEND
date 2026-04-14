@@ -1,10 +1,6 @@
 [build]
 builder = "dockerfile"
-dockerfile = "./Dockerfile"
-context = "."
-buildArgs = []
 
 [deploy]
-restartPolicyType = "on_failure"
-restartPolicyMaxRetries = 3
 port = 80
+startCommand = "/usr/local/bin/start-nginx.sh"
