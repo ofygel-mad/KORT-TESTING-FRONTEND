@@ -660,7 +660,7 @@ function TaskListCard({
 
       <div className={styles.taskListCardMain}>
         <div className={styles.taskListCardRow}>
-          <div className={styles.taskListCardValue}>{itemLine}</div>
+          <div className={styles.taskListCardValue}>{task.productName}</div>
           <div className={styles.taskListCardValue}>{task.color || '—'}</div>
           <div className={styles.taskListCardValue}>{task.fabric || '—'}</div>
           <div className={styles.taskListCardValue}>{task.size}</div>
