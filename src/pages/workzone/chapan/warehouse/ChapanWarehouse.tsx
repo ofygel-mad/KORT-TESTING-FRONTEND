@@ -2,7 +2,7 @@ import { useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   AlertCircle, AlertTriangle, Archive, CheckCircle2, ChevronRight, Download,
-  FileText, Package, PackageCheck, Phone, Plus, RotateCcw, Search, Send, TrendingDown, User, Upload, X, XCircle, CheckSquare, BookOpen,
+  FileText, Package, PackageCheck, Phone, Plus, RefreshCcw, Search, TrendingDown, User, Upload, X, XCircle, CheckSquare, BookOpen,
 } from 'lucide-react';
 import { WarehouseCatalog } from '../../../warehouse/WarehouseCatalog';
 import ChapanInvoicePreviewModal from '../invoices/ChapanInvoicePreviewModal';
@@ -11,8 +11,9 @@ import {
   useWarehouseItems, useWarehouseMovements, useWarehouseAlerts,
   useWarehouseCategories, useCreateItem, useAddMovement, useDeleteItem, useResolveAlert,
   useWarehouseFoundationSites, useWarehouseFoundationSiteControlTower, useWarehouseFoundationSiteHealth,
-  useImportOpeningBalance, useWarehouseSummary,
+  useImportOpeningBalance, useWarehouseSummary, useSyncFromOrders,
 } from '../../../../entities/warehouse/queries';
+import { SetBeginningBalanceModal } from './SetBeginningBalanceModal';
 import {
   useInvoices, useConfirmWarehouse, useOrders, useShipOrder, useOrder, useArchiveInvoice,
   useCloseOrder, useReturnToReady, useRejectInvoice,
@@ -851,6 +852,7 @@ export default function ChapanWarehousePage() {
   const [importBalanceOpen, setImportBalanceOpen] = useState(false);
   const [preselectItem, setPreselectItem] = useState<string | undefined>();
   const [selectedCanonicalSiteId, setSelectedCanonicalSiteId] = useState('');
+  const [verifyItem, setVerifyItem] = useState<WarehouseItem | null>(null);
 
   // Detail drawers
   const [selectedInvoice, setSelectedInvoice] = useState<ChapanInvoice | null>(null);
@@ -897,9 +899,13 @@ export default function ChapanWarehousePage() {
   const alertCount = alerts.length;
   const incomingCount = pendingInvoices.length;
   const { data: summaryData } = useWarehouseSummary();
+  const syncFromOrders = useSyncFromOrders();
   const totalUnits = useMemo(() => items.reduce((sum, i) => sum + getQtyAvailable(i), 0), [items]);
   const totalReserved = useMemo(() => items.reduce((sum, i) => sum + i.qtyReserved, 0), [items]);
-  const needsVerificationCount = useMemo(() => items.filter(i => i.qty - i.qtyReserved < 0).length, [items]);
+  const needsVerificationCount = useMemo(
+    () => items.filter(i => i.verificationRequired || i.qty - i.qtyReserved < 0).length,
+    [items],
+  );
   const { data: canonicalSites } = useWarehouseFoundationSites();
   const { data: canonicalSiteHealth } = useWarehouseFoundationSiteHealth(selectedCanonicalSiteId || undefined);
   const { data: canonicalControlTower } = useWarehouseFoundationSiteControlTower(selectedCanonicalSiteId || undefined);
@@ -1292,6 +1298,14 @@ export default function ChapanWarehousePage() {
             </div>
             <button className={styles.exportBtn} onClick={handleExportItems}><Download size={13} /> Excel</button>
             <button className={styles.exportBtn} onClick={() => setImportBalanceOpen(true)}><Upload size={13} /> Импорт остатков</button>
+            <button
+              className={styles.exportBtn}
+              onClick={() => syncFromOrders.mutate()}
+              disabled={syncFromOrders.isPending}
+              title="Создать складские позиции для товаров из активных заказов"
+            >
+              <RefreshCcw size={13} /> {syncFromOrders.isPending ? 'Синхронизация...' : 'Синхр. с заказами'}
+            </button>
             <button className={styles.addBtn} onClick={() => setAddItemOpen(true)}><Plus size={14} /> Добавить</button>
           </div>
 
@@ -1307,20 +1321,29 @@ export default function ChapanWarehousePage() {
                   {items.map(item => {
                     const status = getStockStatus(item);
                     const available = getQtyAvailable(item);
-                    const needsVerify = item.qty - item.qtyReserved < 0;
+                    const needsVerify = item.verificationRequired || item.qty - item.qtyReserved < 0;
                     return (
                       <tr key={item.id} className={styles.row} onClick={() => setSelectedItem(item)} style={{ cursor: 'pointer' }}>
                         <td className={styles.tdName}>
                           {item.name}
                           {needsVerify && (
-                            <span style={{
-                              marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 3,
-                              fontSize: 10, fontWeight: 600, color: 'var(--fill-negative)',
-                              background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
-                              borderRadius: 4, padding: '1px 5px',
-                            }}>
-                              <AlertTriangle size={9} /> Сверка
-                            </span>
+                            <button
+                              onClick={(e) => { e.stopPropagation(); setVerifyItem(item); }}
+                              style={{
+                                marginLeft: 6, display: 'inline-flex', alignItems: 'center', gap: 3,
+                                fontSize: 10, fontWeight: 700, color: 'var(--fill-negative)',
+                                background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)',
+                                borderRadius: 4, padding: '2px 6px', cursor: 'pointer',
+                              }}
+                              title="Нажмите для сверки начального остатка"
+                            >
+                              <AlertTriangle size={9} /> ???
+                            </button>
+                          )}
+                          {needsVerify && (
+                            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', marginTop: 2 }}>
+                              {item.qtyBeginning} + {Math.max(0, item.qty - item.qtyBeginning)} − {Math.max(0, item.qtyBeginning - item.qty)} = {item.qty}
+                            </div>
                           )}
                         </td>
                         <td className={styles.tdSecondary} style={{ fontSize: 11 }}>
@@ -1541,6 +1564,7 @@ export default function ChapanWarehousePage() {
         <AddMovementDrawer items={items} preselectItemId={preselectItem} onClose={() => { setAddMovOpen(false); setPreselectItem(undefined); }} />
       )}
       {importBalanceOpen && <ImportBalanceDrawer onClose={() => setImportBalanceOpen(false)} />}
+      {verifyItem && <SetBeginningBalanceModal item={verifyItem} onClose={() => setVerifyItem(null)} />}
       <ChapanInvoicePreviewModal
         open={Boolean(previewInvoiceId)}
         invoiceId={previewInvoiceId}
@@ -1564,6 +1588,10 @@ export default function ChapanWarehousePage() {
           onAddMovement={() => {
             setPreselectItem(selectedItem.id);
             setAddMovOpen(true);
+            setSelectedItem(null);
+          }}
+          onVerify={() => {
+            setVerifyItem(selectedItem);
             setSelectedItem(null);
           }}
         />

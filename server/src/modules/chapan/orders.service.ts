@@ -878,7 +878,9 @@ async function applyItemRouting(
 
   if (warehouseItems.length > 0) {
     try {
-      const { reserveOrderWarehouseItems } = await import('../warehouse/warehouse.service.js');
+      const { autoCreateFromOrder, reserveOrderWarehouseItems } = await import('../warehouse/warehouse.service.js');
+      // Auto-create skeleton warehouse entries for any new product variants (Accumulation Method)
+      await autoCreateFromOrder(orgId, warehouseItems, id, authorName || 'system');
       const summary = await reserveOrderWarehouseItems(orgId, id, authorName || 'system');
 
       await prisma.chapanActivity.create({

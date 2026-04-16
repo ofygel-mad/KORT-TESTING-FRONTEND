@@ -8,6 +8,9 @@ import type {
   WarehousePoolPolicyDto, ImportOpeningBalanceRow,
 } from './types';
 
+// New query key for formula
+const warehouseFormulaKey = (id: string) => ['warehouse', 'item-formula', id] as const;
+
 export const warehouseKeys = {
   all: ['warehouse'] as const,
   items: (params?: object) => ['warehouse', 'items', params] as const,
@@ -247,6 +250,47 @@ export const useImportOpeningBalance = () => {
       result.errors.length > 0 ? toast.warning(msg) : toast.success(msg);
     },
     onError: () => toast.error('Ошибка при импорте остатков'),
+  });
+};
+
+// ── Accumulation Method hooks ──────────────────────────────────────────────────
+
+export const useItemFormula = (id: string | undefined) =>
+  useQuery({
+    queryKey: id ? warehouseFormulaKey(id) : ['warehouse', 'item-formula', '_disabled'],
+    queryFn: () => warehouseApi.getItemFormula(id!),
+    enabled: Boolean(id),
+    staleTime: 10_000,
+  });
+
+export const useSetBeginningBalance = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, qty, note }: { id: string; qty: number; note?: string }) =>
+      warehouseApi.setBeginningBalance(id, qty, note),
+    onSuccess: (_data, variables) => {
+      qc.invalidateQueries({ queryKey: warehouseKeys.items() });
+      qc.invalidateQueries({ queryKey: warehouseKeys.summary });
+      qc.invalidateQueries({ queryKey: warehouseKeys.alerts });
+      qc.invalidateQueries({ queryKey: warehouseFormulaKey(variables.id) });
+      toast.success('Начальный остаток установлен. Сверка завершена.');
+    },
+    onError: () => toast.error('Не удалось установить начальный остаток'),
+  });
+};
+
+export const useSyncFromOrders = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => warehouseApi.syncFromOrders(),
+    onSuccess: (result) => {
+      qc.invalidateQueries({ queryKey: warehouseKeys.items() });
+      qc.invalidateQueries({ queryKey: warehouseKeys.alerts });
+      toast.success(
+        `Синхронизировано: создано ${result.createdItemIds.length}, совпало ${result.matchedItemIds.length} (просмотрено ${result.scannedOrders} заказов)`,
+      );
+    },
+    onError: () => toast.error('Ошибка синхронизации с заказами'),
   });
 };
 

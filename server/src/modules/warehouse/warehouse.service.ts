@@ -40,6 +40,7 @@ export interface CreateItemDto {
   color?: string;
   gender?: string;
   size?: string;
+  length?: string;
 }
 
 export interface UpdateItemDto {
@@ -76,6 +77,7 @@ export interface ImportOpeningBalanceRow {
   color?: string;
   gender?: string;
   size?: string;
+  length?: string;
   qty: number;
   costPrice?: number;
 }
@@ -218,6 +220,7 @@ export async function listItems(
     categoryId?: string;
     locationId?: string;
     lowStock?: boolean;
+    verificationRequired?: boolean;
     page?: number;
     pageSize?: number;
   },
@@ -226,7 +229,7 @@ export async function listItems(
   const pageSize = Math.min(filters?.pageSize ?? 50, 200);
   const skip = (page - 1) * pageSize;
 
-  const where: Record<string, unknown> = { orgId };
+  const where: Prisma.WarehouseItemWhereInput = { orgId };
 
   if (filters?.search) {
     where.OR = [
@@ -236,8 +239,11 @@ export async function listItems(
   }
   if (filters?.categoryId) where.categoryId = filters.categoryId;
   if (filters?.locationId) where.locationId = filters.locationId;
+  if (filters?.verificationRequired !== undefined) {
+    where.verificationRequired = filters.verificationRequired;
+  }
   if (filters?.lowStock) {
-    // qty (excluding reserved) ≤ qtyMin
+    // Items where available (qty - qtyReserved) <= qtyMin, done via raw subquery for correct pagination
     where.AND = [{ qtyMin: { gt: 0 } }];
   }
 
@@ -246,13 +252,14 @@ export async function listItems(
     prisma.warehouseItem.findMany({
       where,
       include: { category: true, location: true },
-      orderBy: { name: 'asc' },
+      orderBy: [{ verificationRequired: 'desc' }, { name: 'asc' }],
       skip,
       take: pageSize,
     }),
   ]);
 
-  // Post-filter lowStock (available = qty - qtyReserved)
+  // Post-filter lowStock (available = qty - qtyReserved) — kept as post-filter for simplicity
+  // verificationRequired items sort first above
   const result = filters?.lowStock
     ? items.filter((i) => i.qty - i.qtyReserved <= i.qtyMin)
     : items;
@@ -272,11 +279,12 @@ export async function getItem(orgId: string, id: string) {
 export async function createItem(orgId: string, dto: CreateItemDto, authorName: string) {
   const qrCode = `KORT-WH-${nanoid(10)}`;
 
-  // Compute variantKey when color/gender/size are provided
+  // Compute variantKey when color/gender/size/length are provided
   const attrs: Record<string, string> = {};
   if (dto.color?.trim()) attrs.color = dto.color.trim();
   if (dto.gender?.trim()) attrs.gender = dto.gender.trim();
   if (dto.size?.trim()) attrs.size = dto.size.trim();
+  if (dto.length?.trim()) attrs.length = dto.length.trim();
   const variantKey = buildWarehouseVariantKey(dto.name, attrs);
   const attributesSummary = summarizeVariantAttributes(attrs) || null;
 
@@ -369,6 +377,7 @@ export async function bulkImportOpeningBalance(
       if (row.color?.trim()) attrs.color = row.color.trim();
       if (row.gender?.trim()) attrs.gender = row.gender.trim();
       if (row.size?.trim()) attrs.size = row.size.trim();
+      if (row.length?.trim()) attrs.length = row.length.trim();
 
       const variantKey = buildWarehouseVariantKey(name, attrs);
       const attributesSummary = summarizeVariantAttributes(attrs) || null;
@@ -657,6 +666,10 @@ type WarehouseReservationOrderItem = {
   id: string;
   productName: string;
   quantity: number;
+  color?: string | null;
+  gender?: string | null;
+  size?: string | null;
+  length?: string | null;
   variantKey?: string | null;
   attributesJson?: Prisma.JsonValue | null;
   attributesSummary?: string | null;
@@ -760,6 +773,7 @@ async function reserveSimpleOrderItems(
     color?: string | null;
     gender?: string | null;
     size?: string | null;
+    length?: string | null;
     quantity: number;
     variantKey?: string | null;
   }>,
@@ -782,6 +796,7 @@ async function reserveSimpleOrderItems(
     if (orderItem.color?.trim()) attrs.color = orderItem.color.trim();
     if (orderItem.gender?.trim()) attrs.gender = orderItem.gender.trim();
     if (orderItem.size?.trim()) attrs.size = orderItem.size.trim();
+    if (orderItem.length?.trim()) attrs.length = orderItem.length.trim();
     const variantKey = buildWarehouseVariantKey(name, attrs);
 
     const warehouseItem = await prisma.warehouseItem.findFirst({
@@ -1204,6 +1219,9 @@ export async function releaseOrderReservations(orgId: string, sourceId: string) 
  * P3: Consume simple WarehouseReservations on shipment.
  * Creates an 'out' movement and decrements WarehouseItem.qty + qtyReserved.
  * Used when canonical WMS is not set up (simple qtyReserved path).
+ *
+ * Accumulation Method fallback: if no formal reservation exists (e.g. item was
+ * unverified at routing time), falls back to direct deduction via variantKey lookup.
  */
 export async function consumeSimpleOrderReservations(
   orgId: string,
@@ -1214,36 +1232,96 @@ export async function consumeSimpleOrderReservations(
     where: { orgId, sourceId: orderId, sourceType: 'chapan_order', status: 'active' },
     include: { item: { select: { id: true, qty: true, qtyReserved: true } } },
   });
-  if (reservations.length === 0) return;
+
+  if (reservations.length > 0) {
+    // Normal path: consume existing reservations
+    await prisma.$transaction(async (tx) => {
+      for (const res of reservations) {
+        const item = res.item;
+        const outQty = Math.min(res.qty, item.qty); // never below 0
+        const newQty = item.qty - outQty;
+        const newReserved = Math.max(0, item.qtyReserved - res.qty);
+
+        await tx.warehouseItem.update({
+          where: { id: item.id },
+          data: { qty: newQty, qtyReserved: newReserved },
+        });
+        await tx.warehouseMovement.create({
+          data: {
+            orgId,
+            itemId: item.id,
+            type: 'out',
+            qty: -outQty,
+            qtyBefore: item.qty,
+            qtyAfter: newQty,
+            sourceId: orderId,
+            sourceType: 'chapan_order_shipment',
+            reason: 'Отгрузка клиенту',
+            author: authorName,
+          },
+        });
+        await tx.warehouseReservation.update({
+          where: { id: res.id },
+          data: { status: 'fulfilled' },
+        });
+      }
+    });
+    return;
+  }
+
+  // Accumulation Method fallback: no reservation found — look up warehouse items by variantKey
+  // and create direct 'out' movements (handles case where item was unverified at routing time)
+  const order = await prisma.chapanOrder.findFirst({
+    where: { id: orderId, orgId },
+    include: { items: { where: { fulfillmentMode: 'warehouse' } } },
+  });
+  if (!order || order.items.length === 0) return;
 
   await prisma.$transaction(async (tx) => {
-    for (const res of reservations) {
-      const item = res.item;
-      const outQty = Math.min(res.qty, item.qty); // never below 0
-      const newQty = item.qty - outQty;
-      const newReserved = Math.max(0, item.qtyReserved - res.qty);
+    for (const orderItem of order.items) {
+      const name = orderItem.productName?.trim();
+      if (!name) continue;
+
+      const attrs: Record<string, string> = {};
+      if (orderItem.color?.trim()) attrs.color = orderItem.color.trim();
+      if (orderItem.gender?.trim()) attrs.gender = orderItem.gender.trim();
+      if (orderItem.size?.trim()) attrs.size = orderItem.size.trim();
+      if (orderItem.length?.trim()) attrs.length = orderItem.length.trim();
+
+      const variantKey = buildWarehouseVariantKey(name, attrs);
+      const warehouseItem = await tx.warehouseItem.findFirst({
+        where: { orgId, variantKey },
+        select: { id: true, qty: true, qtyReserved: true },
+      });
+      if (!warehouseItem) continue;
+
+      // Idempotency: skip if an 'out' movement for this order+item already exists
+      const existingMovement = await tx.warehouseMovement.findFirst({
+        where: { orgId, itemId: warehouseItem.id, sourceId: orderId, sourceType: 'chapan_order_shipment' },
+      });
+      if (existingMovement) continue;
+
+      const outQty = orderItem.quantity;
+      const newQty = warehouseItem.qty - outQty;
+      const newReserved = Math.max(0, warehouseItem.qtyReserved - outQty);
 
       await tx.warehouseItem.update({
-        where: { id: item.id },
+        where: { id: warehouseItem.id },
         data: { qty: newQty, qtyReserved: newReserved },
       });
       await tx.warehouseMovement.create({
         data: {
           orgId,
-          itemId: item.id,
+          itemId: warehouseItem.id,
           type: 'out',
           qty: -outQty,
-          qtyBefore: item.qty,
+          qtyBefore: warehouseItem.qty,
           qtyAfter: newQty,
           sourceId: orderId,
           sourceType: 'chapan_order_shipment',
-          reason: 'Отгрузка клиенту',
+          reason: 'Отгрузка клиенту (метод накопления)',
           author: authorName,
         },
-      });
-      await tx.warehouseReservation.update({
-        where: { id: res.id },
-        data: { status: 'fulfilled' },
       });
     }
   });
@@ -1483,7 +1561,7 @@ export interface VariantAvailabilityResult {
 
 export async function checkVariantAvailability(
   orgId: string,
-  variants: Array<{ name: string; color?: string; size?: string; gender?: string }>,
+  variants: Array<{ name: string; color?: string; size?: string; gender?: string; length?: string }>,
 ): Promise<Record<string, VariantAvailabilityResult>> {
   const result: Record<string, VariantAvailabilityResult> = {};
 
@@ -1495,6 +1573,7 @@ export async function checkVariantAvailability(
     if (v.color?.trim()) attrs.color = v.color.trim();
     if (v.gender?.trim()) attrs.gender = v.gender.trim();
     if (v.size?.trim()) attrs.size = v.size.trim();
+    if (v.length?.trim()) attrs.length = v.length.trim();
 
     const variantKey = buildWarehouseVariantKey(name, attrs);
     const hasAttributes = Object.keys(attrs).length > 0;
@@ -1573,5 +1652,299 @@ export async function getWarehouseSummary(orgId: string) {
     lowStockCount: actualLowStock,
     totalMovementsToday,
     lowItems,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Accumulation Method — transaction-aware movement helper
+// ─────────────────────────────────────────────────────────────
+
+export async function addMovementTx(
+  tx: Prisma.TransactionClient,
+  orgId: string,
+  dto: AddMovementDto & { skipAvailabilityCheck?: boolean },
+): Promise<void> {
+  const item = await tx.warehouseItem.findFirst({ where: { id: dto.itemId, orgId } });
+  if (!item) throw new AppError(404, 'Позиция не найдена');
+
+  const isIncoming = ['in', 'return'].includes(dto.type) || (dto.type === 'adjustment' && dto.qty > 0);
+  const isOutgoing = ['out', 'write_off'].includes(dto.type) || (dto.type === 'adjustment' && dto.qty < 0);
+
+  const qty = Math.abs(dto.qty);
+  const delta = isIncoming ? qty : -qty;
+  const qtyAfter = item.qty + delta;
+
+  // Skip availability check for unverified items (accumulation method allows negative balance)
+  if (isOutgoing && !dto.skipAvailabilityCheck) {
+    const available = item.qty - item.qtyReserved;
+    if (available < qty) {
+      throw new AppError(400, `Недостаточно свободного остатка: есть ${available} ${item.unit}`);
+    }
+  }
+
+  await tx.warehouseItem.update({
+    where: { id: item.id },
+    data: { qty: qtyAfter },
+  });
+
+  await tx.warehouseMovement.create({
+    data: {
+      orgId,
+      itemId: item.id,
+      type: dto.type,
+      qty: delta,
+      qtyBefore: item.qty,
+      qtyAfter,
+      sourceId: dto.sourceId,
+      sourceType: dto.sourceType,
+      lotId: dto.lotId,
+      reason: dto.reason,
+      author: dto.author,
+    },
+  });
+
+  if (isIncoming) {
+    await checkLowStockAlerts(tx, orgId, item.id, qtyAfter, item.qtyReserved, item.qtyMin);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Accumulation Method — formula breakdown
+// ─────────────────────────────────────────────────────────────
+
+export interface ItemFormulaBreakdown {
+  qtyBeginning: number;
+  totalIn: number;
+  totalOut: number;
+  qtyEnd: number;
+  qtyReserved: number;
+  qtyAvailable: number;
+  verificationRequired: boolean;
+}
+
+export async function computeFormulaBreakdown(orgId: string, itemId: string): Promise<ItemFormulaBreakdown> {
+  const item = await prisma.warehouseItem.findFirst({
+    where: { id: itemId, orgId },
+    select: { qty: true, qtyBeginning: true, qtyReserved: true, verificationRequired: true },
+  });
+  if (!item) throw new AppError(404, 'Позиция не найдена');
+
+  const movements = await prisma.warehouseMovement.findMany({
+    where: { orgId, itemId },
+    select: { type: true, qty: true },
+  });
+
+  let totalIn = 0;
+  let totalOut = 0;
+  for (const m of movements) {
+    if (m.qty > 0) totalIn += m.qty;
+    else totalOut += Math.abs(m.qty);
+  }
+
+  return {
+    qtyBeginning: item.qtyBeginning,
+    totalIn,
+    totalOut,
+    qtyEnd: item.qty,
+    qtyReserved: item.qtyReserved,
+    qtyAvailable: item.qty - item.qtyReserved,
+    verificationRequired: item.verificationRequired,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Accumulation Method — setBeginningBalance (сверка)
+// ─────────────────────────────────────────────────────────────
+
+export async function setBeginningBalance(
+  orgId: string,
+  itemId: string,
+  qty: number,
+  authorName: string,
+  note?: string,
+): Promise<ItemFormulaBreakdown> {
+  if (!Number.isFinite(qty) || qty < 0) {
+    throw new AppError(400, 'Некорректное количество: должно быть неотрицательным числом');
+  }
+
+  await prisma.$transaction(async (tx) => {
+    const item = await tx.warehouseItem.findFirst({ where: { id: itemId, orgId } });
+    if (!item) throw new AppError(404, 'Позиция не найдена');
+
+    const delta = qty - item.qtyBeginning;
+    const qtyAfter = item.qty + delta;
+    const reason = ['Сверка начального остатка', note].filter(Boolean).join(' — ');
+
+    await tx.warehouseItem.update({
+      where: { id: itemId },
+      data: {
+        qtyBeginning: qty,
+        qty: qtyAfter,
+        verificationRequired: false,
+      },
+    });
+
+    await tx.warehouseMovement.create({
+      data: {
+        orgId,
+        itemId,
+        type: 'adjustment',
+        qty: delta,
+        qtyBefore: item.qty,
+        qtyAfter,
+        reason,
+        author: authorName,
+        sourceType: 'verification',
+      },
+    });
+
+    // Resolve all open needs_verification alerts for this item
+    await tx.warehouseAlert.updateMany({
+      where: { orgId, itemId, type: 'needs_verification', status: 'open' },
+      data: { status: 'resolved', resolvedAt: new Date() },
+    });
+  });
+
+  // After stock change, check shortage alerts
+  await tryResolveShortageAlerts(orgId, itemId);
+
+  return computeFormulaBreakdown(orgId, itemId);
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Accumulation Method — autoCreateFromOrder
+// ─────────────────────────────────────────────────────────────
+
+export interface AutoCreateFromOrderResult {
+  createdItemIds: string[];
+  matchedItemIds: string[];
+  skipped: Array<{ orderItemId: string; reason: string }>;
+}
+
+export async function autoCreateFromOrder(
+  orgId: string,
+  orderItems: Array<{
+    id: string;
+    productName: string;
+    color?: string | null;
+    gender?: string | null;
+    size?: string | null;
+    length?: string | null;
+    quantity: number;
+    variantKey?: string | null;
+    attributesJson?: Prisma.JsonValue | null;
+    attributesSummary?: string | null;
+  }>,
+  orderId: string,
+  _authorName: string,
+): Promise<AutoCreateFromOrderResult> {
+  const result: AutoCreateFromOrderResult = { createdItemIds: [], matchedItemIds: [], skipped: [] };
+
+  for (const orderItem of orderItems) {
+    const name = orderItem.productName?.trim();
+    if (!name) {
+      result.skipped.push({ orderItemId: orderItem.id, reason: 'missing_product_name' });
+      continue;
+    }
+
+    const attrs: Record<string, string> = {};
+    if (orderItem.color?.trim()) attrs.color = orderItem.color.trim();
+    if (orderItem.gender?.trim()) attrs.gender = orderItem.gender.trim();
+    if (orderItem.size?.trim()) attrs.size = orderItem.size.trim();
+    if (orderItem.length?.trim()) attrs.length = orderItem.length.trim();
+
+    const variantKey = orderItem.variantKey?.trim() || buildWarehouseVariantKey(name, attrs);
+    const attributesSummary = orderItem.attributesSummary?.trim() || summarizeVariantAttributes(attrs) || null;
+
+    const existing = await prisma.warehouseItem.findFirst({
+      where: { orgId, variantKey },
+      select: { id: true },
+    });
+
+    if (existing) {
+      result.matchedItemIds.push(existing.id);
+      continue;
+    }
+
+    // Create new skeleton item
+    await prisma.$transaction(async (tx) => {
+      const qrCode = `KORT-WH-${nanoid(10)}`;
+      const newItem = await tx.warehouseItem.create({
+        data: {
+          orgId,
+          name,
+          unit: 'шт',
+          qty: 0,
+          qtyBeginning: 0,
+          qtyMin: 0,
+          qtyReserved: 0,
+          verificationRequired: true,
+          variantKey,
+          attributesJson: Object.keys(attrs).length > 0 ? attrs : undefined,
+          attributesSummary,
+          qrCode,
+          tags: [],
+        },
+        select: { id: true },
+      });
+
+      // Create needs_verification alert (idempotent: only if no open alert exists)
+      const alertExists = await tx.warehouseAlert.findFirst({
+        where: { orgId, itemId: newItem.id, type: 'needs_verification', status: 'open' },
+      });
+      if (!alertExists) {
+        await tx.warehouseAlert.create({
+          data: {
+            orgId,
+            itemId: newItem.id,
+            type: 'needs_verification',
+            sourceId: orderId,
+            qtyHave: 0,
+            qtyNeed: orderItem.quantity,
+          },
+        });
+      }
+
+      result.createdItemIds.push(newItem.id);
+    });
+  }
+
+  return result;
+}
+
+// ─────────────────────────────────────────────────────────────
+//  Accumulation Method — syncFromOrders
+// ─────────────────────────────────────────────────────────────
+
+export async function syncFromOrders(
+  orgId: string,
+  authorName: string,
+): Promise<{ createdItemIds: string[]; matchedItemIds: string[]; scannedOrders: number }> {
+  const activeOrders = await prisma.chapanOrder.findMany({
+    where: {
+      orgId,
+      status: { notIn: ['shipped', 'delivered', 'closed', 'cancelled'] },
+    },
+    include: {
+      items: {
+        where: { fulfillmentMode: 'warehouse' },
+      },
+    },
+  });
+
+  const allCreated: string[] = [];
+  const allMatched: string[] = [];
+
+  for (const order of activeOrders) {
+    if (order.items.length === 0) continue;
+    const res = await autoCreateFromOrder(orgId, order.items, order.id, authorName);
+    allCreated.push(...res.createdItemIds);
+    allMatched.push(...res.matchedItemIds);
+  }
+
+  return {
+    createdItemIds: allCreated,
+    matchedItemIds: allMatched,
+    scannedOrders: activeOrders.length,
   };
 }

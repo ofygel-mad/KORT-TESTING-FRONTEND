@@ -995,7 +995,9 @@ model WarehouseItem {
   name              String
   unit              String   @default("шт")   // шт | кг | м | л | пар | рулон | лист
   qty               Float    @default(0)
+  qtyBeginning      Float    @default(0)      @map("qty_beginning")
   qtyReserved       Float    @default(0)      @map("qty_reserved")
+  verificationRequired Boolean @default(false) @map("verification_required")
   qtyMin            Float    @default(0)      @map("qty_min")
   qtyMax            Float?   @map("qty_max")
   costPrice         Float?   @map("cost_price")
@@ -1023,6 +1025,7 @@ model WarehouseItem {
   @@index([orgId])
   @@index([orgId, categoryId])
   @@index([orgId, variantKey])
+  @@index([orgId, verificationRequired])
   @@map("warehouse_items")
 }
 

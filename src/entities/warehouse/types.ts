@@ -13,7 +13,9 @@ export interface WarehouseItem {
   sku?: string | null;
   unit: string;
   qty: number;
+  qtyBeginning: number;
   qtyReserved: number;
+  verificationRequired: boolean;
   qtyMin: number;
   qtyMax?: number | null;
   costPrice?: number | null;
@@ -26,6 +28,16 @@ export interface WarehouseItem {
   attributesSummary?: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ItemFormulaBreakdown {
+  qtyBeginning: number;
+  totalIn: number;
+  totalOut: number;
+  qtyEnd: number;
+  qtyReserved: number;
+  qtyAvailable: number;
+  verificationRequired: boolean;
 }
 
 export type MovementType = 'in' | 'out' | 'adjustment' | 'write_off' | 'return';
@@ -1080,6 +1092,7 @@ export interface CreateItemDto {
   color?: string;
   gender?: string;
   size?: string;
+  length?: string;
 }
 
 export interface AddMovementDto {
@@ -1094,6 +1107,7 @@ export interface ImportOpeningBalanceRow {
   color?: string;
   gender?: string;
   size?: string;
+  length?: string;
   qty: number;
   costPrice?: number;
 }
@@ -1213,6 +1227,11 @@ export interface ImportResult {
 /** Доступное количество — никогда не бывает отрицательным. */
 export function getQtyAvailable(item: WarehouseItem): number {
   return Math.max(0, item.qty - item.qtyReserved);
+}
+
+/** Доступное количество со знаком — может быть отрицательным (метод накопления). */
+export function getQtyAvailableSigned(item: WarehouseItem): number {
+  return item.qty - item.qtyReserved;
 }
 
 /** Статус товара рассчитывается по доступному, а не валовому количеству. */

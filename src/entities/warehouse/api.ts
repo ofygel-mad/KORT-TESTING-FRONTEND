@@ -3,7 +3,7 @@ import type {
   WarehouseItem, WarehouseMovement, WarehouseAlert, WarehouseCategory,
   WarehouseSummary, PaginatedWarehouseItems, PaginatedMovements,
   CreateItemDto, AddMovementDto, ProductsAvailabilityMap, ImportOpeningBalanceRow, ImportOpeningBalanceResult,
-  VariantAvailabilityMap,
+  VariantAvailabilityMap, ItemFormulaBreakdown,
   WarehouseFieldDefinition, WarehouseProductCatalog, OrderFormCatalog,
   VariantAvailability, ImportResult, WarehouseFoundationStatus,
   WarehouseSite, WarehouseSiteStructure, WarehouseSiteHealthSnapshot, WarehouseSiteControlTowerSnapshot, WarehouseZone, WarehouseBin,
@@ -38,6 +38,18 @@ export const warehouseApi = {
 
   importOpeningBalance: (rows: ImportOpeningBalanceRow[]) =>
     api.post<ImportOpeningBalanceResult>('/warehouse/items/import-opening-balance', { rows }),
+
+  // Accumulation Method
+  setBeginningBalance: (id: string, qty: number, note?: string) =>
+    api.post<ItemFormulaBreakdown>(`/warehouse/items/${id}/set-beginning-balance`, { qty, note }),
+
+  syncFromOrders: () =>
+    api.post<{ createdItemIds: string[]; matchedItemIds: string[]; scannedOrders: number }>(
+      '/warehouse/items/sync-from-orders', {},
+    ),
+
+  getItemFormula: (id: string) =>
+    api.get<ItemFormulaBreakdown>(`/warehouse/items/${id}/formula`),
 
   // Movements
   listMovements: (params?: { itemId?: string; type?: string; page?: number; limit?: number }) =>

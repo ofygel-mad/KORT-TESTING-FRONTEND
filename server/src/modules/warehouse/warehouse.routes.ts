@@ -47,6 +47,7 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
       categoryId?: string;
       locationId?: string;
       lowStock?: string;
+      verificationRequired?: string;
       page?: string;
       pageSize?: string;
       limit?: string;
@@ -57,6 +58,9 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
       categoryId: req.query.categoryId,
       locationId: req.query.locationId,
       lowStock: req.query.lowStock === 'true',
+      verificationRequired: req.query.verificationRequired === 'true' ? true
+        : req.query.verificationRequired === 'false' ? false
+        : undefined,
       page: req.query.page ? parseInt(req.query.page, 10) : undefined,
       pageSize: req.query.pageSize
         ? parseInt(req.query.pageSize, 10)
@@ -154,6 +158,30 @@ export const warehouseRoutes: FastifyPluginAsync = async (app) => {
     const authorName = req.userFullName ?? 'Неизвестно';
     await svc.addMovement(req.orgId!, { ...req.body, author: authorName });
     return reply.status(204).send();
+  });
+
+  // ── Accumulation Method routes ─────────────────────────────────────────────
+
+  app.post<{ Params: { id: string }; Body: { qty: number; note?: string } }>(
+    '/items/:id/set-beginning-balance',
+    async (req, reply) => {
+      const authorName = req.userFullName ?? 'Неизвестно';
+      const qty = Number(req.body.qty);
+      if (!Number.isFinite(qty) || qty < 0) {
+        return reply.status(400).send({ error: 'Некорректное количество: должно быть неотрицательным числом' });
+      }
+      const breakdown = await svc.setBeginningBalance(req.orgId!, req.params.id, qty, authorName, req.body.note);
+      return breakdown;
+    },
+  );
+
+  app.post('/items/sync-from-orders', async (req) => {
+    const authorName = req.userFullName ?? 'Неизвестно';
+    return svc.syncFromOrders(req.orgId!, authorName);
+  });
+
+  app.get<{ Params: { id: string } }>('/items/:id/formula', async (req) => {
+    return svc.computeFormulaBreakdown(req.orgId!, req.params.id);
   });
 
   app.get('/bom/products', async (req) => {

@@ -119,37 +119,26 @@ interface Props {
   item: WarehouseItem;
   onClose: () => void;
   onAddMovement: () => void;
+  onVerify?: () => void;
 }
 
-export function ItemDetailDrawer({ item, onClose, onAddMovement }: Props) {
+export function ItemDetailDrawer({ item, onClose, onAddMovement, onVerify }: Props) {
   const { data: movData, isLoading: movLoading } = useWarehouseMovements({ itemId: item.id, limit: 50 });
   const movements = movData?.results ?? [];
 
   // ── Формула накопления: Начало + Приход − Расход = Конец ──────────────────
-  // Движения приходят от бэкенда в порядке убывания (сначала новые).
-  // Начало = qtyBefore самого старого движения в выборке,
-  //           либо qty явного движения с типом opening_balance.
-  const { prikhod, raskhod, nachalo } = useMemo(() => {
-    const openingMov = [...movements].reverse().find(
-      m => m.sourceType === 'opening_balance',
-    );
-
+  const { prikhod, raskhod } = useMemo(() => {
     const prikhod = movements
       .filter(m => m.type === 'in' || m.type === 'return')
       .reduce((sum, m) => sum + m.qty, 0);
-
     const raskhod = movements
       .filter(m => m.type === 'out' || m.type === 'write_off')
       .reduce((sum, m) => sum + m.qty, 0);
-
-    const oldest = movements[movements.length - 1];
-    const nachalo = openingMov?.qty ?? (oldest?.qtyBefore ?? 0);
-
-    return { prikhod, raskhod, nachalo };
+    return { prikhod, raskhod };
   }, [movements]);
 
   const available = getQtyAvailable(item);
-  const needsVerify = item.qty - item.qtyReserved < 0;
+  const needsVerify = item.verificationRequired || item.qty - item.qtyReserved < 0;
 
   return (
     <div className={styles.drawerOverlay} onClick={onClose}>
@@ -173,7 +162,7 @@ export function ItemDetailDrawer({ item, onClose, onAddMovement }: Props) {
           <div className={styles.drawerCard}>
             <div className={styles.drawerCardLabel}>Формула накопления</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
-              <FormulaCell label="Начало" value={nachalo} unit={item.unit} />
+              <FormulaCell label="Начало" value={item.qtyBeginning} unit={item.unit} />
               <span style={{ color: 'var(--text-tertiary)', fontSize: 16, fontWeight: 300 }}>+</span>
               <FormulaCell label="Приход" value={prikhod} unit={item.unit} color="var(--fill-positive)" />
               <span style={{ color: 'var(--text-tertiary)', fontSize: 16, fontWeight: 300 }}>−</span>
@@ -244,8 +233,8 @@ export function ItemDetailDrawer({ item, onClose, onAddMovement }: Props) {
           <button className={`${styles.drawerActionBtn} ${styles.drawerActionBtnPrimary}`} onClick={onAddMovement}>
             <Plus size={15} /> Записать приход
           </button>
-          <button className={styles.drawerSecondaryBtn} onClick={onAddMovement}>
-            <RotateCcw size={13} /> Провести сверку (коррекция остатка)
+          <button className={styles.drawerSecondaryBtn} onClick={onVerify ?? onAddMovement}>
+            <RotateCcw size={13} /> Провести сверку
           </button>
         </div>
       </div>
