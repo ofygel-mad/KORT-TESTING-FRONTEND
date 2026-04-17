@@ -91,7 +91,6 @@ type DisplayGroup =
 function itemSignature(item: ChapanOrder['items'][number]) {
   return [
     item.productName?.toLowerCase().trim() ?? '',
-    item.fabric?.toLowerCase().trim() ?? '',
     item.size?.toLowerCase().trim() ?? '',
     String(item.quantity ?? 0),
     String(item.unitPrice ?? 0),

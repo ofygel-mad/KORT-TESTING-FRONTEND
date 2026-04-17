@@ -36,6 +36,7 @@ import {
 import { useWarehouseFoundationLiveSync } from '../../entities/warehouse/live';
 import { WarehouseModeNav } from './WarehouseModeNav';
 import { WarehouseTwinPanel } from './WarehouseTwinPanel';
+import { localizeAttrSummary } from '../../shared/lib/attrLocalize';
 import styles from './Warehouse.module.css';
 
 function formatNumber(value: number) {
@@ -77,8 +78,8 @@ function formatVariantLabel(variant?: {
   variantKey?: string | null;
 }) {
   if (!variant) return 'Unknown variant';
-  const productName = variant.productCatalog?.name ?? variant.variantKey ?? 'Variant';
-  const details = variant.attributesSummary?.trim();
+  const productName = variant.productCatalog?.name ?? variant.variantKey ?? 'Вариант';
+  const details = localizeAttrSummary(variant.attributesSummary);
   return details ? `${productName} · ${details}` : productName;
 }
 
@@ -973,7 +974,7 @@ export default function WarehousePage() {
                       <tr key={balance.id} className={styles.row}>
                         <td>
                           <div className={styles.tdName}>{balance.variant?.productCatalog?.name ?? balance.variant?.variantKey ?? balance.variantId}</div>
-                          <div className={styles.tdSecondary}>{balance.variant?.attributesSummary ?? balance.variant?.variantKey ?? 'No attributes'}</div>
+                          <div className={styles.tdSecondary}>{localizeAttrSummary(balance.variant?.attributesSummary) || balance.variant?.variantKey || '—'}</div>
                         </td>
                         <td className={styles.tdMono}>{balance.bin?.code ?? '—'}</td>
                         <td className={styles.tdNum}>{formatNumber(balance.qtyOnHand)}</td>
@@ -1074,7 +1075,7 @@ export default function WarehousePage() {
                           <div className={styles.tdName}>
                             {reservation.variant?.productCatalog?.name ?? reservation.variant?.variantKey ?? reservation.variantId}
                           </div>
-                          <div className={styles.tdSecondary}>{reservation.variant?.attributesSummary ?? 'No attributes'}</div>
+                          <div className={styles.tdSecondary}>{localizeAttrSummary(reservation.variant?.attributesSummary) || '—'}</div>
                         </td>
                         <td className={styles.tdMono}>{binCodes}</td>
                         <td>

@@ -227,7 +227,6 @@ export default function ChapanOrderDetailModal({ orderId, open, onClose }: Props
                       <thead>
                         <tr>
                           <th style={{ textAlign: 'left' }}>Модель</th>
-                          {items.some((i) => i.fabric) && <th style={{ textAlign: 'left' }}>Ткань</th>}
                           <th style={{ textAlign: 'left' }}>Размер</th>
                           <th style={{ textAlign: 'center' }}>Кол-во</th>
                           <th style={{ textAlign: 'right' }}>Цена</th>
@@ -238,7 +237,6 @@ export default function ChapanOrderDetailModal({ orderId, open, onClose }: Props
                         {items.map((item) => (
                           <tr key={item.id} className={modalStyles.tableRow}>
                             <td style={{ paddingLeft: 10 }}>{item.productName}</td>
-                            {items.some((i) => i.fabric) && <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{item.fabric}</td>}
                             <td style={{ fontSize: 12, color: 'var(--text-secondary)' }}>{item.size}</td>
                             <td style={{ textAlign: 'center', fontSize: 12 }}>{item.quantity}</td>
                             <td style={{ textAlign: 'right', fontSize: 12 }}>{fmtMoney(item.unitPrice)}</td>

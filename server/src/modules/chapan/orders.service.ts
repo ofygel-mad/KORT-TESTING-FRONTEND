@@ -159,9 +159,15 @@ async function buildOrderItemVariantSnapshot(
     },
   });
 
+  const ATTR_KEY_RU: Record<string, string> = {
+    color: 'Цвет', gender: 'Пол', size: 'Размер', length: 'Длина',
+  };
+  const ATTR_VAL_RU: Record<string, string> = {
+    female: 'Женский', male: 'Мужской',
+  };
+
   const rawAttributes = Object.fromEntries(
     Object.entries({
-      fabric: item.fabric?.trim() || '',
       color: item.color?.trim() || '',
       gender: item.gender?.trim() || '',
       length: item.length?.trim() || '',
@@ -182,7 +188,7 @@ async function buildOrderItemVariantSnapshot(
 
   const attributesSummary = Object.entries(rawAttributes)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}: ${value}`)
+    .map(([key, value]) => `${ATTR_KEY_RU[key] ?? key}: ${ATTR_VAL_RU[value] ?? value}`)
     .join(', ');
 
   return {
@@ -657,7 +663,6 @@ export async function create(orgId: string, authorId: string, authorName: string
         const variantSnapshot = await buildOrderItemVariantSnapshot(tx, orgId, item);
         return {
           productName: item.productName,
-          fabric: item.fabric?.trim() || '',
           color: item.color?.trim() || undefined,
           gender: item.gender?.trim() || undefined,
           length: item.length?.trim() || undefined,
@@ -840,14 +845,12 @@ async function applyItemRouting(
             orderId: id,
             orderItemId: item.id,
             productName: item.productName,
-            fabric: item.fabric ?? '',
             size: item.size,
             quantity: item.quantity,
             status: 'queued',
           },
           update: {
             productName: item.productName,
-            fabric: item.fabric ?? '',
             size: item.size,
             quantity: item.quantity,
             status: 'queued',
@@ -1355,7 +1358,6 @@ export async function update(orgId: string, id: string, authorId: string, author
           data: {
             orderId: id,
             productName: item.productName,
-            fabric: item.fabric?.trim() || '',
             color: item.color?.trim() || null,
             gender: item.gender?.trim() || null,
             length: item.length?.trim() || null,
@@ -1771,20 +1773,20 @@ export async function approveChangeRequest(
 
     const currentItems = order.items;
 
-    function itemKey(productName: string, size: string, fabric?: string | null) {
-      return `${productName}|${size}|${(fabric ?? '').toLowerCase().trim()}`;
+    function itemKey(productName: string, size: string) {
+      return `${productName}|${size}`;
     }
 
-    const existingKeys = new Set(currentItems.map((i) => itemKey(i.productName, i.size, i.fabric)));
+    const existingKeys = new Set(currentItems.map((i) => itemKey(i.productName, i.size)));
 
     const addedItems = proposedItems.filter(
-      (p) => !existingKeys.has(itemKey(p.productName, p.size, p.fabric)),
+      (p) => !existingKeys.has(itemKey(p.productName, p.size)),
     );
 
     // Update prices/notes on existing items (non-disruptive — no task changes)
     for (const proposed of proposedItems) {
-      const key = itemKey(proposed.productName, proposed.size, proposed.fabric);
-      const existing = currentItems.find((i) => itemKey(i.productName, i.size, i.fabric) === key);
+      const key = itemKey(proposed.productName, proposed.size);
+      const existing = currentItems.find((i) => itemKey(i.productName, i.size) === key);
       if (existing) {
         const variantSnapshot = await buildOrderItemVariantSnapshot(tx, orgId, proposed);
         await tx.chapanOrderItem.update({
@@ -1806,7 +1808,6 @@ export async function approveChangeRequest(
         data: {
           orderId: order.id,
           productName: item.productName,
-          fabric: item.fabric?.trim() || '',
           size: item.size,
           quantity: item.quantity,
           unitPrice: item.unitPrice,
@@ -1821,7 +1822,6 @@ export async function approveChangeRequest(
           orderId: order.id,
           orderItemId: newItem.id,
           productName: item.productName,
-          fabric: item.fabric?.trim() || '',
           size: item.size,
           quantity: item.quantity,
           status: 'queued',
@@ -1934,7 +1934,6 @@ export async function routeSingleItem(
           orderId,
           orderItemId: itemId,
           productName: item.productName,
-          fabric: item.fabric ?? '',
           size: item.size,
           quantity: item.quantity,
           status: 'queued',

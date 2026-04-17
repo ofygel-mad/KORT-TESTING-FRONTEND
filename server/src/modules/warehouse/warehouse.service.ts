@@ -165,10 +165,17 @@ function readStringMapFromJson(value?: Prisma.JsonValue | null): Record<string, 
   );
 }
 
+const ATTR_KEY_RU: Record<string, string> = {
+  color: 'Цвет', gender: 'Пол', size: 'Размер', length: 'Длина',
+};
+const ATTR_VAL_RU: Record<string, string> = {
+  female: 'Женский', male: 'Мужской',
+};
+
 function summarizeVariantAttributes(attributes: Record<string, string>) {
   return Object.entries(attributes)
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}: ${value}`)
+    .map(([key, value]) => `${ATTR_KEY_RU[key] ?? key}: ${ATTR_VAL_RU[value] ?? value}`)
     .join(', ');
 }
 

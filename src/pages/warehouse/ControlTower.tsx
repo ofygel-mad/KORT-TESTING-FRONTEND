@@ -20,6 +20,7 @@ import {
 } from '../../entities/warehouse/queries';
 import { useWarehouseFoundationLiveSync } from '../../entities/warehouse/live';
 import { WarehouseModeNav } from './WarehouseModeNav';
+import { localizeAttrSummary } from '../../shared/lib/attrLocalize';
 import styles from './Warehouse.module.css';
 
 function formatNumber(value: number) {
@@ -568,7 +569,7 @@ export default function WarehouseControlTowerPage() {
                       <div className={styles.tdName}>
                         {reservation.variant?.productCatalog?.name ?? reservation.variant?.variantKey ?? reservation.variantId}
                       </div>
-                      <div className={styles.tdSecondary}>{reservation.variant?.attributesSummary ?? 'No attributes'}</div>
+                      <div className={styles.tdSecondary}>{localizeAttrSummary(reservation.variant?.attributesSummary) || '—'}</div>
                     </td>
                     <td>
                       <span

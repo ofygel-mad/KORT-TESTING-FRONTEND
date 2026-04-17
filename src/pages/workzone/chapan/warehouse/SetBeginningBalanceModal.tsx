@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useItemFormula, useSetBeginningBalance } from '../../../../entities/warehouse/queries';
 import type { WarehouseItem } from '../../../../entities/warehouse/types';
+import { localizeAttrSummary } from '../../../../shared/lib/attrLocalize';
 import styles from '../../../warehouse/Warehouse.module.css';
 
 interface Props {
@@ -43,7 +44,7 @@ export function SetBeginningBalanceModal({ item, onClose }: Props) {
             <div className={styles.drawerTitle}>Сверка остатка</div>
             <div className={styles.drawerSubtitle}>
               {item.name}
-              {item.attributesSummary ? ` — ${item.attributesSummary}` : ''}
+              {item.attributesSummary ? ` — ${localizeAttrSummary(item.attributesSummary)}` : ''}
             </div>
           </div>
           <button className={styles.drawerClose} onClick={onClose}><X size={14} /></button>

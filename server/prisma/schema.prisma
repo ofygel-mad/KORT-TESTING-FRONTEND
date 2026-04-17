@@ -706,7 +706,7 @@ model ChapanOrderItem {
   id                String  @id @default(cuid())
   orderId           String  @map("order_id")
   productName       String  @map("product_name")
-  fabric            String
+  fabric            String?
   size              String
   quantity          Int     @default(1)
   unitPrice         Float   @map("unit_price")
@@ -732,7 +732,7 @@ model ChapanProductionTask {
   orderId     String    @map("order_id")
   orderItemId String    @unique @map("order_item_id")
   productName String    @map("product_name")
-  fabric      String
+  fabric      String?
   size        String
   quantity    Int
   status      String    @default("pending")

@@ -1,9 +1,8 @@
 .root { display: flex; flex-direction: column; height: 100%; overflow: hidden; padding: 24px; gap: 16px; }
-.header { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; flex-shrink: 0; }
+.header { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .title { font-size: 22px; font-weight: 700; color: var(--text-primary); letter-spacing: -.02em; }
-.headerRight { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-.tabs { display: flex; background: var(--bg-surface-inset); border: 1px solid var(--border-subtle); border-radius: 9px; padding: 3px; gap: 2px; }
-.tab { display: flex; align-items: center; gap: 5px; padding: 6px 14px; border-radius: 6px; border: none; background: none; color: var(--text-secondary); font-size: 12px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 120ms; white-space: nowrap; }
+.tabs { display: flex; flex-wrap: wrap; width: 100%; background: var(--bg-surface-inset); border: 1px solid var(--border-subtle); border-radius: 9px; padding: 3px; gap: 2px; }
+.tab { display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 6px; border: none; background: none; color: var(--text-secondary); font-size: 11px; font-weight: 500; font-family: inherit; cursor: pointer; transition: all 120ms; white-space: nowrap; }
 .tab:hover { color: var(--text-primary); background: var(--bg-hover); }
 .tabActive { background: var(--fill-accent-soft, rgba(160,104,56,.12)); color: var(--fill-accent); }
 .alertBadge { background: var(--fill-negative); color: #fff; font-size: 10px; border-radius: 10px; padding: 0 5px; min-width: 16px; text-align: center; }
@@ -23,7 +22,7 @@
 .tableWrap { flex: 1; min-height: 0; overflow-y: auto; }
 .table { width: 100%; border-collapse: collapse; }
 .table th { text-align: left; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); padding: 8px 14px; border-bottom: 1px solid var(--border-subtle); }
-.row td { padding: 11px 14px; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,.03); }
+.row td { padding: 11px 14px; font-size: 13px; color: var(--text-secondary); border-bottom: 1px solid rgba(255,255,255,.03); vertical-align: middle; }
 .row:hover td { background: var(--bg-hover); }
 .tdName { color: var(--text-primary) !important; font-weight: 500; }
 .tdMono { font-family: 'JetBrains Mono', monospace; font-size: 12px !important; }
@@ -143,14 +142,14 @@
   /* Layout */
   .root { padding: 12px; gap: 10px; }
   .title { font-size: 18px; }
-  .header { align-items: flex-start; }
-  .headerRight { width: 100%; margin-left: 0; min-width: 0; flex-wrap: wrap; }
 
-  /* Tabs: scroll horizontally instead of wrapping */
-  .tabs { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; flex-shrink: 0; }
+  /* Tabs: on mobile use horizontal scroll (touch users can swipe) */
+  .tabs { flex-wrap: nowrap; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
   .tabs::-webkit-scrollbar { display: none; }
 
-  /* Stats bar */
+  /* Stats bar: scroll horizontally on narrow screens */
+  .statsBar { overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+  .statsBar::-webkit-scrollbar { display: none; }
   .statItem { padding: 8px 12px; }
   .statValue { font-size: 16px; }
 
@@ -163,7 +162,7 @@
 
   /* Table: horizontal scroll so columns don't squish */
   .tableWrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-  .table { min-width: 520px; }
+  .table { min-width: 600px; }
 
   /* Drawer — mobile overrides handled by the inner @media in the Drawer block above */
   .drawerHeader { padding: 16px 16px 12px; }
@@ -209,6 +208,7 @@
 /* Summary stats bar */
 .statsBar {
   display: flex;
+  flex-wrap: nowrap;
   gap: 0;
   background: var(--bg-surface-inset);
   border: 1px solid var(--border-subtle);
@@ -222,6 +222,7 @@
   gap: 1px;
   padding: 10px 20px;
   border-right: 1px solid var(--border-subtle);
+  flex-shrink: 0;
 }
 .statItem:last-child { border-right: none; }
 .statValue { font-size: 20px; font-weight: 700; color: var(--text-primary); letter-spacing: -.02em; line-height: 1.1; }

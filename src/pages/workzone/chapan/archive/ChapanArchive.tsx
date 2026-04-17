@@ -166,7 +166,7 @@ function ArchiveRow({ order, onClick }: { order: ChapanOrder; onClick: () => voi
           <>
             <span className={styles.itemName}>{first.productName}</span>
             <span className={styles.itemMeta}>
-              {[first.fabric, first.size].filter(Boolean).join(' · ')}
+              {[first.size].filter(Boolean).join(' · ')}
               {first.quantity > 1 && ` × ${first.quantity}`}
             </span>
             {more > 0 && <span className={styles.itemMore}>+ещё {more}</span>}

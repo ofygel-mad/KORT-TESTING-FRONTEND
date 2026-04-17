@@ -31,14 +31,12 @@ export function buildItemLine(
 }
 
 export function buildTaskMetaLine(task: {
-  fabric?: string | null;
   size?: string | null;
   length?: string | null;
   quantity?: number;
   // color / gender intentionally excluded — they go in the primary buildItemLine row
 }): string {
   return [
-    task.fabric,
     task.size,
     task.length ? `дл. ${task.length}` : '',
     (task.quantity ?? 0) > 1 ? `× ${task.quantity}` : '',

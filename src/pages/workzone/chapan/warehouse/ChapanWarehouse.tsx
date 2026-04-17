@@ -25,6 +25,7 @@ import { getStockStatus, getQtyAvailable } from '../../../../entities/warehouse/
 import { ItemDetailDrawer } from './ItemDetailDrawer';
 import { Skeleton } from '../../../../shared/ui/Skeleton';
 import { exportToCSV } from '../../../../shared/lib/export';
+import { localizeAttrSummary } from '../../../../shared/lib/attrLocalize';
 import { toast } from 'sonner';
 import styles from '../../../warehouse/Warehouse.module.css';
 
@@ -919,7 +920,7 @@ function TransitTab() {
                     <td>
                       <div style={{ fontWeight: 600, fontSize: 13 }}>{entry.item?.name ?? entry.itemId}</div>
                       {entry.item?.attributesSummary && (
-                        <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{entry.item.attributesSummary}</div>
+                        <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{localizeAttrSummary(entry.item.attributesSummary)}</div>
                       )}
                     </td>
                     <td style={{ textAlign: 'right', fontWeight: 600 }}>{entry.qty}</td>
@@ -1037,7 +1038,7 @@ export default function ChapanWarehousePage() {
     }
     exportToCSV(items.map(i => ({
       'Название': i.name,
-      'Вариант': i.attributesSummary ?? '',
+      'Вариант': localizeAttrSummary(i.attributesSummary) ?? '',
       'Уникальный номер': i.sku ?? '',
       'Ед.изм': i.unit,
       'Остаток': i.qty,
@@ -1057,44 +1058,44 @@ export default function ChapanWarehousePage() {
 
   return (
     <div className={styles.root} style={{ height: 'auto', overflow: 'visible' }}>
-      {/* Header + tabs */}
+      {/* Header */}
       <div className={styles.header}>
         <h1 className={styles.title}>Склад</h1>
-        <div className={styles.headerRight}>
-          <div className={styles.tabs}>
-            <button className={`${styles.tab} ${tab === 'items' ? styles.tabActive : ''}`} onClick={() => setTab('items')}>
-              <Package size={13} /> Остатки
-            </button>
-            <button className={`${styles.tab} ${tab === 'movements' ? styles.tabActive : ''}`} onClick={() => setTab('movements')}>
-              <TrendingDown size={13} /> Движения
-            </button>
-            <button className={`${styles.tab} ${tab === 'alerts' ? styles.tabActive : ''}`} onClick={() => setTab('alerts')}>
-              <AlertTriangle size={13} /> Оповещения {alertCount > 0 && <span className={styles.alertBadge}>{alertCount}</span>}
-            </button>
-            <button className={`${styles.tab} ${tab === 'catalog' ? styles.tabActive : ''}`} onClick={() => setTab('catalog')}>
-              <BookOpen size={13} /> Каталог
-            </button>
+      </div>
 
-            <div className={styles.tabDivider} />
-            <span className={styles.tabGroupLabel}>Чапан</span>
+      {/* Tabs — full-width row so all tabs are always visible without horizontal scroll */}
+      <div className={styles.tabs}>
+        <button className={`${styles.tab} ${tab === 'items' ? styles.tabActive : ''}`} onClick={() => setTab('items')}>
+          <Package size={13} /> Остатки
+        </button>
+        <button className={`${styles.tab} ${tab === 'movements' ? styles.tabActive : ''}`} onClick={() => setTab('movements')}>
+          <TrendingDown size={13} /> Движения
+        </button>
+        <button className={`${styles.tab} ${tab === 'alerts' ? styles.tabActive : ''}`} onClick={() => setTab('alerts')}>
+          <AlertTriangle size={13} /> Оповещения {alertCount > 0 && <span className={styles.alertBadge}>{alertCount}</span>}
+        </button>
+        <button className={`${styles.tab} ${tab === 'catalog' ? styles.tabActive : ''}`} onClick={() => setTab('catalog')}>
+          <BookOpen size={13} /> Каталог
+        </button>
 
-            <button className={`${styles.tab} ${tab === 'incoming' ? styles.tabActive : ''}`} onClick={() => setTab('incoming')}>
-              <FileText size={13} /> Приёмка от цеха {incomingCount > 0 && <span className={styles.alertBadge}>{incomingCount}</span>}
-            </button>
-            <button className={`${styles.tab} ${tab === 'invoice_archive' ? styles.tabActive : ''}`} onClick={() => setTab('invoice_archive')}>
-              <Archive size={13} /> Журнал накладных
-            </button>
-            <button className={`${styles.tab} ${tab === 'orders_wh' ? styles.tabActive : ''}`} onClick={() => setTab('orders_wh')}>
-              <Package size={13} /> Заказы на складе {(warehouseOrders.length + partialWarehouseOrders.length) > 0 && <span className={styles.alertBadge}>{warehouseOrders.length + partialWarehouseOrders.length}</span>}
-            </button>
-            <button className={`${styles.tab} ${tab === 'shipped' ? styles.tabActive : ''}`} onClick={() => setTab('shipped')}>
-              <CheckSquare size={13} /> Отправленные {shippedOrders.length > 0 && <span className={styles.alertBadge}>{shippedOrders.length}</span>}
-            </button>
-            <button className={`${styles.tab} ${tab === 'transit' ? styles.tabActive : ''}`} onClick={() => setTab('transit')}>
-              <Truck size={13} /> Транзит
-            </button>
-          </div>
-        </div>
+        <div className={styles.tabDivider} />
+        <span className={styles.tabGroupLabel}>Чапан</span>
+
+        <button className={`${styles.tab} ${tab === 'incoming' ? styles.tabActive : ''}`} onClick={() => setTab('incoming')}>
+          <FileText size={13} /> Приёмка от цеха {incomingCount > 0 && <span className={styles.alertBadge}>{incomingCount}</span>}
+        </button>
+        <button className={`${styles.tab} ${tab === 'invoice_archive' ? styles.tabActive : ''}`} onClick={() => setTab('invoice_archive')}>
+          <Archive size={13} /> Журнал накладных
+        </button>
+        <button className={`${styles.tab} ${tab === 'orders_wh' ? styles.tabActive : ''}`} onClick={() => setTab('orders_wh')}>
+          <Package size={13} /> Заказы на складе {(warehouseOrders.length + partialWarehouseOrders.length) > 0 && <span className={styles.alertBadge}>{warehouseOrders.length + partialWarehouseOrders.length}</span>}
+        </button>
+        <button className={`${styles.tab} ${tab === 'shipped' ? styles.tabActive : ''}`} onClick={() => setTab('shipped')}>
+          <CheckSquare size={13} /> Отправленные {shippedOrders.length > 0 && <span className={styles.alertBadge}>{shippedOrders.length}</span>}
+        </button>
+        <button className={`${styles.tab} ${tab === 'transit' ? styles.tabActive : ''}`} onClick={() => setTab('transit')}>
+          <Truck size={13} /> Транзит
+        </button>
       </div>
 
       {/* Summary stats */}
@@ -1464,7 +1465,7 @@ export default function ChapanWarehousePage() {
                           )}
                         </td>
                         <td className={styles.tdSecondary} style={{ fontSize: 11 }}>
-                          {item.attributesSummary ?? (item.sku ? <span className={styles.tdMono}>{item.sku}</span> : '—')}
+                          {item.attributesSummary ? localizeAttrSummary(item.attributesSummary) : (item.sku ? <span className={styles.tdMono}>{item.sku}</span> : '—')}
                         </td>
                         <td className={styles.tdSecondary}>{item.category?.name ?? '—'}</td>
                         <td className={styles.tdNum}>{fmtNum(item.qty)} {item.unit}</td>

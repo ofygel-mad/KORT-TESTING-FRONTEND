@@ -96,8 +96,7 @@ function formatPaymentMethod(method: string) {
   return PAYMENT_METHOD_LABEL[method] ?? method;
 }
 
-function formatItemMeta(item: Pick<OrderItem, 'fabric' | 'size' | 'quantity'>) {
-  // fabric omitted — color/gender shown in separate line; keep size + qty
+function formatItemMeta(item: Pick<OrderItem, 'size' | 'quantity'>) {
   const meta = [item.size].filter(Boolean).join(' · ');
   return item.quantity > 1 ? `${meta}${meta ? ' · ' : ''}× ${item.quantity}` : meta;
 }
@@ -233,7 +232,6 @@ export default function ChapanOrderDetailPage() {
         orderItemId: item.id,
         productName: item.productName,
         size: item.size,
-        fabric: item.fabric ?? undefined,
         color: item.color ?? undefined,
         gender: item.gender ?? undefined,
         qty: returnItemDrafts[item.id]?.qty ?? item.quantity,

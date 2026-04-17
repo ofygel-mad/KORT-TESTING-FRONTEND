@@ -26,6 +26,7 @@ import {
 } from '../../entities/warehouse/queries';
 import { useWarehouseFoundationLiveSync } from '../../entities/warehouse/live';
 import { WarehouseModeNav } from './WarehouseModeNav';
+import { localizeAttrSummary } from '../../shared/lib/attrLocalize';
 import styles from './Warehouse.module.css';
 
 function formatNumber(value: number) {
@@ -520,7 +521,7 @@ export default function WarehouseOperationsPage() {
                   <tr key={balance.id} className={styles.row}>
                     <td>
                       <div className={styles.tdName}>{balance.variant?.productCatalog?.name ?? balance.variant?.variantKey ?? balance.variantId}</div>
-                      <div className={styles.tdSecondary}>{balance.variant?.attributesSummary ?? 'No attributes'}</div>
+                      <div className={styles.tdSecondary}>{localizeAttrSummary(balance.variant?.attributesSummary) || '—'}</div>
                     </td>
                     <td className={styles.tdMono}>{balance.bin?.code ?? '—'}</td>
                     <td className={styles.tdNum}>{formatNumber(balance.qtyOnHand)}</td>

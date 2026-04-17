@@ -108,7 +108,6 @@ const DELIVERY = ['Самовывоз', 'Курьер по городу', 'Ка�
 // ── Schema ────────────────────────────────────────────────────────────────────
 
 const itemSchema = z.object({
-  fabric: z.string().optional(),
   productName: z.string().min(1, 'Укажите модель'),
   size:        z.string().min(1, 'Укажите размер'),
   quantity:    z.coerce.number().int().min(1),
@@ -272,7 +271,6 @@ export default function ChapanEditOrderPage() {
       expectedPaymentMethod: order.expectedPaymentMethod ?? undefined,
       paymentBreakdown: undefined,
       items: (order.items ?? []).map(item => ({
-        fabric:        item.fabric ?? '',
         productName:   item.productName,
         size:          item.size,
         quantity:      item.quantity,
@@ -329,7 +327,6 @@ export default function ChapanEditOrderPage() {
           ? Object.fromEntries(Object.entries(data.paymentBreakdown ?? {}).filter(([, v]) => Number(v) > 0))
           : undefined,
         items:       canEditItems ? data.items.map(item => ({
-          fabric:        item.fabric?.trim() || undefined,
           productName:   item.productName,
           size:          item.size,
           quantity:      item.quantity,
@@ -347,14 +344,14 @@ export default function ChapanEditOrderPage() {
   async function handleSubmitChangeRequest() {
     if (!id || !pendingFormData) return;
 
-    function itemKey(productName: string, size: string, fabric?: string) {
-      return `${productName}|${size}|${(fabric ?? '').toLowerCase().trim()}`;
+    function itemKey(productName: string, size: string) {
+      return `${productName}|${size}`;
     }
-    const existingKeys = new Set((order!.items ?? []).map(i => itemKey(i.productName, i.size, i.fabric ?? '')));
-    const newItems = pendingFormData.items.filter(i => !existingKeys.has(itemKey(i.productName, i.size, i.fabric)));
+    const existingKeys = new Set((order!.items ?? []).map(i => itemKey(i.productName, i.size)));
+    const newItems = pendingFormData.items.filter(i => !existingKeys.has(itemKey(i.productName, i.size)));
     const changedItems = pendingFormData.items.filter(i => {
-      if (!existingKeys.has(itemKey(i.productName, i.size, i.fabric))) return false;
-      const orig = order!.items.find(o => itemKey(o.productName, o.size, o.fabric ?? '') === itemKey(i.productName, i.size, i.fabric));
+      if (!existingKeys.has(itemKey(i.productName, i.size))) return false;
+      const orig = order!.items.find(o => itemKey(o.productName, o.size) === itemKey(i.productName, i.size));
       return orig && (orig.quantity !== i.quantity || orig.unitPrice !== i.unitPrice);
     });
     const hasItemChanges = newItems.length > 0 || changedItems.length > 0;
@@ -393,7 +390,6 @@ export default function ChapanEditOrderPage() {
       await requestItemChange.mutateAsync({
         id,
         items: pendingFormData.items.map(item => ({
-          fabric:        item.fabric?.trim() || undefined,
           productName:   item.productName,
           size:          item.size,
           quantity:      item.quantity,
@@ -698,10 +694,6 @@ export default function ChapanEditOrderPage() {
                   </div>
 
                   <div className={styles.itemNoteField}>
-                    <input
-                      {...register(`items.${idx}.fabric`)}
-                      type="hidden"
-                    />
                     <input
                       {...register(`items.${idx}.workshopNotes`)}
                       disabled={!editable}
@@ -1062,14 +1054,14 @@ export default function ChapanEditOrderPage() {
       {/* ── Change Request Confirmation Modal ──────────────────────────────── */}
       {changeRequestModal && pendingFormData && (() => {
         // Compute diff: which items are new vs existing
-        function itemKey(productName: string, size: string, fabric?: string) {
-          return `${productName}|${size}|${(fabric ?? '').toLowerCase().trim()}`;
+        function itemKey(productName: string, size: string) {
+          return `${productName}|${size}`;
         }
-        const existingKeys = new Set((order.items ?? []).map(i => itemKey(i.productName, i.size, i.fabric ?? '')));
-        const newItems = pendingFormData.items.filter(i => !existingKeys.has(itemKey(i.productName, i.size, i.fabric)));
+        const existingKeys = new Set((order.items ?? []).map(i => itemKey(i.productName, i.size)));
+        const newItems = pendingFormData.items.filter(i => !existingKeys.has(itemKey(i.productName, i.size)));
         const changedItems = pendingFormData.items.filter(i => {
-          if (!existingKeys.has(itemKey(i.productName, i.size, i.fabric))) return false;
-          const orig = order.items.find(o => itemKey(o.productName, o.size, o.fabric ?? '') === itemKey(i.productName, i.size, i.fabric));
+          if (!existingKeys.has(itemKey(i.productName, i.size))) return false;
+          const orig = order.items.find(o => itemKey(o.productName, o.size) === itemKey(i.productName, i.size));
           return orig && (orig.quantity !== i.quantity || orig.unitPrice !== i.unitPrice);
         });
 

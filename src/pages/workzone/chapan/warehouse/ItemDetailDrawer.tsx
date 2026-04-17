@@ -1,6 +1,7 @@
 import { AlertTriangle, Plus, RotateCcw, X } from 'lucide-react';
 import { useWarehouseMovements, useItemFormula } from '../../../../entities/warehouse/queries';
 import type { WarehouseItem, WarehouseMovement } from '../../../../entities/warehouse/types';
+import { localizeAttrSummary } from '../../../../shared/lib/attrLocalize';
 import styles from '../../../warehouse/Warehouse.module.css';
 
 const NUMBER_FORMATTER = new Intl.NumberFormat('ru-KZ');
@@ -125,7 +126,7 @@ export function ItemDetailDrawer({ item, onClose, onAddMovement, onVerify }: Pro
           <div>
             <div className={styles.drawerTitle}>{item.name}</div>
             <div className={styles.drawerSubtitle}>
-              {[item.attributesSummary, item.sku, item.unit].filter(Boolean).join(' · ')}
+              {[localizeAttrSummary(item.attributesSummary) || null, item.sku, item.unit].filter(Boolean).join(' · ')}
               {item.category ? ` · ${item.category.name}` : ''}
             </div>
           </div>

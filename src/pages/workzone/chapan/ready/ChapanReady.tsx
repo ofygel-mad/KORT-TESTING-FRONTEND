@@ -105,7 +105,6 @@ function getRejectedInvoice(order: ReadyOrder) {
 function buildItemSignature(orderItem: ChapanOrder['items'][number]) {
   return [
     orderItem.productName?.toLowerCase().trim() ?? '',
-    orderItem.fabric?.toLowerCase().trim() ?? '',
     orderItem.size?.toLowerCase().trim() ?? '',
     String(orderItem.quantity ?? 0),
     String(orderItem.unitPrice ?? 0),

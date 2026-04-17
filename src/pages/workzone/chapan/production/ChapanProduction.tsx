@@ -52,7 +52,6 @@ function layoutModeStorageKey(userId?: string) {
 function taskBatchKey(task: ProductionTask): string {
   return [
     task.productName?.toLowerCase().trim() ?? '',
-    task.fabric?.toLowerCase().trim() ?? '',
     task.size?.toLowerCase().trim() ?? '',
     task.order.urgency ?? task.order.priority,
     String(task.order.isDemandingClient ?? (task.order.priority === 'vip')),
@@ -216,7 +215,6 @@ export default function ChapanProductionPage() {
     return filteredByView.filter((task) =>
       task.order.orderNumber.toLowerCase().includes(q) ||
       (task.productName?.toLowerCase() ?? '').includes(q) ||
-      (task.fabric?.toLowerCase() ?? '').includes(q) ||
       (task.size?.toLowerCase() ?? '').includes(q),
     );
   }, [deferredSearch, filteredByView]);
@@ -662,7 +660,6 @@ function TaskListCard({
         <div className={styles.taskListCardRow}>
           <div className={styles.taskListCardValue}>{task.productName}</div>
           <div className={styles.taskListCardValue}>{task.color || '—'}</div>
-          <div className={styles.taskListCardValue}>{task.fabric || '—'}</div>
           <div className={styles.taskListCardValue}>{task.size}</div>
           <div className={styles.taskListCardValue}>{task.length || '—'}</div>
           <div className={styles.taskListCardValue}>{task.quantity} шт.</div>
@@ -860,12 +857,6 @@ function TaskDetailPanel({ task }: { task: ProductionTask }) {
             </>
           )}
 
-          {task.fabric && (
-            <>
-              <span className={styles.detailLabel}>Ткань:</span>
-              <span className={styles.detailValue}>{task.fabric}</span>
-            </>
-          )}
 
           <span className={styles.detailLabel}>Размер:</span>
           <span className={styles.detailValue}>{task.size}</span>

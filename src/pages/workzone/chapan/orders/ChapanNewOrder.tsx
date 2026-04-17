@@ -168,7 +168,6 @@ function buildPayloadItems(items: FormData['items'], orderDiscount: number) {
 
     return {
       productName: line.item.productName,
-      fabric: line.item.color?.trim() || undefined,  // color goes to fabric for invoice compat
       color: line.item.color?.trim() || undefined,
       gender: line.item.gender?.trim() || undefined,
       length: line.item.length?.trim() || undefined,
