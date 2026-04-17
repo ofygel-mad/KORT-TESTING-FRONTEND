@@ -1,4 +1,5 @@
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { Link } from 'react-router-dom';
 import {
   AlertCircle, AlertTriangle, Archive, CheckCircle2, ChevronRight, Download,
@@ -437,30 +438,47 @@ function AddMovementDrawer({ items, preselectItemId, onClose }: { items: Warehou
 
 const IMPORT_TEMPLATE = 'наименование,цвет,пол,размер,остаток,цена\nЧапан классик,Синий,Мужской,52,10,15000\nЧапан классик,Чёрный,Женский,48,5,14000';
 
+function findColIdx(keys: string[], ...patterns: string[]): number {
+  return keys.findIndex(k => patterns.some(p => k.includes(p)));
+}
+
+function rowsFromMatrix(keys: string[], data: Record<string, unknown>[]): ImportOpeningBalanceRow[] {
+  const nameIdx  = findColIdx(keys, 'наим', 'name', 'товар', 'модель');
+  const colorIdx = findColIdx(keys, 'цвет', 'color');
+  const genderIdx= findColIdx(keys, 'пол', 'gender');
+  const sizeIdx  = findColIdx(keys, 'разм', 'size');
+  const qtyIdx   = findColIdx(keys, 'остат', 'кол', 'qty', 'quantity');
+  const priceIdx = findColIdx(keys, 'цена', 'price', 'cost');
+  if (nameIdx === -1 || qtyIdx === -1) return [];
+  return data.map(row => ({
+    name:      String(row[keys[nameIdx]] ?? '').trim(),
+    color:     colorIdx  >= 0 ? (String(row[keys[colorIdx]]  ?? '').trim() || undefined) : undefined,
+    gender:    genderIdx >= 0 ? (String(row[keys[genderIdx]] ?? '').trim() || undefined) : undefined,
+    size:      sizeIdx   >= 0 ? (String(row[keys[sizeIdx]]   ?? '').trim() || undefined) : undefined,
+    qty:       parseFloat(String(row[keys[qtyIdx]] ?? '0')) || 0,
+    costPrice: priceIdx  >= 0 ? (parseFloat(String(row[keys[priceIdx]] ?? '')) || undefined) : undefined,
+  })).filter(r => r.name && r.qty >= 0);
+}
+
 function parseImportCsv(raw: string): ImportOpeningBalanceRow[] {
   const lines = raw.trim().split('\n').filter(Boolean);
   if (lines.length < 2) return [];
-  const header = lines[0].split(',').map(h => h.trim().toLowerCase());
-  const nameIdx = header.findIndex(h => h.includes('наим') || h.includes('name') || h.includes('товар') || h.includes('модель'));
-  const colorIdx = header.findIndex(h => h.includes('цвет') || h === 'color');
-  const genderIdx = header.findIndex(h => h.includes('пол') || h === 'gender');
-  const sizeIdx = header.findIndex(h => h.includes('разм') || h === 'size');
-  const qtyIdx = header.findIndex(h => h.includes('остат') || h.includes('кол') || h === 'qty' || h === 'quantity');
-  const priceIdx = header.findIndex(h => h.includes('цена') || h === 'price' || h === 'cost');
-
-  if (nameIdx === -1 || qtyIdx === -1) return [];
-
-  return lines.slice(1).map(line => {
+  const keys = lines[0].split(',').map(h => h.trim().toLowerCase());
+  const data = lines.slice(1).map(line => {
     const cells = line.split(',').map(c => c.trim());
-    return {
-      name: cells[nameIdx] ?? '',
-      color: colorIdx >= 0 ? (cells[colorIdx] || undefined) : undefined,
-      gender: genderIdx >= 0 ? (cells[genderIdx] || undefined) : undefined,
-      size: sizeIdx >= 0 ? (cells[sizeIdx] || undefined) : undefined,
-      qty: parseFloat(cells[qtyIdx] ?? '0') || 0,
-      costPrice: priceIdx >= 0 ? (parseFloat(cells[priceIdx] ?? '') || undefined) : undefined,
-    };
-  }).filter(r => r.name && r.qty >= 0);
+    return Object.fromEntries(keys.map((k, i) => [k, cells[i] ?? '']));
+  });
+  return rowsFromMatrix(keys, data);
+}
+
+function parseImportExcel(buffer: ArrayBuffer): ImportOpeningBalanceRow[] {
+  const wb = XLSX.read(buffer, { type: 'array' });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const raw = XLSX.utils.sheet_to_json<Record<string, unknown>>(ws, { defval: '' });
+  if (!raw.length) return [];
+  const keys = Object.keys(raw[0]).map(k => k.trim().toLowerCase());
+  const data = raw.map(row => Object.fromEntries(Object.entries(row).map(([k, v]) => [k.trim().toLowerCase(), v])));
+  return rowsFromMatrix(keys, data);
 }
 
 function ImportBalanceDrawer({ onClose }: { onClose: () => void }) {
@@ -468,21 +486,44 @@ function ImportBalanceDrawer({ onClose }: { onClose: () => void }) {
   const [csvText, setCsvText] = useState('');
   const [preview, setPreview] = useState<ImportOpeningBalanceRow[]>([]);
   const [result, setResult] = useState<{ created: number; updated: number; skipped: number; errors: Array<{ row: number; reason: string }> } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   function handleParse() {
     setPreview(parseImportCsv(csvText));
   }
 
+  function processFile(file: File) {
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+    if (isExcel) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const rows = parseImportExcel(e.target!.result as ArrayBuffer);
+        setPreview(rows);
+      };
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target!.result as string;
+        setCsvText(text);
+        setPreview(parseImportCsv(text));
+      };
+      reader.readAsText(file, 'utf-8');
+    }
+  }
+
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (evt) => {
-      const text = evt.target?.result as string;
-      setCsvText(text);
-      setPreview(parseImportCsv(text));
-    };
-    reader.readAsText(file, 'utf-8');
+    if (file) processFile(file);
+    e.target.value = '';
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
   }
 
   async function handleImport() {
@@ -498,7 +539,7 @@ function ImportBalanceDrawer({ onClose }: { onClose: () => void }) {
         <div className={styles.drawerHeader}>
           <div>
             <div className={styles.drawerTitle}>Загрузить начальные остатки</div>
-            <div className={styles.drawerSubtitle}>CSV файл: наименование, цвет, пол, размер, остаток, цена</div>
+            <div className={styles.drawerSubtitle}>CSV или Excel: наименование, цвет, пол, размер, остаток, цена</div>
           </div>
           <button className={styles.drawerClose} onClick={onClose}><X size={14} /></button>
         </div>
@@ -580,16 +621,24 @@ function ImportBalanceDrawer({ onClose }: { onClose: () => void }) {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div style={{ display: 'flex', gap: 8 }}>
-                <label style={{
-                  flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 7,
-                  padding: '9px 14px', border: '1px dashed var(--border-default)', borderRadius: 8,
-                  cursor: 'pointer', fontSize: 13, color: 'var(--text-secondary)', background: 'var(--bg-surface-inset)',
-                }}>
-                  <Upload size={14} />
-                  Выбрать CSV файл
-                  <input type="file" accept=".csv,.txt" style={{ display: 'none' }} onChange={handleFileChange} />
-                </label>
+              <div
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 6,
+                  padding: '20px 14px', border: `2px dashed ${isDragging ? 'var(--fill-accent)' : 'var(--border-default)'}`,
+                  borderRadius: 10, cursor: 'pointer', fontSize: 13, color: 'var(--text-secondary)',
+                  background: isDragging ? 'var(--fill-accent-subtle)' : 'var(--bg-surface-inset)',
+                  transition: 'all 140ms',
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                onDragEnter={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+                onDragLeave={() => setIsDragging(false)}
+                onDrop={handleDrop}
+              >
+                <Upload size={20} style={{ color: isDragging ? 'var(--fill-accent)' : 'var(--text-tertiary)' }} />
+                <span>{isDragging ? 'Отпустите файл' : 'Перетащите или выберите файл'}</span>
+                <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>.csv / .xlsx / .xls</span>
+                <input ref={fileInputRef} type="file" accept=".csv,.txt,.xlsx,.xls" style={{ display: 'none' }} onChange={handleFileChange} />
               </div>
               <div style={{ fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center' }}>— или —</div>
               <div className={styles.field}>
@@ -603,7 +652,7 @@ function ImportBalanceDrawer({ onClose }: { onClose: () => void }) {
                 />
               </div>
               <div style={{ background: 'var(--bg-surface-inset)', borderRadius: 8, padding: '10px 14px', fontSize: 12, color: 'var(--text-tertiary)' }}>
-                <strong style={{ color: 'var(--text-secondary)' }}>Формат CSV:</strong> наименование, цвет, пол, размер, остаток, цена (первая строка — заголовок)
+                <strong style={{ color: 'var(--text-secondary)' }}>Формат (CSV или Excel):</strong> наименование, цвет, пол, размер, остаток, цена (первая строка — заголовок)
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className={styles.drawerSecondaryBtn} style={{ flex: 1 }} onClick={onClose}>Отмена</button>
@@ -1077,9 +1126,6 @@ export default function ChapanWarehousePage() {
         <button className={`${styles.tab} ${tab === 'catalog' ? styles.tabActive : ''}`} onClick={() => setTab('catalog')}>
           <BookOpen size={13} /> Каталог
         </button>
-
-        <div className={styles.tabDivider} />
-        <span className={styles.tabGroupLabel}>Чапан</span>
 
         <button className={`${styles.tab} ${tab === 'incoming' ? styles.tabActive : ''}`} onClick={() => setTab('incoming')}>
           <FileText size={13} /> Приёмка от цеха {incomingCount > 0 && <span className={styles.alertBadge}>{incomingCount}</span>}

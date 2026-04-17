@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Upload, CheckCircle2, ChevronDown, ChevronRight, Plus, Trash2, Package, Settings2, Pencil, Check, X } from 'lucide-react';
+import { Upload, CheckCircle2, ChevronDown, ChevronRight, Plus, Trash2, Package, Settings2, Pencil, Check, X, AlertCircle, Loader2 } from 'lucide-react';
 import {
   useSmartImportProducts, useSmartImportColors,
   useCatalogDefinitions, useCatalogProducts,
@@ -69,6 +69,7 @@ function UploadZone({
   accept,
   isPending,
   isDone,
+  isError,
   doneText,
   onFile,
 }: {
@@ -78,15 +79,37 @@ function UploadZone({
   accept: string;
   isPending: boolean;
   isDone: boolean;
+  isError?: boolean;
   doneText?: string;
   onFile: (file: File) => void;
 }) {
   const ref = useRef<HTMLInputElement>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setIsDragging(false);
+    if (isPending) return;
+    const f = e.dataTransfer.files?.[0];
+    if (f) onFile(f);
+  }
+
+  const zoneClass = [
+    styles.uploadZone,
+    isDone ? styles.uploadZoneDone : '',
+    isError ? styles.uploadZoneError : '',
+    isPending ? styles.uploadZoneLoading : '',
+    isDragging ? styles.uploadZoneDragging : '',
+  ].filter(Boolean).join(' ');
 
   return (
     <div
-      className={`${styles.uploadZone} ${isDone ? styles.uploadZoneDone : ''} ${isPending ? styles.uploadZoneLoading : ''}`}
+      className={zoneClass}
       onClick={() => !isPending && ref.current?.click()}
+      onDragEnter={(e) => { e.preventDefault(); if (!isPending) setIsDragging(true); }}
+      onDragOver={(e) => { e.preventDefault(); if (!isPending) setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={handleDrop}
     >
       <input
         ref={ref}
@@ -100,14 +123,19 @@ function UploadZone({
         }}
       />
       <div className={styles.uploadIcon}>
-        {isDone ? <CheckCircle2 size={32} /> : <Upload size={32} />}
+        {isPending ? <Loader2 size={32} className={styles.spinner} /> : isError ? <AlertCircle size={32} /> : isDone ? <CheckCircle2 size={32} /> : <Upload size={32} />}
       </div>
       <div className={styles.uploadTitle}>{title}</div>
-      <div className={styles.uploadDescription}>{description}</div>
-      {isDone && doneText ? (
-        <div className={styles.uploadDoneText}>{doneText}</div>
+      {!isPending && !isError && <div className={styles.uploadDescription}>{description}</div>}
+      {isError ? (
+        <div className={styles.uploadErrorText}>Ошибка загрузки. Попробуйте снова</div>
+      ) : isDone && doneText ? (
+        <>
+          <div className={styles.uploadDoneText}>{doneText}</div>
+          <div className={styles.uploadReplace}>Заменить файл →</div>
+        </>
       ) : (
-        <div className={styles.uploadHint}>{isPending ? 'Загружаю...' : hint}</div>
+        <div className={styles.uploadHint}>{isPending ? 'Загружаю...' : isDragging ? 'Отпустите файл' : hint}</div>
       )}
     </div>
   );
@@ -266,12 +294,15 @@ export function WarehouseCatalog() {
   const createDef = useCreateDefinition();
   const createProduct = useCreateProduct();
 
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState<boolean | null>(null);
   const [productsDone, setProductsDone] = useState<string | null>(null);
   const [colorsDone, setColorsDone] = useState<string | null>(null);
   const [newDefLabel, setNewDefLabel] = useState('');
   const [newDefType, setNewDefType] = useState<'select' | 'text' | 'number' | 'boolean'>('select');
   const [newProdName, setNewProdName] = useState('');
+
+  const hasData = products.length > 0 || definitions.length > 0;
+  const isOpen = showAdvanced === null ? hasData : showAdvanced;
 
   return (
     <div className={styles.root}>
@@ -293,8 +324,11 @@ export function WarehouseCatalog() {
           accept=".xlsx,.xls"
           isPending={smartImportProducts.isPending}
           isDone={!!productsDone}
+          isError={smartImportProducts.isError}
           doneText={productsDone ?? undefined}
           onFile={(file) => {
+            smartImportProducts.reset();
+            setProductsDone(null);
             smartImportProducts.mutate(file, {
               onSuccess: (data) => setProductsDone(`Загружено ${data.products.created} товаров`),
             });
@@ -307,8 +341,11 @@ export function WarehouseCatalog() {
           accept=".xlsx,.xls"
           isPending={smartImportColors.isPending}
           isDone={!!colorsDone}
+          isError={smartImportColors.isError}
           doneText={colorsDone ?? undefined}
           onFile={(file) => {
+            smartImportColors.reset();
+            setColorsDone(null);
             smartImportColors.mutate(file, {
               onSuccess: (data) => setColorsDone(`Загружено ${data.created} цветов`),
             });
@@ -329,13 +366,13 @@ export function WarehouseCatalog() {
       )}
 
       {/* ── Расширенные настройки (свёрнуто по умолчанию) ── */}
-      <button className={styles.advancedToggle} onClick={() => setShowAdvanced(!showAdvanced)}>
+      <button className={styles.advancedToggle} onClick={() => setShowAdvanced(!isOpen)}>
         <Settings2 size={14} />
         Редактировать каталог
-        {showAdvanced ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+        {isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
       </button>
 
-      {showAdvanced && (
+      {isOpen && (
         <div className={styles.advancedPanel}>
 
           {/* Поля */}
