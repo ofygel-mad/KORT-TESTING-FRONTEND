@@ -1182,9 +1182,11 @@ export default function ChapanWarehousePage() {
                         : <span style={{ color: 'var(--fill-warning)', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}><AlertCircle size={12} /> Ожидает цех</span>}
                     </td>
                     <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
-                      <button className={styles.incomBtn} onClick={() => { setPreviewInvoiceId(inv.id); setPreviewInvoice(inv); }}>
-                        <FileText size={12} /> Открыть
-                      </button>
+                      <div className={styles.tdActionsInner}>
+                        <button className={styles.incomBtn} onClick={() => { setPreviewInvoiceId(inv.id); setPreviewInvoice(inv); }}>
+                          <FileText size={12} /> Открыть
+                        </button>
+                      </div>
                     </td>
                   </ClickRow>
                   );
@@ -1221,9 +1223,11 @@ export default function ChapanWarehousePage() {
                     <td className={styles.tdNum}>{inv.items?.length ?? 0} заказ(а)</td>
                     <td className={styles.tdSecondary}>{inv.createdByName}</td>
                     <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
-                      <button className={styles.incomBtn} onClick={() => { setPreviewInvoiceId(inv.id); setPreviewInvoice(inv); }}>
-                        <FileText size={12} /> Открыть
-                      </button>
+                      <div className={styles.tdActionsInner}>
+                        <button className={styles.incomBtn} onClick={() => { setPreviewInvoiceId(inv.id); setPreviewInvoice(inv); }}>
+                          <FileText size={12} /> Открыть
+                        </button>
+                      </div>
                     </td>
                   </ClickRow>
                 ))}
@@ -1394,9 +1398,11 @@ export default function ChapanWarehousePage() {
                     <td className={styles.tdNum}>{fmtMoney(order.totalAmount)}</td>
                     <td><span style={{ color: PAY_COLOR[order.paymentStatus], fontWeight: 500, fontSize: 12 }}>{PAY_LABEL[order.paymentStatus]}</span></td>
                     <td className={styles.tdActions} onClick={(e) => e.stopPropagation()}>
-                      <button className={styles.incomBtn} onClick={() => setSelectedOrderId(order.id)}>
-                        <CheckSquare size={12} /> Завершить
-                      </button>
+                      <div className={styles.tdActionsInner}>
+                        <button className={styles.incomBtn} onClick={() => setSelectedOrderId(order.id)}>
+                          <CheckSquare size={12} /> Завершить
+                        </button>
+                      </div>
                     </td>
                   </ClickRow>
                 ))}
@@ -1484,8 +1490,10 @@ export default function ChapanWarehousePage() {
                           </span>
                         </td>
                         <td className={styles.tdActions} onClick={e => e.stopPropagation()}>
-                          <button className={styles.incomBtn} onClick={() => { setPreselectItem(item.id); setAddMovOpen(true); }}>Приход</button>
-                          <button className={styles.deleteBtn} onClick={() => { if (confirm('Удалить позицию?')) deleteItem.mutate(item.id); }}><X size={12} /></button>
+                          <div className={styles.tdActionsInner}>
+                            <button className={styles.incomBtn} onClick={() => { setPreselectItem(item.id); setAddMovOpen(true); }}>Приход</button>
+                            <button className={styles.deleteBtn} onClick={() => { if (confirm('Удалить позицию?')) deleteItem.mutate(item.id); }}><X size={12} /></button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1593,8 +1601,10 @@ export default function ChapanWarehousePage() {
                   <td className={styles.tdSecondary}>{a.item?.unit ?? '—'}</td>
                   <td><span className={styles.alertStatusBadge}>Низкий остаток</span></td>
                   <td className={styles.tdActions}>
-                    <button className={styles.incomBtn} onClick={() => { setPreselectItem(a.itemId); setAddMovOpen(true); setTab('movements'); }}>Записать приход</button>
-                    <button className={styles.resolveBtn} onClick={() => resolveAlert.mutate(a.id)}>Закрыть</button>
+                    <div className={styles.tdActionsInner}>
+                      <button className={styles.incomBtn} onClick={() => { setPreselectItem(a.itemId); setAddMovOpen(true); setTab('movements'); }}>Записать приход</button>
+                      <button className={styles.resolveBtn} onClick={() => resolveAlert.mutate(a.id)}>Закрыть</button>
+                    </div>
                   </td>
                 </tr>
               ))}

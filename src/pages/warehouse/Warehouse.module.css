@@ -29,7 +29,8 @@
 .tdSecondary { color: var(--text-tertiary) !important; }
 .tdNum { font-weight: 500; color: var(--text-primary) !important; }
 .tdDate { font-size: 11px !important; color: var(--text-tertiary) !important; }
-.tdActions { display: flex; gap: 6px; align-items: center; }
+.tdActions { vertical-align: middle; }
+.tdActionsInner { display: flex; gap: 6px; align-items: center; }
 
 .stockBadge { font-size: 11px; padding: 2px 8px; border-radius: 10px; font-weight: 500; }
 .stockBadge[data-status="ok"] { background: var(--fill-positive-soft, rgba(16,185,129,.12)); color: var(--fill-positive); }
