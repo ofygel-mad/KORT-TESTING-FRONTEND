@@ -10,10 +10,10 @@ export const financeKeys = {
 };
 
 export const useFinanceEntries = (params?: { type?: string; from?: string; to?: string; period?: string; page?: number; limit?: number }) =>
-  useQuery({ queryKey: financeKeys.entries(params), queryFn: () => financeApi.listEntries(params), staleTime: 60_000, refetchInterval: 120_000 });
+  useQuery({ queryKey: financeKeys.entries(params), queryFn: () => financeApi.listEntries(params), staleTime: 60_000, refetchInterval: 5 * 60_000 });
 
 export const useFinanceSummary = (params?: { period?: string; from?: string; to?: string }) =>
-  useQuery({ queryKey: financeKeys.summary(params), queryFn: () => financeApi.getSummary(params), staleTime: 60_000, refetchInterval: 120_000 });
+  useQuery({ queryKey: financeKeys.summary(params), queryFn: () => financeApi.getSummary(params), staleTime: 60_000, refetchInterval: 5 * 60_000 });
 
 export const useCreateEntry = () => {
   const qc = useQueryClient();

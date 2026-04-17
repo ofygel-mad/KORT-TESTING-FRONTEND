@@ -42,7 +42,7 @@ export const useOrders = (params?: Parameters<typeof ordersApi.list>[0]) =>
     queryKey: orderKeys.list(params),
     queryFn: () => ordersApi.list(params),
     staleTime: 60_000,
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useOrder = (id: string) =>
@@ -278,7 +278,7 @@ export const useProductionTasks = (params?: Parameters<typeof productionApi.list
     queryKey: orderKeys.productionList(params),
     queryFn: () => productionApi.list(params),
     staleTime: 30_000,
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useWorkshopTasks = () =>
@@ -286,7 +286,7 @@ export const useWorkshopTasks = () =>
     queryKey: [...orderKeys.production, 'workshop'],
     queryFn: () => productionApi.listWorkshop(),
     staleTime: 30_000,
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useUpdateProductionStatus = () => {
@@ -356,7 +356,7 @@ export const useInvoices = (params?: Parameters<typeof invoicesApi.list>[0]) =>
     queryKey: orderKeys.invoiceList(params),
     queryFn: () => invoicesApi.list(params),
     staleTime: 60_000,
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useInvoice = (id: string) =>
@@ -462,7 +462,7 @@ export const usePendingChangeRequests = () =>
   useQuery({
     queryKey: orderKeys.changeRequests,
     queryFn: () => changeRequestsApi.list(),
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
     staleTime: 30_000,
   });
 
@@ -699,7 +699,7 @@ export const useReturns = (params?: { orderId?: string; status?: string }) =>
     queryKey: orderKeys.returnsList(params),
     queryFn: () => returnsApi.list(params),
     staleTime: 60_000,
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useCreateReturn = () => {

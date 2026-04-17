@@ -15,14 +15,14 @@ export const useDealsBoard = () =>
   useQuery({
     queryKey: dealKeys.board,
     queryFn: () => dealsApi.getBoard(),
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useDeals = (params?: { page?: number; limit?: number }) =>
   useQuery({
     queryKey: dealKeys.list(params),
     queryFn: () => dealsApi.list(params),
-    refetchInterval: 60_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useDeal = (id: string) =>
@@ -37,7 +37,7 @@ export const useDealActivities = (id: string) =>
     queryKey: dealKeys.activities(id),
     queryFn: () => dealsApi.getActivities(id),
     enabled: Boolean(id),
-    refetchInterval: 60_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useCreateDeal = () => {

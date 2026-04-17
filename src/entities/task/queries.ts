@@ -14,7 +14,7 @@ export const useTasks = (filters?: TaskFilters) =>
     queryKey: taskKeys.list(filters),
     queryFn: () => tasksApi.list(filters),
     staleTime: 60_000,
-    refetchInterval: 30_000,
+    refetchInterval: 5 * 60_000,
   });
 
 export const useTask = (id: string) =>

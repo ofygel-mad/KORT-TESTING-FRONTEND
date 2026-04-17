@@ -3,7 +3,7 @@ import { toast } from 'sonner';
 import { customersApi } from './api';
 const KEY = ['customers'] as const;
 export const useCustomers = (params?: { page?: number; limit?: number; q?: string }) =>
-  useQuery({ queryKey: [...KEY, params], queryFn: () => customersApi.list(params), staleTime: 60_000, refetchInterval: 60_000 });
+  useQuery({ queryKey: [...KEY, params], queryFn: () => customersApi.list(params), staleTime: 60_000, refetchInterval: 5 * 60_000 });
 export const useCustomer = (id: string) =>
   useQuery({ queryKey: [...KEY, id], queryFn: () => customersApi.get(id), enabled: Boolean(id), staleTime: 120_000 });
 export const useCreateCustomer = () => {
