@@ -36,7 +36,6 @@ function NotificationBell({ enabled }: { enabled: boolean }) {
     queryKey: ['notifications'],
     queryFn: () => api.get('/notifications/'),
     enabled,
-    refetchInterval: 30000,
   });
 
   useSSE({

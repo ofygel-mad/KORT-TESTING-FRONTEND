@@ -83,7 +83,9 @@ function RequireAuth({ children }: { children: ReactNode }) {
 }
 
 function RequireOrg({ children }: { children: ReactNode }) {
+  const user = useAuthStore((s) => s.user);
   const status = useAuthStore((s) => s.membership.status);
+  if (!user) return null; // Wait for bootstrap to complete
   if (status !== 'active') return <Navigate to="/settings" replace />;
   return <>{children}</>;
 }
@@ -258,7 +260,10 @@ function RequirePermission({ check, children }: { check: PermissionCheck; childr
  * Используется как index-route вместо жёсткого Navigate to="orders".
  */
 function ChapanDefaultRedirect() {
+  const user = useAuthStore((s) => s.user);
   const { canAccessOrders, canAccessProduction, canAccessReady, canAccessArchive } = useChapanPermissions();
+
+  if (!user) return null; // Wait for bootstrap to complete
 
   if (canAccessOrders)     return <Navigate to="orders"     replace />;
   if (canAccessProduction) return <Navigate to="production" replace />;

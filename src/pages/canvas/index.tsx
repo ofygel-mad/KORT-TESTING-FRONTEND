@@ -233,7 +233,7 @@ export default function CanvasPage() {
 
   return (
     <div className={styles.root}>
-      <Suspense fallback={null}>
+      <Suspense fallback={<div className={styles.canvasLoading} />}>
         <WorkspaceCanvas />
       </Suspense>
 

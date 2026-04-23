@@ -145,8 +145,14 @@ export default function ChapanProductionPage() {
     && membershipRole !== 'admin';
 
   const [view, setView] = useState<ProductionMode>(workshopDefault ? 'workshop' : 'manager');
-  const [grouped, setGroupedState] = useState(true);
-  const [layoutMode, setLayoutModeState] = useState<LayoutMode>('kanban');
+  const [grouped, setGroupedState] = useState(() => {
+    const saved = localStorage.getItem(groupStorageKey(userId));
+    return saved !== null ? saved !== 'false' : true;
+  });
+  const [layoutMode, setLayoutModeState] = useState<LayoutMode>(() => {
+    const saved = localStorage.getItem(layoutModeStorageKey(userId));
+    return (saved === 'kanban' || saved === 'list') ? (saved as LayoutMode) : 'kanban';
+  });
   const [showOnlyRunning, setShowOnlyRunning] = useState(false);
   const [search, setSearch] = useState('');
   const deferredSearch = useDeferredValue(search);
@@ -156,20 +162,6 @@ export default function ChapanProductionPage() {
   useEffect(() => {
     setView(workshopDefault ? 'workshop' : 'manager');
   }, [workshopDefault, userId]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(groupStorageKey(userId));
-    if (saved !== null) {
-      setGroupedState(saved !== 'false');
-    }
-  }, [userId]);
-
-  useEffect(() => {
-    const saved = localStorage.getItem(layoutModeStorageKey(userId));
-    if (saved !== null && (saved === 'kanban' || saved === 'list')) {
-      setLayoutModeState(saved as LayoutMode);
-    }
-  }, [userId]);
 
   const toggleGrouped = () => {
     setGroupedState((value) => {

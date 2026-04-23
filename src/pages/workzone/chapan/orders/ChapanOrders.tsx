@@ -167,8 +167,14 @@ export default function ChapanOrdersPage() {
 
   const [showFilters, setShowFilters] = useState(false);
   const { data: orgManagers } = useOrgManagers();
-  const [viewMode, setViewModeState] = useState<ViewMode>('grid');
-  const [grouped, setGroupedState] = useState(true);
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem(viewStorageKey(userId));
+    return (saved === 'grid' || saved === 'list') ? saved : 'grid';
+  });
+  const [grouped, setGroupedState] = useState(() => {
+    const saved = localStorage.getItem(groupStorageKey(userId));
+    return saved !== null ? saved !== 'false' : true;
+  });
   const [showViewMenu, setShowViewMenu] = useState(false);
   const [showAlertsPanel, setShowAlertsPanel] = useState(false);
   const [isSeedingOrders, setIsSeedingOrders] = useState(false);
@@ -260,13 +266,6 @@ export default function ChapanOrdersPage() {
 
   const deferred = useDeferredValue(search);
   const hasActiveFilters = Boolean(search || statusFilter || payFilter || managerFilter || calendarDate);
-
-  useEffect(() => {
-    const savedView = localStorage.getItem(viewStorageKey(userId));
-    if (savedView === 'grid' || savedView === 'list') setViewModeState(savedView);
-    const savedGroup = localStorage.getItem(groupStorageKey(userId));
-    if (savedGroup !== null) setGroupedState(savedGroup !== 'false');
-  }, [userId]);
 
   // A1 fix: авторедирект убран — он вызывал цикл возврата.
   // selectedOrderId теперь очищается при входе в ChapanOrderDetail.

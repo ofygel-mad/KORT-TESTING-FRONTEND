@@ -195,8 +195,14 @@ export default function ChapanReadyPage() {
     && membershipRole !== 'admin';
 
   const [search, setSearch] = useState('');
-  const [viewMode, setViewModeState] = useState<ViewMode>('grid');
-  const [grouped, setGroupedState] = useState(true);
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem(viewStorageKey(userId));
+    return (saved === 'grid' || saved === 'list') ? saved : 'grid';
+  });
+  const [grouped, setGroupedState] = useState(() => {
+    const saved = localStorage.getItem(groupStorageKey(userId));
+    return saved !== null ? saved !== 'false' : true;
+  });
   const [showViewMenu, setShowViewMenu] = useState(false);
   const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -211,18 +217,6 @@ export default function ChapanReadyPage() {
   const viewPickerRef = useRef<HTMLDivElement>(null);
 
   const deferredSearch = useDeferredValue(search);
-
-  useEffect(() => {
-    const savedView = localStorage.getItem(viewStorageKey(userId));
-    if (savedView === 'grid' || savedView === 'list') {
-      setViewModeState(savedView);
-    }
-
-    const savedGroup = localStorage.getItem(groupStorageKey(userId));
-    if (savedGroup !== null) {
-      setGroupedState(savedGroup !== 'false');
-    }
-  }, [userId]);
 
   useEffect(() => {
     if (!showViewMenu) return;

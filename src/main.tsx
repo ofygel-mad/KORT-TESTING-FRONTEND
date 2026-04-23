@@ -30,7 +30,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 60_000,           // treat data as fresh for 60 s (was 30 s)
-      gcTime:    2 * 60 * 1000,    // evict unused cache after 2 min (default 5 min)
+      gcTime:    10 * 60 * 1000,   // evict unused cache after 10 min (default 5 min)
       retry: 1,
       refetchOnWindowFocus: false, // don't re-fetch just because user switched tabs
     },

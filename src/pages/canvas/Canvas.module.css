@@ -288,3 +288,9 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.canvasLoading {
+  position: absolute;
+  inset: 0;
+  background: var(--scene-bg, #0a0a0a);
+}

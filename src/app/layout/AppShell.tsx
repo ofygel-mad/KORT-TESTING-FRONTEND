@@ -19,6 +19,14 @@ import { pageTransition } from '../../shared/motion/presets';
 import { addDocumentListener } from '../../shared/lib/browser';
 import styles from './AppShell.module.css';
 
+const subscribeToTheme = (cb: () => void) => {
+  const obs = new MutationObserver(cb);
+  obs.observe(document.documentElement, { attributeFilter: ['data-theme'] });
+  return () => obs.disconnect();
+};
+const getThemeSnapshot = () => document.documentElement.getAttribute('data-theme') ?? 'dark';
+const getThemeServerSnapshot = () => 'dark';
+
 function OfflineBanner() {
   const [offline, setOffline] = useState(typeof navigator !== 'undefined' ? !navigator.onLine : false);
   useEffect(() => {
@@ -47,13 +55,9 @@ export function AppShell() {
 
   // Reactively read the resolved data-theme attribute (kept in sync by applyTheme)
   const resolvedTheme = useSyncExternalStore(
-    (cb) => {
-      const obs = new MutationObserver(cb);
-      obs.observe(document.documentElement, { attributeFilter: ['data-theme'] });
-      return () => obs.disconnect();
-    },
-    () => document.documentElement.getAttribute('data-theme') ?? 'dark',
-    () => 'dark',
+    subscribeToTheme,
+    getThemeSnapshot,
+    getThemeServerSnapshot,
   );
 
   const isCanvasPage = location.pathname === '/';
@@ -101,7 +105,7 @@ export function AppShell() {
         <Topbar chromeTone={chromeTone} />
         <main className={styles.main} data-app-scroll="true">
           {performance.preferMinimalMotion ? (
-            <div key={location.pathname} className={styles.routeViewport}>
+            <div className={styles.routeViewport}>
               <Outlet />
             </div>
           ) : (
