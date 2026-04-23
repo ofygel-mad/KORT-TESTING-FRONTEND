@@ -115,6 +115,7 @@
   border: 1px solid var(--scene-hud-border);
   background: var(--scene-hud-fill);
   color: var(--scene-hud-text);
+  -webkit-backdrop-filter: blur(8px) saturate(135%);
   backdrop-filter: blur(8px) saturate(135%);
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.28),
@@ -360,6 +361,7 @@
   border-radius: 16px;
   border: 1px solid rgba(169,205,255,0.1);
   background: linear-gradient(158deg, rgba(16,20,27,0.86) 0%, rgba(8,11,17,0.94) 100%);
+  -webkit-backdrop-filter: blur(8px) saturate(124%);
   backdrop-filter: blur(8px) saturate(124%);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.05),
@@ -388,6 +390,7 @@
   transform: translate(-50%, calc(-50% + var(--tile-flight-lift))) scale(calc(var(--tile-flight-scale) * var(--tile-flight-focus-scale)));
   opacity: var(--tile-flight-opacity);
   /* Flight blur removed for performance — opacity handles depth cue */
+  -webkit-backdrop-filter: blur(8px) saturate(128%);
   backdrop-filter: blur(8px) saturate(128%);
   box-shadow:
     inset 0 1px 0 rgba(255,255,255,0.06),
@@ -660,6 +663,7 @@
   position: fixed;
   inset: 0;
   background: color-mix(in srgb, var(--bg-overlay) 92%, rgba(0, 0, 0, 0.12));
+  -webkit-backdrop-filter: blur(10px) saturate(118%);
   backdrop-filter: blur(10px) saturate(118%);
   z-index: 200;
   cursor: default;
@@ -718,6 +722,7 @@
   background:
     linear-gradient(180deg, color-mix(in srgb, white 10%, transparent) 0%, transparent 100%),
     color-mix(in srgb, var(--bg-surface) 88%, transparent);
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   flex-shrink: 0;
 }
@@ -852,6 +857,7 @@
   box-shadow: var(--brand-panel-shadow-strong);
   display: grid;
   gap: 10px;
+  -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
 }
 
@@ -969,6 +975,7 @@
   inset: 0;
   border: 0;
   background: var(--bg-overlay);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   z-index: var(--z-modal);
   cursor: default;
@@ -984,6 +991,7 @@
   border-radius: 16px;
   border: var(--surface-border);
   background: var(--bg-surface);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   box-shadow: var(--brand-panel-shadow-strong);
   z-index: calc(var(--z-modal) + 1);
@@ -1428,6 +1436,7 @@
     0 0 0 1px rgba(125, 78, 37, 0.12),
     0 24px 60px rgba(0, 0, 0, 0.65),
     0 6px 16px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   display: grid;
   gap: 1px;
@@ -1499,6 +1508,7 @@
   position: fixed;
   inset: 0;
   background: rgba(2, 2, 8, 0.72);
+  -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   z-index: 700;
 }
@@ -1516,6 +1526,7 @@
     0 0 0 1px rgba(130, 80, 30, 0.15),
     0 40px 100px rgba(0, 0, 0, 0.7),
     0 8px 24px rgba(0, 0, 0, 0.4);
+  -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   z-index: 701;
   overflow: hidden;

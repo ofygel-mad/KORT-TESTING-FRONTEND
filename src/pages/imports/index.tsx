@@ -193,6 +193,7 @@ export default function ImportsPage() {
                 accept=".xlsx,.xls,.csv"
                 className={s.hiddenInput}
                 onChange={handleFileChange}
+                aria-hidden="true"
               />
               <motion.div
                 className={`${s.dropZone} ${uploadMutation.isPending ? s.uploading : ''}`}
@@ -240,6 +241,7 @@ export default function ImportsPage() {
                     <span className={s.mappingColName}>{header}</span>
                     <ArrowRight size={12} className={s.mappingArrow} />
                     <select
+                      aria-label={`Поле для колонки: ${header}`}
                       value={mapping[header] ?? ''}
                       onChange={(event) => setMapping((prev) => ({ ...prev, [header]: event.target.value }))}
                       className={`kort-input ${s.mappingSelect}`}

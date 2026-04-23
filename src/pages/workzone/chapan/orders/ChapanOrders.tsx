@@ -501,26 +501,29 @@ const setViewMode = (mode: ViewMode) => {
       {showFilters && (
         <div className={styles.filterBar}>
           <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Статус</label>
-            <select className={styles.filterSelect} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-              <option value="">Все активные</option>
-              {ACTIVE_STATUSES.map(k => <option key={k} value={k}>{STATUS_LABEL[k]}</option>)}
-            </select>
+            <label className={styles.filterLabel}>Статус
+              <select className={styles.filterSelect} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+                <option value="">Все активные</option>
+                {ACTIVE_STATUSES.map(k => <option key={k} value={k}>{STATUS_LABEL[k]}</option>)}
+              </select>
+            </label>
           </div>
           <div className={styles.filterGroup}>
-            <label className={styles.filterLabel}>Оплата</label>
-            <select className={styles.filterSelect} value={payFilter} onChange={e => setPayFilter(e.target.value)}>
-              <option value="">Все</option>
-              {Object.entries(PAY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
-            </select>
+            <label className={styles.filterLabel}>Оплата
+              <select className={styles.filterSelect} value={payFilter} onChange={e => setPayFilter(e.target.value)}>
+                <option value="">Все</option>
+                {Object.entries(PAY_LABEL).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+              </select>
+            </label>
           </div>
           {orgManagers && orgManagers.length > 1 && (
             <div className={styles.filterGroup}>
-              <label className={styles.filterLabel}>Менеджер</label>
-              <select className={styles.filterSelect} value={managerFilter} onChange={e => setManagerFilter(e.target.value)}>
-                <option value="">Все</option>
-                {orgManagers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-              </select>
+              <label className={styles.filterLabel}>Менеджер
+                <select className={styles.filterSelect} value={managerFilter} onChange={e => setManagerFilter(e.target.value)}>
+                  <option value="">Все</option>
+                  {orgManagers.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
+                </select>
+              </label>
             </div>
           )}
           <div className={styles.filterGroupCalendar}>
@@ -768,9 +771,9 @@ function MiniCalendar({
   return (
     <div className={styles.calendarDropdown}>
       <div className={styles.calendarHeader}>
-        <button className={styles.calendarNavBtn} onClick={onPrevMonth}><ChevronLeft size={13} /></button>
+        <button aria-label="Предыдущий месяц" className={styles.calendarNavBtn} onClick={onPrevMonth}><ChevronLeft size={13} /></button>
         <span className={styles.calendarMonthLabel}>{MONTH_NAMES[mon]} {year}</span>
-        <button className={styles.calendarNavBtn} onClick={onNextMonth}><ChevronRight size={13} /></button>
+        <button aria-label="Следующий месяц" className={styles.calendarNavBtn} onClick={onNextMonth}><ChevronRight size={13} /></button>
       </div>
       <div className={styles.calendarGrid}>
         {WEEKDAYS.map(w => (

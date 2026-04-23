@@ -188,29 +188,31 @@ function CreateModal({ onClose, preset }: { onClose: () => void; preset?: any })
             />
           </div>
           <div className={s.formGroup}>
-            <label className={s.formLabel}>Срок</label>
-            <input
-              type="datetime-local"
-              className={s.formInput}
-              value={dueAt}
-              onChange={(event) => setDueAt(event.target.value)}
-            />
+            <label className={s.formLabel}>Срок
+              <input
+                type="datetime-local"
+                className={s.formInput}
+                value={dueAt}
+                onChange={(event) => setDueAt(event.target.value)}
+              />
+            </label>
           </div>
         </div>
 
         <div className={s.formGroup}>
-          <label className={s.formLabel}>Приоритет</label>
-          <select
-            className={s.formSelect}
-            value={priority}
-            onChange={(event) => setPriority(event.target.value as TaskPriority)}
-          >
-            {PRIORITY_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {PRIORITY_META_MAP[option].label}
-              </option>
-            ))}
-          </select>
+          <label className={s.formLabel}>Приоритет
+            <select
+              className={s.formSelect}
+              value={priority}
+              onChange={(event) => setPriority(event.target.value as TaskPriority)}
+            >
+              {PRIORITY_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {PRIORITY_META_MAP[option].label}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         {taskType === 'manual' && (
@@ -238,13 +240,14 @@ function CreateModal({ onClose, preset }: { onClose: () => void; preset?: any })
           {timerEnabled && (
             <div className={s.timerOptions}>
               <div className={s.formGroup}>
-                <label className={s.formLabel}>Дедлайн таймера</label>
-                <input
-                  type="datetime-local"
-                  className={s.formInput}
-                  value={timerDeadline}
-                  onChange={(event) => setTimerDeadline(event.target.value)}
-                />
+                <label className={s.formLabel}>Дедлайн таймера
+                  <input
+                    type="datetime-local"
+                    className={s.formInput}
+                    value={timerDeadline}
+                    onChange={(event) => setTimerDeadline(event.target.value)}
+                  />
+                </label>
               </div>
 
               <button

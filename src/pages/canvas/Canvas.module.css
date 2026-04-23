@@ -239,6 +239,7 @@
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
   backdrop-filter: blur(16px) saturate(140%);
   box-shadow:
     0 22px 48px -22px rgba(0,0,0,0.72),
