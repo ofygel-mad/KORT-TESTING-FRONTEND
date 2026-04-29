@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import { Building2, CalendarDays, CheckCircle2, Clock, CreditCard, Megaphone, MessageSquare, AlertTriangle, Pencil, ArchiveIcon, RotateCcw, Download, Package, Star, User, XCircle, FileText, Paperclip, Trash2, Upload, Undo2 } from 'lucide-react';
-import { useOrder, useChangeOrderStatus, useAddPayment, useAddOrderActivity, useRestoreOrder, useCloseOrder, useCreateInvoice, useSetRequiresInvoice, useRouteSingleItem, useUploadAttachment, useDeleteAttachment, useReassignManager, useOrgManagers, useReturns, useCreateReturn, useConfirmReturn } from '../../../../entities/order/queries';
+import { useOrder, useChangeOrderStatus, useAddPayment, useAddOrderActivity, useRestoreOrder, useCloseOrder, useCreateInvoice, useSetRequiresInvoice, useRouteSingleItem, useUploadAttachment, useDeleteAttachment, useReassignManager, useOrgManagers, useReturns, useCreateReturn, useConfirmReturn, orderKeys } from '../../../../entities/order/queries';
 import { useChapanPermissions } from '../../../../shared/hooks/useChapanPermissions';
 import { useProductsAvailability } from '../../../../entities/warehouse/queries';
 import type { OrderItem, OrderItemFulfillmentMode, OrderStatus, Priority, Urgency, OrderAttachment, ReturnReason, ReturnRefundMethod, ReturnItemCondition, RETURN_REASON_LABELS, RETURN_REFUND_METHOD_LABELS } from '../../../../entities/order/types';
@@ -141,6 +142,7 @@ export default function ChapanOrderDetailPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const setSelectedOrderId = useChapanUiStore((state) => state.setSelectedOrderId);
+  const queryClient = useQueryClient();
 
   // A1 fix: очищаем selectedOrderId при входе в карточку,
   // чтобы возврат на список заказов не вызывал повторный редирект.
@@ -243,7 +245,12 @@ export default function ChapanOrderDetailPage() {
       },
       {
         onSuccess: (createdReturn) => {
-          confirmReturn.mutate(createdReturn.id);
+          confirmReturn.mutate(createdReturn.id, {
+            onSuccess: () => {
+              // Refetch returns immediately to update returnedItemIds Set
+              queryClient.refetchQueries({ queryKey: orderKeys.returnsList({ orderId: id! }) });
+            },
+          });
           setOpenReturnItemId(null);
           setItemReturnDrafts((prev) => {
             const next = { ...prev };
@@ -529,12 +536,18 @@ export default function ChapanOrderDetailPage() {
                               <select
                                 className={styles.itemReturnSelect}
                                 value={itemReturnDrafts[item.id]?.qty ?? 1}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const currentDraft = itemReturnDrafts[item.id] ?? {
+                                    qty: 1,
+                                    reason: 'defect' as ReturnReason,
+                                    condition: 'good' as ReturnItemCondition,
+                                    refundMethod: 'cash' as ReturnRefundMethod,
+                                  };
                                   setItemReturnDrafts((prev) => ({
                                     ...prev,
-                                    [item.id]: { ...prev[item.id], qty: parseInt(e.target.value) },
-                                  }))
-                                }
+                                    [item.id]: { ...currentDraft, qty: parseInt(e.target.value) },
+                                  }));
+                                }}
                               >
                                 {Array.from({ length: item.quantity }, (_, i) => i + 1).map((n) => (
                                   <option key={n} value={n}>
@@ -548,12 +561,18 @@ export default function ChapanOrderDetailPage() {
                               <select
                                 className={styles.itemReturnSelect}
                                 value={itemReturnDrafts[item.id]?.reason ?? 'defect'}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const currentDraft = itemReturnDrafts[item.id] ?? {
+                                    qty: 1,
+                                    reason: 'defect' as ReturnReason,
+                                    condition: 'good' as ReturnItemCondition,
+                                    refundMethod: 'cash' as ReturnRefundMethod,
+                                  };
                                   setItemReturnDrafts((prev) => ({
                                     ...prev,
-                                    [item.id]: { ...prev[item.id], reason: e.target.value as ReturnReason },
-                                  }))
-                                }
+                                    [item.id]: { ...currentDraft, reason: e.target.value as ReturnReason },
+                                  }));
+                                }}
                               >
                                 {(Object.entries(REASON_LABELS) as [ReturnReason, string][]).map(([k, v]) => (
                                   <option key={k} value={k}>
@@ -567,12 +586,18 @@ export default function ChapanOrderDetailPage() {
                               <select
                                 className={styles.itemReturnSelect}
                                 value={itemReturnDrafts[item.id]?.condition ?? 'good'}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const currentDraft = itemReturnDrafts[item.id] ?? {
+                                    qty: 1,
+                                    reason: 'defect' as ReturnReason,
+                                    condition: 'good' as ReturnItemCondition,
+                                    refundMethod: 'cash' as ReturnRefundMethod,
+                                  };
                                   setItemReturnDrafts((prev) => ({
                                     ...prev,
-                                    [item.id]: { ...prev[item.id], condition: e.target.value as ReturnItemCondition },
-                                  }))
-                                }
+                                    [item.id]: { ...currentDraft, condition: e.target.value as ReturnItemCondition },
+                                  }));
+                                }}
                               >
                                 {(Object.entries(RETURN_CONDITION_LABELS) as [ReturnItemCondition, string][]).map(([k, v]) => (
                                   <option key={k} value={k}>
@@ -586,12 +611,18 @@ export default function ChapanOrderDetailPage() {
                               <select
                                 className={styles.itemReturnSelect}
                                 value={itemReturnDrafts[item.id]?.refundMethod ?? 'cash'}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const currentDraft = itemReturnDrafts[item.id] ?? {
+                                    qty: 1,
+                                    reason: 'defect' as ReturnReason,
+                                    condition: 'good' as ReturnItemCondition,
+                                    refundMethod: 'cash' as ReturnRefundMethod,
+                                  };
                                   setItemReturnDrafts((prev) => ({
                                     ...prev,
-                                    [item.id]: { ...prev[item.id], refundMethod: e.target.value as ReturnRefundMethod },
-                                  }))
-                                }
+                                    [item.id]: { ...currentDraft, refundMethod: e.target.value as ReturnRefundMethod },
+                                  }));
+                                }}
                               >
                                 {(Object.entries(REFUND_LABELS) as [ReturnRefundMethod, string][]).map(([k, v]) => (
                                   <option key={k} value={k}>
@@ -602,7 +633,7 @@ export default function ChapanOrderDetailPage() {
                             </div>
                           </div>
                           <div className={styles.itemReturnActions}>
-                            <button className={styles.itemReturnCancel} onClick={() => setOpenReturnItemId(null)}>
+                            <button type="button" className={styles.itemReturnCancel} onClick={() => setOpenReturnItemId(null)}>
                               Отмена
                             </button>
                             <button
