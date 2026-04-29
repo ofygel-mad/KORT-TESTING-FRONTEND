@@ -1,36 +1,23 @@
-import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Clock, Trash2 } from 'lucide-react';
-import { useReturns, useConfirmReturn, useDeleteReturnDraft } from '../../../../entities/order/queries';
-import type { ReturnReason, ReturnStatus } from '../../../../entities/order/types';
+import { useReturns } from '../../../../entities/order/queries';
+import type { ReturnReason } from '../../../../entities/order/types';
 import { RETURN_REASON_LABELS } from '../../../../entities/order/types';
 import styles from './ChapanReturns.module.css';
-
-type TabKey = '' | 'draft' | 'confirmed';
-
-const TABS: { key: TabKey; label: string }[] = [
-  { key: '', label: 'Все' },
-  { key: 'draft', label: 'Черновики' },
-  { key: 'confirmed', label: 'Подтверждённые' },
-];
 
 function fmt(n: number) {
   return `${new Intl.NumberFormat('ru-KZ', { maximumFractionDigits: 0 }).format(n)} ₸`;
 }
 
 function fmtDate(d: string) {
-  return new Date(d).toLocaleDateString('ru-KZ', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(d).toLocaleDateString('ru-KZ', { day: '2-digit', month: 'short' });
 }
 
 export default function ChapanReturnsPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<TabKey>('');
 
-  const { data, isLoading, isError } = useReturns({ status: tab || undefined });
-  const returns = data?.results ?? [];
-
-  const confirmReturn = useConfirmReturn();
-  const deleteDraft = useDeleteReturnDraft();
+  const { data, isLoading, isError } = useReturns({});
+  const allReturns = data?.results ?? [];
+  const confirmed = allReturns.filter((r) => r.status === 'confirmed');
 
   if (isLoading) {
     return (
@@ -48,84 +35,140 @@ export default function ChapanReturnsPage() {
     );
   }
 
+  // Compute stats from confirmed returns only
+  const totalCount = confirmed.length;
+  const totalAmount = confirmed.reduce((s, r) => s + r.totalRefundAmount, 0);
+
+  const byReason = confirmed.reduce(
+    (acc, r) => {
+      const key = r.reason;
+      if (!acc[key]) {
+        acc[key] = { count: 0, amount: 0 };
+      }
+      acc[key].count += 1;
+      acc[key].amount += r.totalRefundAmount;
+      return acc;
+    },
+    {} as Record<ReturnReason, { count: number; amount: number }>
+  );
+
+  const reasonsSorted = (Object.entries(byReason) as [ReturnReason, { count: number; amount: number }][])
+    .sort((a, b) => b[1].count - a[1].count);
+
+  const topReason = reasonsSorted[0]?.[0];
+
+  // Top returned products
+  const byProduct: Record<string, { name: string; count: number; amount: number }> = {};
+  confirmed.forEach((ret) => {
+    ret.items.forEach((item) => {
+      const key = `${item.productName}/${item.size}`;
+      if (!byProduct[key]) {
+        byProduct[key] = { name: `${item.productName} / ${item.size}`, count: 0, amount: 0 };
+      }
+      byProduct[key].count += item.qty;
+      byProduct[key].amount += item.refundAmount;
+    });
+  });
+
+  const productsSorted = Object.values(byProduct).sort((a, b) => b.count - a.count).slice(0, 5);
+
+  // Recent returns
+  const recent = [...confirmed].sort((a, b) => b.createdAt.localeCompare(a.createdAt)).slice(0, 10);
+
   return (
     <div className={styles.root}>
       <div className={styles.header}>
         <h1 className={styles.title}>Возвраты</h1>
-        <span className={styles.count}>{returns.length}</span>
       </div>
 
-      <div className={styles.tabs}>
-        {TABS.map((t) => (
-          <button
-            key={t.key}
-            className={`${styles.tab} ${tab === t.key ? styles.tabActive : ''}`}
-            onClick={() => setTab(t.key)}
-          >
-            {t.label}
-          </button>
-        ))}
-      </div>
-
-      {returns.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>↩</div>
-          <div className={styles.emptyText}>Возвратов нет</div>
+      <div className={styles.summaryCards}>
+        <div className={styles.card}>
+          <div className={styles.cardValue}>{totalCount}</div>
+          <div className={styles.cardLabel}>возвратов</div>
         </div>
-      ) : (
-        <div className={styles.list}>
-          {returns.map((ret) => (
-            <div key={ret.id} className={styles.row}>
-              <div className={styles.rowMain} onClick={() => navigate(`/workzone/chapan/orders/${ret.orderId}`)}>
-                <div className={styles.rowTop}>
-                  <span className={styles.returnNum}>{ret.returnNumber}</span>
-                  <span className={styles.orderNum}>Заказ #{ret.order.orderNumber}</span>
-                  <span className={`${styles.statusBadge} ${ret.status === 'confirmed' ? styles.statusConfirmed : styles.statusDraft}`}>
-                    {ret.status === 'confirmed' ? 'Подтверждён' : 'Черновик'}
-                  </span>
-                </div>
-                <div className={styles.rowBottom}>
-                  <span className={styles.clientName}>{ret.order.clientName}</span>
-                  <span className={styles.reason}>{RETURN_REASON_LABELS[ret.reason as ReturnReason]}</span>
-                  <span className={styles.date}>{fmtDate(ret.createdAt)}</span>
-                  {ret.items.length > 0 && (
-                    <span className={styles.itemsCount}>{ret.items.length} поз.</span>
-                  )}
-                </div>
-              </div>
+        <div className={styles.card}>
+          <div className={styles.cardValue}>{fmt(totalAmount)}</div>
+          <div className={styles.cardLabel}>возвращено</div>
+        </div>
+        {topReason && (
+          <div className={styles.card}>
+            <div className={styles.cardValue}>{RETURN_REASON_LABELS[topReason]}</div>
+            <div className={styles.cardLabel}>ТОП причина</div>
+          </div>
+        )}
+      </div>
 
-              <div className={styles.rowRight}>
-                <span className={styles.amount}>−{fmt(ret.totalRefundAmount)}</span>
-                {ret.status === 'draft' && (
-                  <div className={styles.draftActions}>
-                    <button
-                      className={styles.confirmBtn}
-                      onClick={() => confirmReturn.mutate(ret.id)}
-                      disabled={confirmReturn.isPending}
-                      title="Подтвердить возврат"
-                    >
-                      <CheckCircle2 size={13} />
-                      Подтвердить
-                    </button>
-                    <button
-                      className={styles.deleteBtn}
-                      onClick={() => deleteDraft.mutate(ret.id)}
-                      disabled={deleteDraft.isPending}
-                      title="Удалить черновик"
-                    >
-                      <Trash2 size={13} />
-                    </button>
+      <div className={styles.grid}>
+        <div className={styles.tableSection}>
+          <div className={styles.sectionTitle}>По причинам</div>
+          {reasonsSorted.length === 0 ? (
+            <div className={styles.emptyState}>Нет данных</div>
+          ) : (
+            <table className={styles.table}>
+              <tbody>
+                {reasonsSorted.map(([reason, stats]) => (
+                  <tr key={reason} className={styles.tableRow}>
+                    <td className={styles.tableCell}>{RETURN_REASON_LABELS[reason]}</td>
+                    <td className={`${styles.tableCell} ${styles.tableRight}`}>
+                      {stats.count}
+                    </td>
+                    <td className={`${styles.tableCell} ${styles.tableRightAmount}`}>
+                      {fmt(stats.amount)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <div className={styles.tableSection}>
+          <div className={styles.sectionTitle}>Последние возвраты</div>
+          {recent.length === 0 ? (
+            <div className={styles.emptyState}>Нет возвратов</div>
+          ) : (
+            <div className={styles.recentList}>
+              {recent.map((ret) => (
+                <button
+                  key={ret.id}
+                  type="button"
+                  className={styles.recentItem}
+                  onClick={() => navigate(`/workzone/chapan/orders/${ret.orderId}`)}
+                >
+                  <div className={styles.recentItemLeft}>
+                    <span className={styles.recentNum}>{ret.returnNumber}</span>
+                    <span className={styles.recentClient}>{ret.order.clientName}</span>
                   </div>
-                )}
-                {ret.status === 'confirmed' && (
-                  <span className={styles.confirmedBy}>
-                    <CheckCircle2 size={11} />
-                    {ret.confirmedBy}
-                  </span>
-                )}
-              </div>
+                  <div className={styles.recentItemRight}>
+                    <span className={styles.recentReason}>{RETURN_REASON_LABELS[ret.reason]}</span>
+                    <span className={styles.recentAmount}>−{fmt(ret.totalRefundAmount)}</span>
+                  </div>
+                  <span className={styles.recentDate}>{fmtDate(ret.createdAt)}</span>
+                </button>
+              ))}
             </div>
-          ))}
+          )}
+        </div>
+      </div>
+
+      {productsSorted.length > 0 && (
+        <div className={styles.tableSection}>
+          <div className={styles.sectionTitle}>Топ возвращаемые товары</div>
+          <table className={styles.table}>
+            <tbody>
+              {productsSorted.map((product) => (
+                <tr key={product.name} className={styles.tableRow}>
+                  <td className={styles.tableCell}>{product.name}</td>
+                  <td className={`${styles.tableCell} ${styles.tableRight}`}>
+                    {product.count} шт.
+                  </td>
+                  <td className={`${styles.tableCell} ${styles.tableRightAmount}`}>
+                    {fmt(product.amount)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

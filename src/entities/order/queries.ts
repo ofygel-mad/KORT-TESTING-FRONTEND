@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { ordersApi, usersApi, productionApi, chapanSettingsApi, invoicesApi, changeRequestsApi, attachmentsApi, returnsApi, chapanClientsApi } from './api';
+import { warehouseKeys } from '../warehouse/queries';
 import type {
   CreateOrderDto,
   UpdateOrderDto,
@@ -722,6 +723,7 @@ export const useConfirmReturn = () => {
     onSuccess: (data) => {
       qc.invalidateQueries({ queryKey: orderKeys.returns });
       qc.invalidateQueries({ queryKey: orderKeys.detail(data.orderId) });
+      qc.invalidateQueries({ queryKey: warehouseKeys.all });
       toast.success(`Возврат ${data.returnNumber} подтверждён, склад пополнен`);
     },
     onError: (error) => toast.error(readApiErrorMessage(error, 'Не удалось подтвердить возврат')),

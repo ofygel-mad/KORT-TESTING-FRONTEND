@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { Building2, CalendarDays, CheckCircle2, Clock, CreditCard, Megaphone, MessageSquare, AlertTriangle, Pencil, ArchiveIcon, RotateCcw, Download, Package, Star, User, XCircle, FileText, Paperclip, Trash2, Upload, Undo2 } from 'lucide-react';
-import { useOrder, useChangeOrderStatus, useAddPayment, useAddOrderActivity, useRestoreOrder, useCloseOrder, useCreateInvoice, useSetRequiresInvoice, useRouteSingleItem, useUploadAttachment, useDeleteAttachment, useReassignManager, useOrgManagers, useReturns, useCreateReturn, useConfirmReturn, useDeleteReturnDraft } from '../../../../entities/order/queries';
+import { useOrder, useChangeOrderStatus, useAddPayment, useAddOrderActivity, useRestoreOrder, useCloseOrder, useCreateInvoice, useSetRequiresInvoice, useRouteSingleItem, useUploadAttachment, useDeleteAttachment, useReassignManager, useOrgManagers, useReturns, useCreateReturn, useConfirmReturn } from '../../../../entities/order/queries';
 import { useChapanPermissions } from '../../../../shared/hooks/useChapanPermissions';
 import { useProductsAvailability } from '../../../../entities/warehouse/queries';
 import type { OrderItem, OrderItemFulfillmentMode, OrderStatus, Priority, Urgency, OrderAttachment, ReturnReason, ReturnRefundMethod, ReturnItemCondition, RETURN_REASON_LABELS, RETURN_REFUND_METHOD_LABELS } from '../../../../entities/order/types';
@@ -198,57 +198,60 @@ export default function ChapanOrderDetailPage() {
   const [reassignOpen, setReassignOpen] = useState(false);
   const [selectedNewManagerId, setSelectedNewManagerId] = useState('');
 
-  // ── Return form state ──────────────────────────────────────────────────────
-  const [showReturnForm, setShowReturnForm] = useState(false);
-  const [returnReason, setReturnReason] = useState<ReturnReason>('defect');
-  const [returnNotes, setReturnNotes] = useState('');
-  const [returnRefundMethod, setReturnRefundMethod] = useState<ReturnRefundMethod>('cash');
-  type ReturnItemDraft = { selected: boolean; qty: number; condition: ReturnItemCondition };
-  const [returnItemDrafts, setReturnItemDrafts] = useState<Record<string, ReturnItemDraft>>({});
+  // ── Per-item return state ──────────────────────────────────────────────────
+  const [openReturnItemId, setOpenReturnItemId] = useState<string | null>(null);
+  type ItemReturnDraft = { qty: number; reason: ReturnReason; condition: ReturnItemCondition; refundMethod: ReturnRefundMethod };
+  const [itemReturnDrafts, setItemReturnDrafts] = useState<Record<string, ItemReturnDraft>>({});
 
   const { data: returnsData } = useReturns({ orderId: id! });
   const existingReturns = returnsData?.results ?? [];
+  const returnedItemIds = new Set(
+    existingReturns
+      .filter((r) => r.status === 'confirmed')
+      .flatMap((r) => r.items.map((i) => i.orderItemId))
+      .filter(Boolean)
+  );
   const createReturn = useCreateReturn();
   const confirmReturn = useConfirmReturn();
-  const deleteReturnDraft = useDeleteReturnDraft();
 
-  function openReturnForm() {
-    const drafts: Record<string, ReturnItemDraft> = {};
-    for (const item of order?.items ?? []) {
-      drafts[item.id] = { selected: true, qty: item.quantity, condition: 'good' };
-    }
-    setReturnItemDrafts(drafts);
-    setReturnReason('defect');
-    setReturnNotes('');
-    setReturnRefundMethod('cash');
-    setShowReturnForm(true);
-  }
-
-  async function handleSubmitReturn() {
+  function handleItemReturn(item: OrderItem) {
     if (!order) return;
-    const items = (order.items ?? [])
-      .filter((item) => returnItemDrafts[item.id]?.selected)
-      .map((item) => ({
-        orderItemId: item.id,
-        productName: item.productName,
-        size: item.size,
-        color: item.color ?? undefined,
-        gender: item.gender ?? undefined,
-        qty: returnItemDrafts[item.id]?.qty ?? item.quantity,
-        unitPrice: item.unitPrice,
-        refundAmount: (returnItemDrafts[item.id]?.qty ?? item.quantity) * item.unitPrice,
-        condition: returnItemDrafts[item.id]?.condition ?? 'good',
-      }));
-    if (items.length === 0) return;
-
+    const draft = itemReturnDrafts[item.id] ?? {
+      qty: 1,
+      reason: 'defect' as ReturnReason,
+      condition: 'good' as ReturnItemCondition,
+      refundMethod: 'cash' as ReturnRefundMethod,
+    };
     createReturn.mutate(
-      { orderId: order.id, reason: returnReason, reasonNotes: returnNotes || undefined, refundMethod: returnRefundMethod, items },
       {
-        onSuccess: (draft) => {
-          setShowReturnForm(false);
-          confirmReturn.mutate(draft.id);
-        },
+        orderId: order.id,
+        reason: draft.reason,
+        refundMethod: draft.refundMethod,
+        items: [
+          {
+            orderItemId: item.id,
+            productName: item.productName,
+            size: item.size,
+            color: item.color ?? undefined,
+            gender: item.gender ?? undefined,
+            qty: draft.qty,
+            unitPrice: item.unitPrice,
+            refundAmount: draft.qty * item.unitPrice,
+            condition: draft.condition,
+          },
+        ],
       },
+      {
+        onSuccess: (createdReturn) => {
+          confirmReturn.mutate(createdReturn.id);
+          setOpenReturnItemId(null);
+          setItemReturnDrafts((prev) => {
+            const next = { ...prev };
+            delete next[item.id];
+            return next;
+          });
+        },
+      }
     );
   }
 
@@ -504,6 +507,114 @@ export default function ChapanOrderDetailPage() {
                           </button>
                         </div>
                       )}
+                      {isTerminal && ['shipped', 'completed'].includes(order.status) && (
+                        <div className={styles.itemReturnRow}>
+                          {!returnedItemIds.has(item.id) ? (
+                            <button
+                              className={styles.returnItemBtn}
+                              onClick={() => setOpenReturnItemId((id) => (id === item.id ? null : item.id))}
+                            >
+                              Возврат
+                            </button>
+                          ) : (
+                            <span className={styles.returnedBadge}>↩ возвращён</span>
+                          )}
+                        </div>
+                      )}
+                      {openReturnItemId === item.id && (
+                        <div className={styles.itemReturnExpand}>
+                          <div className={styles.itemReturnGrid}>
+                            <div className={styles.itemReturnField}>
+                              <label className={styles.itemReturnLabel}>Кол-во</label>
+                              <select
+                                className={styles.itemReturnSelect}
+                                value={itemReturnDrafts[item.id]?.qty ?? 1}
+                                onChange={(e) =>
+                                  setItemReturnDrafts((prev) => ({
+                                    ...prev,
+                                    [item.id]: { ...prev[item.id], qty: parseInt(e.target.value) },
+                                  }))
+                                }
+                              >
+                                {Array.from({ length: item.quantity }, (_, i) => i + 1).map((n) => (
+                                  <option key={n} value={n}>
+                                    {n}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className={styles.itemReturnField}>
+                              <label className={styles.itemReturnLabel}>Причина</label>
+                              <select
+                                className={styles.itemReturnSelect}
+                                value={itemReturnDrafts[item.id]?.reason ?? 'defect'}
+                                onChange={(e) =>
+                                  setItemReturnDrafts((prev) => ({
+                                    ...prev,
+                                    [item.id]: { ...prev[item.id], reason: e.target.value as ReturnReason },
+                                  }))
+                                }
+                              >
+                                {(Object.entries(REASON_LABELS) as [ReturnReason, string][]).map(([k, v]) => (
+                                  <option key={k} value={k}>
+                                    {v}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className={styles.itemReturnField}>
+                              <label className={styles.itemReturnLabel}>Состояние</label>
+                              <select
+                                className={styles.itemReturnSelect}
+                                value={itemReturnDrafts[item.id]?.condition ?? 'good'}
+                                onChange={(e) =>
+                                  setItemReturnDrafts((prev) => ({
+                                    ...prev,
+                                    [item.id]: { ...prev[item.id], condition: e.target.value as ReturnItemCondition },
+                                  }))
+                                }
+                              >
+                                {(Object.entries(RETURN_CONDITION_LABELS) as [ReturnItemCondition, string][]).map(([k, v]) => (
+                                  <option key={k} value={k}>
+                                    {v}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                            <div className={styles.itemReturnField}>
+                              <label className={styles.itemReturnLabel}>Способ</label>
+                              <select
+                                className={styles.itemReturnSelect}
+                                value={itemReturnDrafts[item.id]?.refundMethod ?? 'cash'}
+                                onChange={(e) =>
+                                  setItemReturnDrafts((prev) => ({
+                                    ...prev,
+                                    [item.id]: { ...prev[item.id], refundMethod: e.target.value as ReturnRefundMethod },
+                                  }))
+                                }
+                              >
+                                {(Object.entries(REFUND_LABELS) as [ReturnRefundMethod, string][]).map(([k, v]) => (
+                                  <option key={k} value={k}>
+                                    {v}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                          <div className={styles.itemReturnActions}>
+                            <button className={styles.itemReturnCancel} onClick={() => setOpenReturnItemId(null)}>
+                              Отмена
+                            </button>
+                            <button
+                              className={styles.itemReturnSubmit}
+                              onClick={() => handleItemReturn(item)}
+                              disabled={createReturn.isPending || confirmReturn.isPending}
+                            >
+                              {createReturn.isPending || confirmReturn.isPending ? 'Оформление...' : 'Оформить возврат'}
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                     <span className={styles.itemPrice}>{fmt(item.quantity * item.unitPrice)}</span>
                   </div>
@@ -667,95 +778,6 @@ export default function ChapanOrderDetailPage() {
               )}
 
               {!['completed', 'cancelled'].includes(order.status) && <button className={`${styles.actionBtn} ${styles.actionDanger}`} onClick={() => setCancelConfirmOpen(true)} disabled={changeStatus.isPending}>Отменить заказ</button>}
-
-              {['shipped', 'completed'].includes(order.status) && !showReturnForm && (
-                <button className={`${styles.actionBtn} ${styles.actionReturn}`} onClick={openReturnForm}>
-                  <Undo2 size={13} />
-                  Оформить возврат
-                </button>
-              )}
-
-              {['shipped', 'completed'].includes(order.status) && showReturnForm && (
-                <div className={styles.returnForm}>
-                  <div className={styles.returnFormTitle}>Акт возврата</div>
-
-                  <div className={styles.returnField}>
-                    <label className={styles.returnLabel}>Причина</label>
-                    <select className={styles.returnSelect} value={returnReason} onChange={(e) => setReturnReason(e.target.value as ReturnReason)}>
-                      {(Object.entries(REASON_LABELS) as [ReturnReason, string][]).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className={styles.returnField}>
-                    <label className={styles.returnLabel}>Метод возврата денег</label>
-                    <select className={styles.returnSelect} value={returnRefundMethod} onChange={(e) => setReturnRefundMethod(e.target.value as ReturnRefundMethod)}>
-                      {(Object.entries(REFUND_LABELS) as [ReturnRefundMethod, string][]).map(([k, v]) => (
-                        <option key={k} value={k}>{v}</option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div className={styles.returnField}>
-                    <label className={styles.returnLabel}>Позиции возврата</label>
-                    <div className={styles.returnItems}>
-                      {(order.items ?? []).map((item) => {
-                        const draft = returnItemDrafts[item.id] ?? { selected: true, qty: item.quantity, condition: 'good' as ReturnItemCondition };
-                        return (
-                          <div key={item.id} className={`${styles.returnItem} ${!draft.selected ? styles.returnItemDisabled : ''}`}>
-                            <input
-                              type="checkbox"
-                              checked={draft.selected}
-                              onChange={(e) => setReturnItemDrafts((prev) => ({ ...prev, [item.id]: { ...draft, selected: e.target.checked } }))}
-                            />
-                            <div className={styles.returnItemName}>
-                              <span>{item.productName}</span>
-                              <span className={styles.returnItemMeta}>{item.size}{item.color ? ` · ${item.color}` : ''}</span>
-                            </div>
-                            <input
-                              type="number"
-                              min={1}
-                              max={item.quantity}
-                              className={styles.returnQtyInput}
-                              value={draft.qty}
-                              disabled={!draft.selected}
-                              onChange={(e) => setReturnItemDrafts((prev) => ({ ...prev, [item.id]: { ...draft, qty: Math.max(1, Math.min(item.quantity, Number(e.target.value))) } }))}
-                            />
-                            <select
-                              className={styles.returnConditionSelect}
-                              value={draft.condition}
-                              disabled={!draft.selected}
-                              onChange={(e) => setReturnItemDrafts((prev) => ({ ...prev, [item.id]: { ...draft, condition: e.target.value as ReturnItemCondition } }))}
-                            >
-                              {(Object.entries(RETURN_CONDITION_LABELS) as [ReturnItemCondition, string][]).map(([k, v]) => (
-                                <option key={k} value={k}>{v}</option>
-                              ))}
-                            </select>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className={styles.returnField}>
-                    <label className={styles.returnLabel}>Примечание (необязательно)</label>
-                    <input className={styles.returnSelect} value={returnNotes} onChange={(e) => setReturnNotes(e.target.value)} placeholder="Доп. информация о возврате..." />
-                  </div>
-
-                  <div className={styles.returnFormActions}>
-                    <button
-                      className={styles.returnSubmitBtn}
-                      onClick={handleSubmitReturn}
-                      disabled={createReturn.isPending || confirmReturn.isPending || !(order.items ?? []).some((i) => returnItemDrafts[i.id]?.selected)}
-                    >
-                      <Undo2 size={13} />
-                      {createReturn.isPending || confirmReturn.isPending ? 'Оформление...' : 'Подтвердить возврат'}
-                    </button>
-                    <button className={styles.returnCancelBtn} onClick={() => setShowReturnForm(false)}>Отмена</button>
-                  </div>
-                </div>
-              )}
 
               {order.status === 'completed' && (
                 <>
