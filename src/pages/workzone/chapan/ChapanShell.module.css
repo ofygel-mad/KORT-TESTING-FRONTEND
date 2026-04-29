@@ -22,7 +22,7 @@
   --ch-accent:        var(--fill-accent);
   --ch-accent-soft:   var(--fill-accent-subtle);
   --ch-accent-border: color-mix(in srgb, var(--fill-accent) 28%, var(--border-default));
-  --ch-accent-glow:   rgba(154,74,27,0.14);
+  --ch-accent-glow: color-mix(in srgb, var(--fill-accent) 14%, transparent);
 
   display: flex;
   flex-direction: column;

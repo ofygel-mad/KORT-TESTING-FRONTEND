@@ -1,0 +1,257 @@
+.catalog {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.cardSkeleton {
+  padding: var(--space-3);
+  background: var(--wh-surface);
+  border: 1px solid var(--wh-border);
+  border-radius: var(--wh-r);
+}
+
+/* Product Card */
+
+.productCard {
+  background: var(--wh-surface);
+  border: 1px solid var(--wh-border);
+  border-radius: var(--wh-r);
+  overflow: hidden;
+  box-shadow: var(--wh-shadow-sm);
+  transition: all 0.2s;
+}
+
+.productCard:hover {
+  border-color: var(--wh-border-strong);
+  box-shadow: var(--wh-shadow-md);
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  border: none;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.cardHeader:hover {
+  background: var(--wh-surface-inset);
+}
+
+.chevron {
+  flex-shrink: 0;
+  color: var(--wh-text-2);
+  transition: transform 0.2s;
+}
+
+.chevron.expanded {
+  transform: rotate(180deg);
+}
+
+.cardTitleGroup {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.cardIcon {
+  flex-shrink: 0;
+  color: var(--wh-text-2);
+}
+
+.cardTitle {
+  font-weight: 600;
+  color: var(--wh-text);
+  word-break: break-word;
+}
+
+.cardSubtitle {
+  font-size: 12px;
+  color: var(--wh-text-3);
+  margin-top: 4px;
+}
+
+.cardBody {
+  border-top: 1px solid var(--wh-border);
+  padding: var(--space-3);
+  background: var(--wh-surface-inset);
+}
+
+/* Sub-groups */
+
+.subgroup {
+  margin-bottom: var(--space-2);
+}
+
+.subgroupHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-2);
+  border: 1px solid var(--wh-border);
+  background: var(--wh-surface);
+  border-radius: var(--wh-r-sm);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--wh-text);
+  transition: all 0.15s;
+}
+
+.subgroupHeader:hover {
+  background: var(--wh-surface-muted);
+}
+
+.subgroupTitle {
+  flex: 1;
+}
+
+.subgroupBadge {
+  font-size: 12px;
+  color: var(--wh-text-2);
+  background: var(--wh-accent-light);
+  padding: 2px 6px;
+  border-radius: var(--wh-r-xs);
+  color: var(--wh-accent);
+}
+
+.subgroupBody {
+  margin-top: var(--space-1);
+  padding: var(--space-2);
+  background: var(--wh-surface);
+  border: 1px solid var(--wh-border);
+  border-radius: var(--wh-r-sm);
+}
+
+/* Breakdown rows */
+
+.breakdownRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-1) 0;
+  border-bottom: 1px solid var(--wh-border-soft);
+  font-size: 13px;
+}
+
+.breakdownRow:last-child {
+  border-bottom: none;
+}
+
+.breakdownLabel {
+  color: var(--wh-text);
+  font-weight: 500;
+}
+
+.breakdownValue {
+  color: var(--wh-accent);
+  font-weight: 600;
+}
+
+.breakdownReserved {
+  font-size: 11px;
+  color: var(--wh-text-3);
+}
+
+/* SKU Table */
+
+.skuTable {
+  margin-top: var(--space-1);
+  border: 1px solid var(--wh-border);
+  border-radius: var(--wh-r-sm);
+  overflow: hidden;
+}
+
+.skuTableHead {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 1fr;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  background: var(--wh-surface-inset);
+  border-bottom: 1px solid var(--wh-border);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--wh-text-3);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.skuCol {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.skuTableRow {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr 0.8fr 0.8fr 1fr;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--wh-border-soft);
+  font-size: 13px;
+  color: var(--wh-text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.skuTableRow:hover {
+  background: var(--wh-surface-muted);
+}
+
+.skuTableRow:last-child {
+  border-bottom: none;
+}
+
+/* View modes */
+
+.view-compact .cardHeader {
+  padding: var(--space-2);
+}
+
+.view-compact .cardBody {
+  padding: var(--space-2);
+}
+
+.view-compact .cardIcon {
+  display: none;
+}
+
+.view-compact .cardTitle {
+  font-size: 14px;
+}
+
+/* Mobile */
+
+@media (max-width: 768px) {
+  .catalog {
+    gap: var(--space-2);
+  }
+
+  .cardHeader {
+    gap: var(--space-1);
+  }
+
+  .cardIcon {
+    display: none;
+  }
+
+  .skuTableHead,
+  .skuTableRow {
+    grid-template-columns: 1fr 0.7fr 0.7fr;
+    gap: var(--space-0-5);
+  }
+
+  .skuCol {
+    font-size: 12px;
+  }
+}

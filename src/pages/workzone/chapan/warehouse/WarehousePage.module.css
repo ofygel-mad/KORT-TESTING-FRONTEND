@@ -1,0 +1,19 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  background: var(--wh-bg);
+  color: var(--wh-text);
+}
+
+.content {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+@media (max-width: 640px) {
+  .content {
+    padding: var(--space-3);
+  }
+}

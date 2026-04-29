@@ -62,7 +62,7 @@ const ResetPasswordPage = makePage(() => import('../../pages/auth/reset-password
 
 // Chapan Workzone — own layout
 const ChapanShell           = makePage(() => import('../../pages/workzone/chapan/ChapanShell'));
-const ChapanWarehousePage   = makePage(() => import('../../pages/workzone/chapan/warehouse/ChapanWarehouse'));
+const ChapanWarehousePage   = makePage(() => import('../../pages/workzone/chapan/warehouse/WarehousePage'));
 const ChapanOrdersPage   = makePage(() => import('../../pages/workzone/chapan/orders/ChapanOrders'));
 const ChapanNewOrderPage = makePage(() => import('../../pages/workzone/chapan/orders/ChapanNewOrder'));
 const ChapanOrderDetailPage = makePage(() => import('../../pages/workzone/chapan/orders/ChapanOrderDetail'));

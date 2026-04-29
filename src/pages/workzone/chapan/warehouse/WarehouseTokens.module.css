@@ -1,0 +1,120 @@
+.whRoot {
+  /* Backgrounds — warm sand palette */
+  --wh-bg: #f7f5f0;
+  --wh-surface: var(--bg-surface);
+  --wh-surface-inset: #faf8f4;
+  --wh-surface-muted: #f1eee8;
+
+  /* Text — always via globals for automatic dark theme support */
+  --wh-text: var(--text-primary);
+  --wh-text-2: var(--text-secondary);
+  --wh-text-3: var(--text-tertiary);
+  --wh-text-4: var(--text-placeholder);
+
+  /* Borders */
+  --wh-border: #e5dfd5;
+  --wh-border-soft: #ede8e0;
+  --wh-border-strong: #d9d0c3;
+
+  /* Accent — warehouse-only warm brown */
+  --wh-accent: #8a6a42;
+  --wh-accent-hover: #755833;
+  --wh-accent-light: rgba(138, 106, 66, 0.11);
+  --wh-accent-medium: rgba(138, 106, 66, 0.18);
+
+  /* Status colors — desaturated palette */
+  --wh-ok: #4f7a5a;
+  --wh-ok-light: rgba(79, 122, 90, 0.11);
+  --wh-ok-border: rgba(79, 122, 90, 0.2);
+
+  --wh-warn: #a87932;
+  --wh-warn-light: rgba(168, 121, 50, 0.11);
+  --wh-warn-border: rgba(168, 121, 50, 0.2);
+
+  --wh-err: #a14d42;
+  --wh-err-light: rgba(161, 77, 66, 0.11);
+  --wh-err-border: rgba(161, 77, 66, 0.2);
+
+  --wh-info: #5a7a94;
+  --wh-info-light: rgba(90, 122, 148, 0.11);
+  --wh-info-border: rgba(90, 122, 148, 0.2);
+
+  /* Radius and shadows */
+  --wh-r: 12px;
+  --wh-r-sm: 8px;
+  --wh-r-xs: 6px;
+  --wh-shadow-sm: 0 1px 3px rgba(29, 27, 24, 0.07);
+  --wh-shadow-md: 0 4px 16px rgba(29, 27, 24, 0.09);
+}
+
+/* Dark theme override */
+[data-theme="dark"] .whRoot {
+  --wh-bg: var(--bg-canvas);
+  --wh-surface-inset: var(--bg-surface-inset);
+  --wh-surface-muted: var(--bg-muted);
+  --wh-border: var(--border-subtle);
+  --wh-border-soft: var(--border-subtle);
+  --wh-border-strong: var(--border-default);
+
+  /* Warm accent, lightened for dark background readability */
+  --wh-accent: #c4975a;
+  --wh-accent-hover: #d4a96a;
+  --wh-accent-light: rgba(196, 151, 90, 0.14);
+  --wh-accent-medium: rgba(196, 151, 90, 0.22);
+
+  /* Status colors for dark theme */
+  --wh-ok: #6aaa7e;
+  --wh-ok-light: rgba(106, 170, 126, 0.14);
+  --wh-ok-border: rgba(106, 170, 126, 0.26);
+
+  --wh-warn: #c49040;
+  --wh-warn-light: rgba(196, 144, 64, 0.14);
+  --wh-warn-border: rgba(196, 144, 64, 0.26);
+
+  --wh-err: #c46860;
+  --wh-err-light: rgba(196, 104, 96, 0.14);
+  --wh-err-border: rgba(196, 104, 96, 0.26);
+
+  --wh-info: #7a9ab4;
+  --wh-info-light: rgba(122, 154, 180, 0.14);
+  --wh-info-border: rgba(122, 154, 180, 0.26);
+
+  --wh-shadow-sm: var(--shadow-sm);
+  --wh-shadow-md: var(--shadow-md);
+}
+
+/* OS-level dark preference fallback */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .whRoot {
+    --wh-bg: var(--bg-canvas);
+    --wh-surface-inset: var(--bg-surface-inset);
+    --wh-surface-muted: var(--bg-muted);
+    --wh-border: var(--border-subtle);
+    --wh-border-soft: var(--border-subtle);
+    --wh-border-strong: var(--border-default);
+
+    --wh-accent: #c4975a;
+    --wh-accent-hover: #d4a96a;
+    --wh-accent-light: rgba(196, 151, 90, 0.14);
+    --wh-accent-medium: rgba(196, 151, 90, 0.22);
+
+    --wh-ok: #6aaa7e;
+    --wh-ok-light: rgba(106, 170, 126, 0.14);
+    --wh-ok-border: rgba(106, 170, 126, 0.26);
+
+    --wh-warn: #c49040;
+    --wh-warn-light: rgba(196, 144, 64, 0.14);
+    --wh-warn-border: rgba(196, 144, 64, 0.26);
+
+    --wh-err: #c46860;
+    --wh-err-light: rgba(196, 104, 96, 0.14);
+    --wh-err-border: rgba(196, 104, 96, 0.26);
+
+    --wh-info: #7a9ab4;
+    --wh-info-light: rgba(122, 154, 180, 0.14);
+    --wh-info-border: rgba(122, 154, 180, 0.26);
+
+    --wh-shadow-sm: var(--shadow-sm);
+    --wh-shadow-md: var(--shadow-md);
+  }
+}
