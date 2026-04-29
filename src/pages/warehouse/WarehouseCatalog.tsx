@@ -167,7 +167,6 @@ function FieldDefinitionRow({ def }: { def: WarehouseFieldDefinition }) {
             isPending={updateDef.isPending}
           />
         </span>
-        <span className={styles.defType}>{INPUT_TYPE_LABEL[def.inputType] ?? def.inputType}</span>
         <span className={styles.defOptionCount}>{def.options.length} зн.</span>
         {!def.isSystem && (
           <button
