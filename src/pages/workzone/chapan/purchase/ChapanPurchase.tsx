@@ -3,6 +3,7 @@ import { Download, Plus, ShoppingCart, Trash2 } from 'lucide-react';
 import { AlertCircle } from 'lucide-react';
 import { useManualInvoices, useDeleteManualInvoice } from '../../../../entities/purchase/queries';
 import { purchaseApi } from '../../../../entities/purchase/api';
+import { getFilenameFromContentDisposition, triggerBrowserDownload } from '../../../../shared/lib/browserDownload';
 import ManualInvoiceForm from './ManualInvoiceForm';
 import styles from './ChapanPurchase.module.css';
 
@@ -20,6 +21,7 @@ function fmt(n: number) {
 export default function ChapanPurchasePage() {
   const [tab, setTab] = useState<Tab>('workshop');
   const [formOpen, setFormOpen] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const { data: workshopData, isLoading: wLoading, isError: wError } = useManualInvoices('workshop');
   const { data: marketData, isLoading: mLoading, isError: mError } = useManualInvoices('market');
@@ -30,6 +32,25 @@ export default function ChapanPurchasePage() {
   const current = tab === 'workshop' ? workshopList : marketList;
   const isLoading = wLoading || mLoading;
   const isError = wError || mError;
+
+  async function handleDownload(id: string, invoiceNum: string) {
+    if (downloadingId) return;
+
+    try {
+      setDownloadingId(id);
+      const response = await purchaseApi.download(id);
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      });
+      const filename = getFilenameFromContentDisposition(
+        response.headers['content-disposition'],
+        `zakup_${invoiceNum}.xlsx`,
+      );
+      triggerBrowserDownload(blob, filename);
+    } finally {
+      setDownloadingId(null);
+    }
+  }
 
   return (
     <div className={`${styles.root} kort-page-enter`}>
@@ -97,7 +118,9 @@ export default function ChapanPurchasePage() {
                     type="button"
                     className={styles.iconBtn}
                     title="Скачать XLSX"
-                    onClick={() => window.open(purchaseApi.downloadUrl(inv.id), '_blank')}
+                    aria-label="Скачать XLSX"
+                    disabled={downloadingId === inv.id}
+                    onClick={() => void handleDownload(inv.id, inv.invoiceNum)}
                   >
                     <Download size={14} />
                   </button>
@@ -105,6 +128,7 @@ export default function ChapanPurchasePage() {
                     type="button"
                     className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
                     title="Удалить"
+                    aria-label="Удалить накладную"
                     onClick={() => deleteInvoice.mutate(inv.id)}
                   >
                     <Trash2 size={14} />

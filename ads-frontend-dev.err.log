@@ -1,3 +1,0 @@
-[2m18:53:06[22m [31m[1m[vite][22m[39m [31mhttp proxy error: /api/v1/sse/?token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1LW93bmVyIiwiZW1haWwiOiJhZG1pbkBrb3J0LmxvY2FsIiwiaWF0IjoxNzc3MjEwOTE5LCJleHAiOjE3NzcyMTE4MTl9.K8gTooJxTla1TUckxwcJD2tETHptqx0_yK0URylPHTQ[39m
-Error: connect ECONNREFUSED 127.0.0.1:8000
-    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1636:16)

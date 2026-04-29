@@ -1,8 +1,14 @@
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
 import { useCreateManualInvoice } from '../../../../entities/purchase/queries';
-import { useCatalogDefinitions } from '../../../../entities/warehouse/queries';
+import { useCatalogDefinitions, useOrderFormCatalog } from '../../../../entities/warehouse/queries';
 import type { PurchaseType } from '../../../../entities/purchase/types';
+import { SearchableSelect } from '../../../../shared/ui/SearchableSelect';
+import {
+  buildPurchaseProductFieldMap,
+  getGlobalWarehouseOptions,
+  resolvePurchaseFieldOptions,
+} from './catalog';
 import styles from './ManualInvoiceForm.module.css';
 
 interface ItemRow {
@@ -15,14 +21,6 @@ interface ItemRow {
   unitPrice: string;
 }
 
-function emptyRow(): ItemRow {
-  return { productName: '', gender: '', length: '', color: '', size: '', quantity: '1', unitPrice: '' };
-}
-
-function fmt(n: number) {
-  return new Intl.NumberFormat('ru-KZ', { maximumFractionDigits: 0 }).format(n) + ' ₸';
-}
-
 interface Props {
   type: PurchaseType;
   onClose: () => void;
@@ -33,59 +31,84 @@ const TYPE_LABELS: Record<PurchaseType, string> = {
   market: 'Базар',
 };
 
+function emptyRow(): ItemRow {
+  return {
+    productName: '',
+    gender: '',
+    length: '',
+    color: '',
+    size: '',
+    quantity: '1',
+    unitPrice: '',
+  };
+}
+
+function fmt(n: number) {
+  return new Intl.NumberFormat('ru-KZ', { maximumFractionDigits: 0 }).format(n) + ' ₸';
+}
+
 export default function ManualInvoiceForm({ type, onClose }: Props) {
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
   const [rows, setRows] = useState<ItemRow[]>([emptyRow()]);
   const createInvoice = useCreateManualInvoice();
   const { data: fieldDefinitions } = useCatalogDefinitions();
-  const genderOptions: string[] = fieldDefinitions?.find(d => d.code === 'gender')?.options.map(o => o.label) ?? ['муж', 'жен'];
-  const lengthOptions: string[] = fieldDefinitions?.find(d => d.code === 'length')?.options.map(o => o.label) ?? [];
+  const { data: orderFormCatalog } = useOrderFormCatalog();
 
-  const total = rows.reduce((s, r) => {
-    const q = parseFloat(r.quantity) || 0;
-    const p = parseFloat(r.unitPrice) || 0;
-    return s + q * p;
+  const productMap = buildPurchaseProductFieldMap(orderFormCatalog);
+  const productOptions = Object.keys(productMap);
+  const globalGenderOptions = getGlobalWarehouseOptions(fieldDefinitions, 'gender');
+  const globalLengthOptions = getGlobalWarehouseOptions(fieldDefinitions, 'length');
+  const globalColorOptions = getGlobalWarehouseOptions(fieldDefinitions, 'color');
+  const globalSizeOptions = getGlobalWarehouseOptions(fieldDefinitions, 'size');
+
+  const total = rows.reduce((sum, row) => {
+    const quantity = parseFloat(row.quantity) || 0;
+    const unitPrice = parseFloat(row.unitPrice) || 0;
+    return sum + quantity * unitPrice;
   }, 0);
 
-  function updateRow(i: number, field: keyof ItemRow, value: string) {
-    setRows((prev) => prev.map((r, idx) => idx === i ? { ...r, [field]: value } : r));
+  function updateRow(index: number, field: keyof ItemRow, value: string) {
+    setRows((prev) => prev.map((row, rowIndex) => (rowIndex === index ? { ...row, [field]: value } : row)));
   }
 
-  function removeRow(i: number) {
-    setRows((prev) => prev.length > 1 ? prev.filter((_, idx) => idx !== i) : prev);
+  function removeRow(index: number) {
+    setRows((prev) => (prev.length > 1 ? prev.filter((_, rowIndex) => rowIndex !== index) : prev));
   }
 
   async function handleSave() {
-    const validRows = rows.filter((r) => r.productName.trim());
+    const validRows = rows.filter((row) => row.productName.trim());
     if (!title.trim() || validRows.length === 0) return;
 
     await createInvoice.mutateAsync({
       type,
       title: title.trim(),
       notes: notes.trim() || undefined,
-      items: validRows.map((r) => ({
-        productName: r.productName.trim(),
-        gender: r.gender.trim() || undefined,
-        length: r.length.trim() || undefined,
-        color: r.color.trim() || undefined,
-        size: r.size.trim() || undefined,
-        quantity: parseFloat(r.quantity) || 1,
-        unitPrice: parseFloat(r.unitPrice) || 0,
+      items: validRows.map((row) => ({
+        productName: row.productName.trim(),
+        gender: row.gender.trim() || undefined,
+        length: row.length.trim() || undefined,
+        color: row.color.trim() || undefined,
+        size: row.size.trim() || undefined,
+        quantity: parseFloat(row.quantity) || 1,
+        unitPrice: parseFloat(row.unitPrice) || 0,
       })),
     });
     onClose();
   }
 
-  const canSave = title.trim().length > 0 && rows.some((r) => r.productName.trim());
+  const canSave = title.trim().length > 0 && rows.some((row) => row.productName.trim());
 
   return (
-    <div className={styles.overlay} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+    <div
+      className={styles.overlay}
+      onClick={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+    >
       <div className={styles.dialog}>
         <div className={styles.dialogHeader}>
-          <span className={styles.dialogTitle}>
-            Новая накладная — {TYPE_LABELS[type]}
-          </span>
+          <span className={styles.dialogTitle}>Новая накладная - {TYPE_LABELS[type]}</span>
           <button type="button" className={styles.closeBtn} onClick={onClose}>
             <X size={14} />
           </button>
@@ -97,8 +120,9 @@ export default function ManualInvoiceForm({ type, onClose }: Props) {
             <input
               className={styles.input}
               placeholder="Например: Закуп ткани, апрель"
+              aria-label="Название накладной"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(event) => setTitle(event.target.value)}
             />
           </div>
 
@@ -107,15 +131,16 @@ export default function ManualInvoiceForm({ type, onClose }: Props) {
             <textarea
               className={`${styles.input} ${styles.textarea}`}
               placeholder="Дополнительная информация..."
+              aria-label="Примечание накладной"
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(event) => setNotes(event.target.value)}
             />
           </div>
 
           <div className={styles.itemsSection}>
             <div className={styles.itemsHeader}>
               <span className={styles.itemsLabel}>Позиции</span>
-              <button type="button" className={styles.addRowBtn} onClick={() => setRows((p) => [...p, emptyRow()])}>
+              <button type="button" className={styles.addRowBtn} onClick={() => setRows((prev) => [...prev, emptyRow()])}>
                 <Plus size={12} />
                 Добавить строку
               </button>
@@ -124,66 +149,95 @@ export default function ManualInvoiceForm({ type, onClose }: Props) {
             <table className={styles.itemsTable}>
               <thead>
                 <tr>
-                  <th style={{ width: '26%' }}>Наименование</th>
-                  <th style={{ width: '8%' }}>Пол</th>
-                  <th style={{ width: '10%' }}>Длина</th>
-                  <th style={{ width: '10%' }}>Цвет</th>
-                  <th style={{ width: '8%' }}>Размер</th>
+                  <th style={{ width: '24%' }}>Наименование</th>
+                  <th style={{ width: '10%' }}>Пол</th>
+                  <th style={{ width: '11%' }}>Длина</th>
+                  <th style={{ width: '12%' }}>Цвет</th>
+                  <th style={{ width: '11%' }}>Размер</th>
                   <th style={{ width: '8%' }}>Кол-во</th>
                   <th style={{ width: '12%' }}>Цена, ₸</th>
-                  <th style={{ width: '10%' }}>Сумма</th>
+                  <th style={{ width: '8%' }}>Сумма</th>
                   <th style={{ width: '4%' }} aria-label="Действия" />
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, i) => {
+                {rows.map((row, index) => {
                   const rowTotal = (parseFloat(row.quantity) || 0) * (parseFloat(row.unitPrice) || 0);
+                  const genderOptions = resolvePurchaseFieldOptions({
+                    productMap,
+                    productName: row.productName,
+                    code: 'gender',
+                    globalOptions: globalGenderOptions,
+                  });
+                  const lengthOptions = resolvePurchaseFieldOptions({
+                    productMap,
+                    productName: row.productName,
+                    code: 'length',
+                    globalOptions: globalLengthOptions,
+                  });
+                  const colorOptions = resolvePurchaseFieldOptions({
+                    productMap,
+                    productName: row.productName,
+                    code: 'color',
+                    globalOptions: globalColorOptions,
+                  });
+                  const sizeOptions = resolvePurchaseFieldOptions({
+                    productMap,
+                    productName: row.productName,
+                    code: 'size',
+                    globalOptions: globalSizeOptions,
+                  });
+
                   return (
-                    <tr key={i}>
+                    <tr key={index}>
                       <td>
-                        <input
+                        <SearchableSelect
                           className={styles.cellInput}
                           placeholder="Название товара"
+                          ariaLabel={`Товар для позиции ${index + 1}`}
+                          options={productOptions}
                           value={row.productName}
-                          onChange={(e) => updateRow(i, 'productName', e.target.value)}
+                          onChange={(value) => updateRow(index, 'productName', value)}
                         />
                       </td>
                       <td>
-                        <select
+                        <SearchableSelect
                           className={styles.cellInput}
-                          title="Пол"
+                          placeholder="-"
+                          ariaLabel={`Пол для позиции ${index + 1}`}
+                          options={genderOptions}
                           value={row.gender}
-                          onChange={(e) => updateRow(i, 'gender', e.target.value)}
-                        >
-                          <option value="">—</option>
-                          {genderOptions.map((g) => <option key={g} value={g}>{g}</option>)}
-                        </select>
-                      </td>
-                      <td>
-                        <select
-                          className={styles.cellInput}
-                          title="Длина изделия"
-                          value={row.length}
-                          onChange={(e) => updateRow(i, 'length', e.target.value)}
-                        >
-                          <option value="">—</option>
-                          {lengthOptions.map((l) => <option key={l} value={l}>{l}</option>)}
-                        </select>
-                      </td>
-                      <td>
-                        <input
-                          className={styles.cellInput}
-                          placeholder="—"
-                          value={row.color}
-                          onChange={(e) => updateRow(i, 'color', e.target.value)}
+                          onChange={(value) => updateRow(index, 'gender', value)}
                         />
                       </td>
                       <td>
-                        <input
+                        <SearchableSelect
                           className={styles.cellInput}
-                          placeholder="—"
+                          placeholder="-"
+                          ariaLabel={`Длина для позиции ${index + 1}`}
+                          options={lengthOptions}
+                          value={row.length}
+                          onChange={(value) => updateRow(index, 'length', value)}
+                        />
+                      </td>
+                      <td>
+                        <SearchableSelect
+                          className={styles.cellInput}
+                          placeholder="-"
+                          ariaLabel={`Цвет для позиции ${index + 1}`}
+                          options={colorOptions}
+                          value={row.color}
+                          onChange={(value) => updateRow(index, 'color', value)}
+                        />
+                      </td>
+                      <td>
+                        <SearchableSelect
+                          className={styles.cellInput}
+                          placeholder="-"
+                          ariaLabel={`Размер для позиции ${index + 1}`}
+                          options={sizeOptions}
                           value={row.size}
-                          onChange={(e) => updateRow(i, 'size', e.target.value)}
+                          onChange={(value) => updateRow(index, 'size', value)}
                         />
                       </td>
                       <td>
@@ -193,7 +247,8 @@ export default function ManualInvoiceForm({ type, onClose }: Props) {
                           min="1"
                           placeholder="1"
                           value={row.quantity}
-                          onChange={(e) => updateRow(i, 'quantity', e.target.value)}
+                          aria-label={`Количество для позиции ${index + 1}`}
+                          onChange={(event) => updateRow(index, 'quantity', event.target.value)}
                         />
                       </td>
                       <td>
@@ -203,14 +258,21 @@ export default function ManualInvoiceForm({ type, onClose }: Props) {
                           min="0"
                           placeholder="0"
                           value={row.unitPrice}
-                          onChange={(e) => updateRow(i, 'unitPrice', e.target.value)}
+                          aria-label={`Цена для позиции ${index + 1}`}
+                          onChange={(event) => updateRow(index, 'unitPrice', event.target.value)}
                         />
                       </td>
                       <td style={{ paddingLeft: 8, color: 'var(--ch-text-muted)', whiteSpace: 'nowrap', fontSize: 11 }}>
-                        {rowTotal > 0 ? fmt(rowTotal) : '—'}
+                        {rowTotal > 0 ? fmt(rowTotal) : '-'}
                       </td>
                       <td>
-                        <button type="button" className={styles.removeRow} title="Удалить строку" onClick={() => removeRow(i)}>
+                        <button
+                          type="button"
+                          className={styles.removeRow}
+                          title="Удалить строку"
+                          aria-label={`Удалить позицию ${index + 1}`}
+                          onClick={() => removeRow(index)}
+                        >
                           <X size={12} />
                         </button>
                       </td>

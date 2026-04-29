@@ -1,5 +1,5 @@
 import type { InputHTMLAttributes } from 'react';
-import { forwardRef, useEffect, useRef, useState, useDeferredValue } from 'react';
+import { forwardRef, useDeferredValue, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -18,6 +18,7 @@ import {
   buildPaymentMethodOptions,
   buildSizeCatalog,
 } from '../../../../shared/lib/chapanCatalogDefaults';
+import { SearchableSelect, type SearchableSelectOption } from '../../../../shared/ui/SearchableSelect';
 import { formatPersonNameInput } from '../../../../shared/utils/person';
 import { formatKazakhPhoneInput, isKazakhPhoneComplete } from '../../../../shared/utils/kz';
 import styles from './ChapanNewOrder.module.css';
@@ -227,83 +228,7 @@ const SelectOrText = forwardRef<HTMLInputElement, InputHTMLAttributes<HTMLInputE
   },
 );
 
-type SearchableSelectOption = string | { value: string; badge?: string; badgeKind?: 'ok' | 'low' | 'out' };
 
-function SearchableSelect({ options, placeholder, className, value, onChange, onBlur, disabled }: {
-  options: SearchableSelectOption[];
-  placeholder?: string;
-  className?: string;
-  value: string;
-  onChange: (val: string) => void;
-  onBlur?: () => void;
-  disabled?: boolean;
-}) {
-  const [inputText, setInputText] = useState(value || '');
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => { setInputText(value || ''); }, [value]);
-
-  // Normalize options to { value, badge?, badgeKind? }
-  const normOpts = options.map(opt =>
-    typeof opt === 'string'
-      ? { value: opt, badge: undefined, badgeKind: undefined }
-      : { value: opt.value, badge: opt.badge, badgeKind: opt.badgeKind }
-  ) as Array<{ value: string; badge?: string; badgeKind?: 'ok' | 'low' | 'out' }>;
-
-  const filtered = !inputText
-    ? normOpts
-    : normOpts.filter(o => o.value.toLowerCase().includes(inputText.toLowerCase()));
-
-  const commit = (opt: string) => {
-    setInputText(opt);
-    onChange(opt);
-    setOpen(false);
-  };
-
-  return (
-    <div className={styles.searchableSelect}>
-      <input
-        type="text"
-        value={inputText}
-        className={className}
-        placeholder={placeholder}
-        autoComplete="off"
-        disabled={disabled}
-        onFocus={() => setOpen(true)}
-        onChange={(e) => { setInputText(e.target.value); setOpen(true); }}
-        onBlur={() => {
-          setTimeout(() => {
-            setOpen(false);
-            if (inputText !== value) onChange(inputText);
-            onBlur?.();
-          }, 150);
-        }}
-      />
-      {open && filtered.length > 0 && (
-        <ul className={styles.searchableDropdown}>
-          {filtered.map((opt) => (
-            <li
-              key={opt.value}
-              className={`${styles.searchableDropdownItem}${opt.value === value ? ` ${styles.searchableDropdownItemSelected}` : ''}`}
-              onMouseDown={(e) => { e.preventDefault(); commit(opt.value); }}
-            >
-              <span>{opt.value}</span>
-              {opt.badge && (
-                <span className={`${styles.searchableDropdownItemBadge} ${
-                  opt.badgeKind === 'low' ? styles.searchableDropdownItemBadgeLow :
-                  opt.badgeKind === 'out' ? styles.searchableDropdownItemBadgeOut :
-                  styles.searchableDropdownItemBadgeOk
-                }`}>
-                  {opt.badge}
-                </span>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  );
-}
 
 // ─── Component ────────────────────────────────────────────────────────────────
 export default function ChapanNewOrderPage() {

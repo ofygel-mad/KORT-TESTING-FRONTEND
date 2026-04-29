@@ -1,4 +1,4 @@
-import { api, API_BASE_URL } from '../../shared/api/client';
+import { api, apiClient } from '../../shared/api/client';
 import type { ManualInvoice, CreateManualInvoiceDto } from './types';
 
 export const purchaseApi = {
@@ -17,6 +17,8 @@ export const purchaseApi = {
   remove: (id: string) =>
     api.delete<{ deleted: boolean }>(`/chapan/purchase/${id}`),
 
-  downloadUrl: (id: string) =>
-    `${API_BASE_URL}/chapan/purchase/${id}/download`,
+  download: (id: string) =>
+    apiClient.get(`/chapan/purchase/${id}/download`, {
+      responseType: 'blob',
+    }),
 };

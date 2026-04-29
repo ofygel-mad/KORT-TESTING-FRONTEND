@@ -454,7 +454,7 @@ export const useConsumeWarehouseFoundationReservation = () => {
       qc.invalidateQueries({ queryKey: warehouseKeys.foundation.outbox });
       toast.success('Reservation consumed');
     },
-    onError: () => toast.error('РќРµ СѓРґР°Р»РѕСЃСЊ СЃРїРёСЃР°С‚СЊ reservation'),
+    onError: () => toast.error('Не удалось списать reservation'),
   });
 };
 
@@ -471,7 +471,7 @@ export const useSyncWarehouseFoundationOperationalState = () => {
       qc.invalidateQueries({ queryKey: warehouseKeys.foundation.feed(siteId) });
       toast.success('Warehouse runtime synced');
     },
-    onError: () => toast.error('РќРµ СѓРґР°Р»РѕСЃСЊ СЃРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°С‚СЊ warehouse runtime'),
+    onError: () => toast.error('Не удалось синхронизировать warehouse runtime'),
   });
 };
 
@@ -486,7 +486,7 @@ export const useCreateWarehouseFoundationLayoutDraft = () => {
       qc.invalidateQueries({ queryKey: warehouseKeys.foundation.feed(variables.siteId) });
       toast.success('Layout draft created');
     },
-    onError: () => toast.error('РќРµ СѓРґР°Р»РѕСЃСЊ СЃРѕР·РґР°С‚СЊ layout draft'),
+    onError: () => toast.error('Не удалось создать layout draft'),
   });
 };
 
@@ -499,7 +499,7 @@ export const useUpdateWarehouseFoundationLayoutNode = () => {
       qc.invalidateQueries({ queryKey: warehouseKeys.foundation.twin(variables.siteId) });
       qc.invalidateQueries({ queryKey: warehouseKeys.foundation.feed(variables.siteId) });
     },
-    onError: () => toast.error('РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ layout node'),
+    onError: () => toast.error('Не удалось обновить layout node'),
   });
 };
 
@@ -523,7 +523,7 @@ export const usePublishWarehouseFoundationLayoutDraft = () => {
       qc.invalidateQueries({ queryKey: warehouseKeys.foundation.pools(variables.siteId) });
       toast.success('Layout draft published');
     },
-    onError: () => toast.error('РќРµ СѓРґР°Р»РѕСЃСЊ РѕРїСѓР±Р»РёРєРѕРІР°С‚СЊ layout draft'),
+    onError: () => toast.error('Не удалось опубликовать layout draft'),
   });
 };
 
@@ -554,7 +554,7 @@ export const useUpdateWarehouseFoundationTaskStatus = () => {
       qc.invalidateQueries({ queryKey: warehouseKeys.foundation.feed(variables.siteId) });
       toast.success('Task status updated');
     },
-    onError: () => toast.error('РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ task'),
+    onError: () => toast.error('Не удалось обновить task'),
   });
 };
 
@@ -595,7 +595,7 @@ export const useUpdateWarehouseFoundationExceptionStatus = () => {
       qc.invalidateQueries({ queryKey: warehouseKeys.foundation.feed(variables.siteId) });
       toast.success('Exception status updated');
     },
-    onError: () => toast.error('РќРµ СѓРґР°Р»РѕСЃСЊ РѕР±РЅРѕРІРёС‚СЊ exception'),
+    onError: () => toast.error('Не удалось обновить exception'),
   });
 };
 

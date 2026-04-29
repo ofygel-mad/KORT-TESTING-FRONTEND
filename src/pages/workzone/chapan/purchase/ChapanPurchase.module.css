@@ -61,6 +61,10 @@
   color: var(--ch-text-muted); cursor: pointer;
   transition: border-color 140ms, color 140ms, background 140ms;
 }
+.iconBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
 .iconBtn:hover { border-color: var(--ch-plat-border); color: var(--ch-plat-bright); background: var(--ch-card); }
 .iconBtnDanger:hover { border-color: #EF4444; color: #EF4444; background: color-mix(in srgb, #EF4444 8%, var(--ch-card)); }
 
