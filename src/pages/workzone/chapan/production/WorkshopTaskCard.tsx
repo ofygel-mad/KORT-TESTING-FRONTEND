@@ -9,12 +9,25 @@ interface WorkshopTaskCardProps {
   onToggleSelect: (id: string) => void;
   onMarkDone: (taskId: string, currentStatus: ProductionStatus) => void;
   isPending: boolean;
-  // Manager-only actions
-  onAssign?: (taskId: string, worker: string) => void;
   onFlag?: (taskId: string, reason: string) => void;
   onReturnToQueue?: (taskId: string) => void;
-  workers?: string[];
 }
+
+const DATE_TOKEN_RE = /\d{4}-\d{2}-\d{2}/;
+const DASH = '\u2014';
+const SHORT_RU_DATE = new Intl.DateTimeFormat('ru-RU', {
+  day: 'numeric',
+  month: 'short',
+  timeZone: 'UTC',
+});
+
+const TITLE_URGENT = '\u0421\u0440\u043e\u0447\u043d\u043e';
+const TITLE_VIP = 'VIP \u043a\u043b\u0438\u0435\u043d\u0442';
+const TITLE_DONE = '\u041e\u0442\u043c\u0435\u0442\u0438\u0442\u044c \u043a\u0430\u043a \u0433\u043e\u0442\u043e\u0432\u043e';
+const LABEL_DONE = '\u0413\u043e\u0442\u043e\u0432\u043e';
+const LABEL_BLOCK = '\u0417\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u0442\u044c';
+const LABEL_BACK_TO_QUEUE = '\u0412\u0435\u0440\u043d\u0443\u0442\u044c \u0432 \u043e\u0447\u0435\u0440\u0435\u0434\u044c';
+const PLACEHOLDER_BLOCK_REASON = '\u041f\u0440\u0438\u0447\u0438\u043d\u0430 \u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u043a\u0438...';
 
 const getBorderColor = (task: ProductionTask): string => {
   const urgency = task.order.urgency ?? task.order.priority;
@@ -28,19 +41,27 @@ const getBorderColor = (task: ProductionTask): string => {
 };
 
 const formatDate = (dateStr: string | null | undefined): string => {
-  if (!dateStr || typeof dateStr !== 'string') return '—';
+  if (!dateStr || typeof dateStr !== 'string') return DASH;
+  const dateToken = dateStr.match(DATE_TOKEN_RE)?.[0];
+  if (!dateToken) return DASH;
+
   try {
-    const date = new Date(dateStr + 'T00:00:00Z');
-    if (isNaN(date.getTime())) return dateStr.slice(0, 10);
-    const day = date.getUTCDate();
-    const monthShort = date.toLocaleString('ru-RU', { month: 'short', timeZone: 'UTC' });
-    return `${day} ${monthShort}.`;
+    const date = new Date(`${dateToken}T00:00:00Z`);
+    if (Number.isNaN(date.getTime())) return DASH;
+    return SHORT_RU_DATE.format(date).replace(',', '');
   } catch {
-    return dateStr.slice(0, 10);
+    return DASH;
   }
 };
 
-const hasNotes = (task: ProductionTask): boolean => !!(task.notes || task.workshopNotes);
+const hasNotes = (task: ProductionTask): boolean => Boolean(task.notes || task.workshopNotes);
+
+const getOrderPositionLabel = (task: ProductionTask): string => {
+  const rawOrderNumber = String(task.order.orderNumber ?? '');
+  const normalizedOrderNumber = rawOrderNumber.replace(/^ORD-/i, '');
+  const position = task.id.split('-').pop() || '1';
+  return `${normalizedOrderNumber}-${position}`;
+};
 
 export default function WorkshopTaskCard({
   task,
@@ -48,13 +69,10 @@ export default function WorkshopTaskCard({
   onToggleSelect,
   onMarkDone,
   isPending,
-  onAssign,
   onFlag,
   onReturnToQueue,
-  workers = [],
 }: WorkshopTaskCardProps) {
   const [menuOpen, setMenuOpen] = useState(false);
-  const [assignOpen, setAssignOpen] = useState(false);
   const [flagReason, setFlagReason] = useState('');
   const [flagOpen, setFlagOpen] = useState(false);
 
@@ -62,6 +80,7 @@ export default function WorkshopTaskCard({
   const isUrgent = urgency === 'urgent';
   const isVIP = task.order.isDemandingClient && !isUrgent;
   const noteText = task.workshopNotes || task.notes;
+  const showsNoteRow = hasNotes(task);
 
   return (
     <div
@@ -72,7 +91,6 @@ export default function WorkshopTaskCard({
       }`}
       style={{ borderLeftColor: getBorderColor(task) }}
     >
-      {/* Col 1: Checkbox */}
       <div className={styles.cell}>
         <input
           type="checkbox"
@@ -83,84 +101,83 @@ export default function WorkshopTaskCard({
         />
       </div>
 
-      {/* Col 2: Badge (! or ★) */}
       <div className={styles.cell}>
         {isUrgent && (
-          <div className={styles.badge} title="Срочно">
+          <div className={styles.badge} title={TITLE_URGENT}>
             <AlertCircle size={14} className={styles.badgeIcon} />
           </div>
         )}
         {isVIP && !isUrgent && (
-          <div className={styles.badgeVip} title="VIP клиент">
+          <div className={styles.badgeVip} title={TITLE_VIP}>
             <Star size={14} className={styles.badgeIconVip} />
           </div>
         )}
       </div>
 
-      {/* Col 3: Order number (e.g. №256-1) */}
       <div className={styles.cell}>
-        <span className={styles.orderNum}>
-          №{task.order.orderNumber}-{task.id.split('-').pop() || '1'}
-        </span>
+        <span className={styles.orderNum}>{`\u2116${getOrderPositionLabel(task)}`}</span>
       </div>
 
-      {/* Col 4: Product name */}
+      <div className={`${styles.cell} ${styles.productCell}`}>
+        <div className={styles.productStack}>
+          <span className={styles.productName}>{task.productName}</span>
+        </div>
+      </div>
+
       <div className={styles.cell}>
-        <span className={styles.productName}>{task.productName}</span>
+        <span className={styles.gender}>{task.gender || DASH}</span>
       </div>
 
-      {/* Col 5: Gender */}
       <div className={styles.cell}>
-        <span className={styles.gender}>{task.gender || '—'}</span>
+        <span className={styles.length}>{task.length || DASH}</span>
       </div>
 
-      {/* Col 6: Length */}
       <div className={styles.cell}>
-        <span className={styles.length}>{task.length || '—'}</span>
+        <span className={styles.color}>{task.color || DASH}</span>
       </div>
 
-      {/* Col 7: Color */}
-      <div className={`${styles.cell} ${hasNotes(task) ? styles.cellHidden : ''}`}>
-        <span className={styles.color}>{task.color || '—'}</span>
-      </div>
-
-      {/* Col 8: Quantity */}
       <div className={styles.cell}>
         <span className={styles.quantity}>{task.quantity}</span>
       </div>
 
-      {/* Col 9: Size */}
       <div className={styles.cell}>
         <span className={styles.size}>{task.size}</span>
       </div>
 
-      {/* Col 10: Received date */}
       <div className={styles.cell}>
         <span className={styles.date}>{formatDate(task.startedAt)}</span>
       </div>
 
-      {/* Col 11: Due date */}
       <div className={styles.cell}>
         <span className={styles.date}>{formatDate(task.order.dueDate)}</span>
       </div>
 
-      {/* Col 12: Action button + manager menu */}
-      <div className={styles.cellAction}>
+      {showsNoteRow && (
+        <div className={styles.notesRow}>
+          <div className={styles.notePanel}>
+            <MessageSquare size={13} className={styles.noteIcon} />
+            <span className={styles.noteInlineText}>{noteText}</span>
+          </div>
+        </div>
+      )}
+
+      <div className={`${styles.cellAction} ${showsNoteRow ? styles.cellActionWithNotes : ''}`}>
         <div className={styles.actionGroup}>
           <button
+            type="button"
             className={styles.doneBtn}
             onClick={() => onMarkDone(task.id, task.status)}
             disabled={isPending}
-            title="Отметить как готово"
+            title={TITLE_DONE}
           >
             <Check size={12} />
-            Готово
+            <span className={styles.doneBtnLabel}>{LABEL_DONE}</span>
           </button>
 
-          {/* Manager overflow menu */}
-          {(onAssign || onFlag || onReturnToQueue) && (
+          {(onFlag || onReturnToQueue) && (
             <div className={styles.managerMenu}>
               <button
+                type="button"
                 className={styles.moreBtn}
                 onClick={() => setMenuOpen(!menuOpen)}
                 disabled={isPending}
@@ -170,52 +187,26 @@ export default function WorkshopTaskCard({
 
               {menuOpen && (
                 <div className={styles.dropdownMenu}>
-                  {onAssign && (
-                    <div className={styles.menuItem}>
-                      <button
-                        className={styles.menuAction}
-                        onClick={() => setAssignOpen(!assignOpen)}
-                      >
-                        Назначить швею
-                      </button>
-                      {assignOpen && (
-                        <div className={styles.submenu}>
-                          {workers.map((worker) => (
-                            <button
-                              key={worker}
-                              className={styles.submenuItem}
-                              onClick={() => {
-                                onAssign(task.id, worker);
-                                setAssignOpen(false);
-                                setMenuOpen(false);
-                              }}
-                            >
-                              {worker}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-
                   {onFlag && (
                     <div className={styles.menuItem}>
                       <button
+                        type="button"
                         className={styles.menuAction}
                         onClick={() => setFlagOpen(!flagOpen)}
                       >
-                        Заблокировать
+                        {LABEL_BLOCK}
                       </button>
                       {flagOpen && (
                         <div className={styles.submenu}>
                           <textarea
                             className={styles.flagInput}
-                            placeholder="Причина блокировки..."
+                            placeholder={PLACEHOLDER_BLOCK_REASON}
                             value={flagReason}
                             onChange={(e) => setFlagReason(e.target.value)}
                             rows={2}
                           />
                           <button
+                            type="button"
                             className={styles.flagConfirm}
                             onClick={() => {
                               if (flagReason.trim()) {
@@ -226,7 +217,7 @@ export default function WorkshopTaskCard({
                               }
                             }}
                           >
-                            Заблокировать
+                            {LABEL_BLOCK}
                           </button>
                         </div>
                       )}
@@ -235,13 +226,14 @@ export default function WorkshopTaskCard({
 
                   {onReturnToQueue && (
                     <button
+                      type="button"
                       className={styles.menuAction}
                       onClick={() => {
                         onReturnToQueue(task.id);
                         setMenuOpen(false);
                       }}
                     >
-                      Вернуть в очередь
+                      {LABEL_BACK_TO_QUEUE}
                     </button>
                   )}
                 </div>
@@ -250,14 +242,6 @@ export default function WorkshopTaskCard({
           )}
         </div>
       </div>
-
-      {/* Notes row (second grid row, cols 4-8) */}
-      {hasNotes(task) && (
-        <div className={styles.notesRow}>
-          <MessageSquare size={11} className={styles.noteIcon} />
-          <span className={styles.noteText}>{noteText}</span>
-        </div>
-      )}
     </div>
   );
 }

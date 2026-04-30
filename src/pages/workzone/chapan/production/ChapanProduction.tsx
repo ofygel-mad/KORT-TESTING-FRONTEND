@@ -2,7 +2,6 @@ import { useDeferredValue, useMemo, useState, type CSSProperties } from 'react';
 import { AlertTriangle, CalendarDays, Factory, MessageCircle, Search, Star, X, XCircle } from 'lucide-react';
 import {
   useAssignWorker,
-  useChapanCatalogs,
   useClaimProductionTask,
   useFlagTask,
   useUnflagTask,
@@ -121,7 +120,6 @@ export default function ChapanProductionPage() {
 
   // Data queries
   const { data: workshopData, isLoading } = useWorkshopTasks();
-  const { data: catalogs } = useChapanCatalogs();
   const { data: changeRequests } = usePendingChangeRequests();
 
   // Mutations
@@ -178,10 +176,6 @@ export default function ChapanProductionPage() {
         return n;
       });
     }
-  };
-
-  const handleAssignWorker = async (taskId: string, worker: string) => {
-    await assignWorker.mutateAsync({ taskId, worker });
   };
 
   const handleFlagTask = async (taskId: string, reason: string) => {
@@ -425,10 +419,8 @@ export default function ChapanProductionPage() {
             isPending={pendingDoneIds.has(task.id)}
             {...(canManageProduction
               ? {
-                  onAssign: handleAssignWorker,
                   onFlag: handleFlagTask,
                   onReturnToQueue: handleReturnToQueue,
-                  workers: catalogs?.workers ?? [],
                 }
               : {})}
           />
