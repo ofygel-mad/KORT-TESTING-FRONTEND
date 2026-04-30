@@ -156,9 +156,17 @@ export async function remove(orgId: string, id: string) {
   return { deleted: true };
 }
 
-export async function generateXlsx(orgId: string, id: string) {
-  const invoice = await getById(orgId, id);
+const CURRENCY_SYMBOLS: Record<string, string> = {
+  KZT: '₸', RUB: '₽', USD: '$', EUR: '€', CNY: '¥',
+};
 
+export async function generateXlsx(orgId: string, id: string) {
+  const [invoice, org] = await Promise.all([
+    getById(orgId, id),
+    prisma.organization.findUnique({ where: { id: orgId }, select: { currency: true } }),
+  ]);
+
+  const symbol = CURRENCY_SYMBOLS[org?.currency ?? 'KZT'] ?? '₸';
   const typeLabel = invoice.type === 'workshop' ? 'Цех' : 'Базар';
   const totalAmount = invoice.items.reduce(
     (sum, item) => sum + item.unitPrice * item.quantity,
@@ -240,7 +248,7 @@ export async function generateXlsx(orgId: string, id: string) {
     });
     // Format currency cells
     ['H', 'I'].forEach((col) => {
-      ws.getCell(`${col}${row.number}`).numFmt = '#,##0 "₸"';
+      ws.getCell(`${col}${row.number}`).numFmt = `#,##0 "${symbol}"`;
     });
     ['A', 'C', 'D', 'F', 'G'].forEach((col) => {
       ws.getCell(`${col}${row.number}`).alignment = { horizontal: 'center' };
@@ -249,7 +257,7 @@ export async function generateXlsx(orgId: string, id: string) {
 
   // Total row
   ws.addRow([]);
-  const totalRow = ws.addRow(['', '', '', '', '', 'ИТОГО:', fmt(totalAmount) + ' ₸']);
+  const totalRow = ws.addRow(['', '', '', '', '', 'ИТОГО:', fmt(totalAmount) + ' ' + symbol]);
   totalRow.font = { bold: true };
   totalRow.getCell(1).value = '';
   totalRow.getCell(2).value = '';
@@ -259,7 +267,7 @@ export async function generateXlsx(orgId: string, id: string) {
   totalRow.getCell(6).value = '';
   totalRow.getCell(7).value = '';
   totalRow.getCell(8).value = 'ИТОГО:';
-  totalRow.getCell(9).value = fmt(totalAmount) + ' ₸';
+  totalRow.getCell(9).value = fmt(totalAmount) + ' ' + symbol;
 
   if (invoice.notes) {
     ws.addRow([]);
