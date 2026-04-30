@@ -1,281 +1,115 @@
-import { useDeferredValue, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
-import { AlertTriangle, CalendarDays, Check, CheckCircle2, ChevronDown, ChevronUp, Factory, Filter, LayoutList, Layers, MessageSquare, Search, Star, User, X, XCircle } from 'lucide-react';
+import { useDeferredValue, useMemo, useState, type CSSProperties } from 'react';
+import { AlertTriangle, CalendarDays, Factory, MessageCircle, Search, Star, X, XCircle } from 'lucide-react';
 import {
   useAssignWorker,
   useChapanCatalogs,
   useClaimProductionTask,
+  useFlagTask,
+  useUnflagTask,
   usePendingChangeRequests,
   useApproveChangeRequest,
   useRejectChangeRequest,
-  useProductionTasks,
   useUpdateProductionStatus,
   useWorkshopTasks,
 } from '../../../../entities/order/queries';
-import type { ChapanChangeRequest, Priority, ProductionStatus, ProductionTask, Urgency } from '../../../../entities/order/types';
+import type { ChapanChangeRequest, ProductionStatus, ProductionTask } from '../../../../entities/order/types';
 import { useAuthStore } from '@/shared/stores/auth';
-import { buildItemLine, buildTaskMetaLine } from '../../../../shared/utils/itemLine';
+import { useChapanPermissions } from '@/shared/hooks/useChapanPermissions';
+import { buildItemLine } from '../../../../shared/utils/itemLine';
+import WorkshopTaskCard from './WorkshopTaskCard';
+import { sortWorkshopTasks } from './workshopSort';
 import styles from './ChapanProduction.module.css';
 
-type ProductionMode = 'manager' | 'workshop';
-type ColumnKey = Extract<ProductionStatus, 'queued' | 'in_progress'>;
-type LayoutMode = 'kanban' | 'list';
-
-const COLUMNS: { key: ColumnKey; label: string }[] = [
-  { key: 'queued', label: 'Новые заказы' },
-  { key: 'in_progress', label: 'Выполнение' },
-];
-
-// Left-border colour on task card — driven by urgency (new) with priority fallback
-function getUrgencyDot(task: ProductionTask): string {
-  const urgency = task.order.urgency ?? task.order.priority;
-  if (urgency === 'urgent') return '#D94F4F';
-  if (task.order.isDemandingClient ?? task.order.priority === 'vip') return '#C9A84C';
-  return 'rgba(180,192,210,.32)';
+function applySearch(tasks: ProductionTask[], q: string): ProductionTask[] {
+  if (!q.trim()) return tasks;
+  const lower = q.toLowerCase();
+  return tasks.filter(
+    (t) =>
+      t.order.orderNumber.toLowerCase().includes(lower) ||
+      (t.productName?.toLowerCase() ?? '').includes(lower),
+  );
 }
 
-const BATCH_WINDOW_DAYS = 2;
-
-type TaskDisplayGroup =
-  | { kind: 'single'; task: ProductionTask }
-  | { kind: 'batch'; tasks: ProductionTask[] };
-
-function groupStorageKey(userId?: string) {
-  return `chapan_prod_grouped_${userId ?? 'guest'}`;
+function applyDueDateFilter(tasks: ProductionTask[], date: string | null): ProductionTask[] {
+  if (!date) return tasks;
+  return tasks.filter((t) => t.order.dueDate?.slice(0, 10) === date);
 }
 
-function layoutModeStorageKey(userId?: string) {
-  return `chapan_prod_layout_${userId ?? 'guest'}`;
+function applyAcceptedFilter(tasks: ProductionTask[], date: string | null): ProductionTask[] {
+  if (!date) return tasks;
+  return tasks.filter((t) => t.startedAt?.slice(0, 10) === date);
 }
 
-function taskBatchKey(task: ProductionTask): string {
-  return [
-    task.productName?.toLowerCase().trim() ?? '',
-    task.size?.toLowerCase().trim() ?? '',
-    task.order.urgency ?? task.order.priority,
-    String(task.order.isDemandingClient ?? (task.order.priority === 'vip')),
-    task.status,
-  ].join('|');
-}
-
-function buildTaskGroups(tasks: ProductionTask[]): TaskDisplayGroup[] {
-  const buckets = new Map<string, ProductionTask[]>();
-
-  for (const task of tasks) {
-    const key = taskBatchKey(task);
-    buckets.set(key, [...(buckets.get(key) ?? []), task]);
-  }
-
-  const result: TaskDisplayGroup[] = [];
-
-  for (const [, bucket] of buckets) {
-    if (bucket.length === 1) {
-      result.push({ kind: 'single', task: bucket[0] });
-      continue;
-    }
-
-    const withDate = bucket
-      .filter((task) => task.order.dueDate)
-      .sort((a, b) => +new Date(a.order.dueDate!) - +new Date(b.order.dueDate!));
-    const withoutDate = bucket.filter((task) => !task.order.dueDate);
-    const clusters: ProductionTask[][] = [];
-    let current: ProductionTask[] = [];
-
-    for (const task of withDate) {
-      if (!current.length) {
-        current.push(task);
-        continue;
-      }
-
-      const diffDays = (+new Date(task.order.dueDate!) - +new Date(current[0].order.dueDate!)) / 86_400_000;
-      if (diffDays <= BATCH_WINDOW_DAYS) current.push(task);
-      else {
-        clusters.push(current);
-        current = [task];
-      }
-    }
-
-    if (current.length) clusters.push(current);
-    if (withoutDate.length) clusters.push(withoutDate);
-
-    for (const cluster of clusters) {
-      if (cluster.length === 1) result.push({ kind: 'single', task: cluster[0] });
-      else result.push({ kind: 'batch', tasks: cluster });
-    }
-  }
-
-  return result;
-}
-
-
-function getTaskBatchColor(task: ProductionTask) {
-  const urgency = task.order.urgency ?? task.order.priority;
-  if (urgency === 'urgent') return '#D94F4F';
-  if (task.order.isDemandingClient ?? task.order.priority === 'vip') return '#C9A84C';
-  return 'rgba(180,192,210,.4)';
-}
-
-function formatDeadline(value: string | null) {
-  if (!value) return null;
-  return new Date(value).toLocaleDateString('ru-KZ', { day: '2-digit', month: 'short' });
-}
-
-function filterWorkshopTasks(tasks: ProductionTask[], currentWorkerName: string | null) {
-  if (!currentWorkerName) return tasks;
-
-  return tasks.filter((task) => {
-    if (task.status === 'queued') {
-      return !task.assignedTo || task.assignedTo === currentWorkerName;
-    }
-
-    return task.assignedTo === currentWorkerName;
-  });
-}
-
-type DateFilter = {
-  from: string | null;
-  to: string | null;
-  preset: string | null;
-} | null;
-
-const DATE_PRESETS = [
-  { key: 'today',    label: 'Сегодня' },
-  { key: 'tomorrow', label: 'Завтра' },
-  { key: '7days',    label: '7 дней' },
-  { key: 'week',     label: 'Эта неделя' },
-  { key: 'apr',      label: 'Апрель' },
-  { key: 'may',      label: 'Май' },
-] as const;
-
-function presetToRange(key: string): { from: string; to: string } {
-  const today = new Date();
-  const fmt = (d: Date) => d.toISOString().slice(0, 10);
-  const y = today.getFullYear();
-
-  if (key === 'today') { const s = fmt(today); return { from: s, to: s }; }
-  if (key === 'tomorrow') { const d = new Date(today); d.setDate(d.getDate() + 1); const s = fmt(d); return { from: s, to: s }; }
-  if (key === '7days') { const end = new Date(today); end.setDate(end.getDate() + 7); return { from: fmt(today), to: fmt(end) }; }
-  if (key === 'week') {
-    const day = today.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    const mon = new Date(today); mon.setDate(today.getDate() + diff);
-    const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
-    return { from: fmt(mon), to: fmt(sun) };
-  }
-  if (key === 'apr') return { from: `${y}-04-01`, to: `${y}-04-30` };
-  if (key === 'may') return { from: `${y}-05-01`, to: `${y}-05-31` };
-  return { from: fmt(today), to: fmt(today) };
-}
-
-function formatDateRange(from: string | null | undefined, to: string | null | undefined): string {
-  const fmt = (s: string) => new Date(s).toLocaleDateString('ru-KZ', { day: 'numeric', month: 'short' });
-  if (from && to) { const f = fmt(from); const t = fmt(to); return f === t ? f : `${f} — ${t}`; }
-  if (from) return `от ${fmt(from)}`;
-  if (to) return `до ${fmt(to)}`;
-  return 'По дате';
-}
-
-interface DateFilterButtonProps {
-  value: DateFilter;
-  onChange: (filter: DateFilter) => void;
-}
-
-function DateFilterButton({ value, onChange }: DateFilterButtonProps) {
+const DatePickerPopover = ({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string | null;
+  onChange: (date: string | null) => void;
+}) => {
   const [open, setOpen] = useState(false);
-  const [localFrom, setLocalFrom] = useState(value?.from ?? '');
-  const [localTo, setLocalTo] = useState(value?.to ?? '');
-  const wrapRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    function handler(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) setOpen(false);
-    }
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
-
-  const isActive = value !== null;
-  const buttonLabel = isActive
-    ? (value?.preset ? DATE_PRESETS.find(p => p.key === value.preset)?.label ?? 'По дате' : formatDateRange(value?.from, value?.to))
-    : 'По дате';
-
-  function handlePreset(key: string) {
-    const range = presetToRange(key);
-    onChange({ ...range, preset: key });
-    setLocalFrom(range.from);
-    setLocalTo(range.to);
-    setOpen(false);
-  }
-
-  function handleApply() {
-    if (!localFrom && !localTo) return;
-    onChange({ from: localFrom || null, to: localTo || null, preset: null });
-    setOpen(false);
-  }
-
-  function handleReset() {
-    onChange(null);
-    setLocalFrom('');
-    setLocalTo('');
-    setOpen(false);
-  }
 
   return (
-    <div ref={wrapRef} className={styles.dateFilterWrap}>
-      <button
-        type="button"
-        className={`${styles.groupToggle} ${isActive ? styles.groupToggleActive : ''}`}
-        onClick={() => setOpen(v => !v)}
-        title="Фильтр по сроку сдачи"
-      >
+    <div style={{ position: 'relative' }}>
+      <button className={styles.filterBtn} onClick={() => setOpen(!open)}>
         <CalendarDays size={13} />
-        <span>{buttonLabel}</span>
-        {isActive && (
-          <span
-            role="button"
-            aria-label="Сбросить фильтр"
-            onClick={(e) => { e.stopPropagation(); onChange(null); setLocalFrom(''); setLocalTo(''); }}
-            className={styles.dateFilterClearBtn}
-          >×</span>
-        )}
+        {label}
+        {value && <span style={{ marginLeft: 4, fontSize: 11 }}>({value})</span>}
       </button>
-
       {open && (
-        <div className={styles.dateFilterDropdown}>
-          <div className={styles.dateFilterDropdownHeader}>Срок сдачи</div>
-          <div className={styles.dateFilterPresets}>
-            {DATE_PRESETS.map(preset => (
-              <button
-                key={preset.key}
-                type="button"
-                className={`${styles.datePresetPill} ${value?.preset === preset.key ? styles.datePresetPillActive : ''}`}
-                onClick={() => handlePreset(preset.key)}
-              >
-                {preset.label}
-              </button>
-            ))}
-          </div>
-          <div className={styles.dateFilterInputRow}>
-            <span className={styles.dateFilterInputLabel}>От</span>
-            <input type="date" aria-label="Дата от" className={styles.dateFilterInput} value={localFrom} onChange={e => setLocalFrom(e.target.value)} />
-          </div>
-          <div className={styles.dateFilterInputRow}>
-            <span className={styles.dateFilterInputLabel}>До</span>
-            <input type="date" aria-label="Дата до" className={styles.dateFilterInput} value={localTo} onChange={e => setLocalTo(e.target.value)} />
-          </div>
-          <div className={styles.dateFilterFooter}>
-            <button type="button" className={`${styles.modalCancel} ${styles.dateFilterFooterBtn}`} onClick={handleReset}>
+        <div
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            zIndex: 50,
+            marginTop: 4,
+            background: 'var(--ch-card)',
+            border: '1px solid var(--ch-border)',
+            borderRadius: 6,
+            padding: 8,
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          }}
+        >
+          <input
+            type="date"
+            title={`Выбрать дату: ${label}`}
+            value={value ?? ''}
+            onChange={(e) => {
+              onChange(e.target.value || null);
+              setOpen(false);
+            }}
+            style={{
+              padding: 6,
+              border: '1px solid var(--ch-border)',
+              borderRadius: 4,
+              fontSize: 12,
+              fontFamily: 'inherit',
+            }}
+          />
+          {value && (
+            <button
+              onClick={() => onChange(null)}
+              style={{
+                display: 'block',
+                marginTop: 6,
+                fontSize: 11,
+                color: 'var(--ch-text-dim)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+              }}
+            >
               Сбросить
             </button>
-            <button type="button" className={`${styles.primaryAction} ${styles.dateFilterFooterBtn}`} onClick={handleApply}>
-              Применить
-            </button>
-          </div>
+          )}
         </div>
       )}
     </div>
   );
-}
+};
 
 export default function ChapanProductionPage() {
   const userId = useAuthStore((state) => state.user?.id);
@@ -283,264 +117,139 @@ export default function ChapanProductionPage() {
   const membershipRole = useAuthStore((state) => state.membership.role);
   const employeePermissions = useAuthStore((state) => state.user?.employee_permissions ?? []);
 
-  const workshopDefault =
-    (employeePermissions.includes('production') || employeePermissions.includes('chapan_access_production'))
-    && !employeePermissions.includes('chapan_full_access')
-    && !employeePermissions.includes('full_access')
-    && membershipRole !== 'owner'
-    && membershipRole !== 'admin';
+  const { canManageProduction } = useChapanPermissions();
 
-  const [view, setView] = useState<ProductionMode>(workshopDefault ? 'workshop' : 'manager');
-  const [grouped, setGroupedState] = useState(() => {
-    const saved = localStorage.getItem(groupStorageKey(userId));
-    return saved !== null ? saved !== 'false' : true;
-  });
-  const [layoutMode, setLayoutModeState] = useState<LayoutMode>(() => {
-    const saved = localStorage.getItem(layoutModeStorageKey(userId));
-    return (saved === 'kanban' || saved === 'list') ? (saved as LayoutMode) : 'kanban';
-  });
-  const [showOnlyRunning, setShowOnlyRunning] = useState(false);
-  const [search, setSearch] = useState('');
-  const deferredSearch = useDeferredValue(search);
-  const [dateFilter, setDateFilter] = useState<DateFilter>(null);
-  const [rejectModal, setRejectModal] = useState<{ crId: string; orderNumber: string } | null>(null);
-  const [rejectReason, setRejectReason] = useState('');
-
-  useEffect(() => {
-    setView(workshopDefault ? 'workshop' : 'manager');
-  }, [workshopDefault, userId]);
-
-  const toggleGrouped = () => {
-    setGroupedState((value) => {
-      localStorage.setItem(groupStorageKey(userId), String(!value));
-      return !value;
-    });
-  };
-
-  const toggleLayoutMode = () => {
-    setLayoutModeState((value) => {
-      const newValue = value === 'kanban' ? 'list' : 'kanban';
-      localStorage.setItem(layoutModeStorageKey(userId), newValue);
-      return newValue;
-    });
-  };
-
-  const { data: managerData, isLoading: managerLoading } = useProductionTasks();
-  const { data: workshopData, isLoading: workshopLoading } = useWorkshopTasks();
+  // Data queries
+  const { data: workshopData, isLoading } = useWorkshopTasks();
   const { data: catalogs } = useChapanCatalogs();
   const { data: changeRequests } = usePendingChangeRequests();
 
-  const claimTask = useClaimProductionTask();
+  // Mutations
   const updateStatus = useUpdateProductionStatus();
+  const claimTask = useClaimProductionTask();
   const assignWorker = useAssignWorker();
+  const flagTask = useFlagTask();
+  const unflagTask = useUnflagTask();
   const approveChangeRequest = useApproveChangeRequest();
   const rejectChangeRequest = useRejectChangeRequest();
 
+  // State
+  const [search, setSearch] = useState('');
+  const deferredSearch = useDeferredValue(search);
+  const [dueDateFilter, setDueDateFilter] = useState<string | null>(null);
+  const [acceptedFilter, setAcceptedFilter] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [showOnlySelected, setShowOnlySelected] = useState(false);
+  const [pendingDoneIds, setPendingDoneIds] = useState<Set<string>>(new Set());
+  const [rejectModal, setRejectModal] = useState<{ crId: string; orderNumber: string } | null>(null);
+  const [rejectReason, setRejectReason] = useState('');
 
-  const rawTasks = view === 'manager' ? (managerData?.results ?? []) : (workshopData?.results ?? []);
-  const filteredByView = useMemo(
-    () => view === 'workshop' ? filterWorkshopTasks(rawTasks, currentWorkerName) : rawTasks,
-    [currentWorkerName, rawTasks, view],
-  );
-  const tasks = useMemo(() => {
-    if (!deferredSearch.trim()) return filteredByView;
-    const q = deferredSearch.toLowerCase().trim();
-    return filteredByView.filter((task) =>
-      task.order.orderNumber.toLowerCase().includes(q) ||
-      (task.productName?.toLowerCase() ?? '').includes(q) ||
-      (task.size?.toLowerCase() ?? '').includes(q),
-    );
-  }, [deferredSearch, filteredByView]);
-
-  const isLoading = view === 'manager' ? managerLoading : workshopLoading;
-  const workers = catalogs?.workers ?? [];
-
-  const tasksFiltered = useMemo(() => {
-    if (!dateFilter) return tasks;
-    return tasks.filter((t) => {
-      if (!t.order.dueDate) return true;
-      const d = t.order.dueDate.slice(0, 10);
-      if (dateFilter.from && d < dateFilter.from) return false;
-      if (dateFilter.to && d > dateFilter.to) return false;
-      return true;
+  // Handlers
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
     });
-  }, [tasks, dateFilter]);
+  };
 
-  const queuedTasks = useMemo(() => {
-    const filtered = tasksFiltered.filter((task) => task.status === 'queued');
-    // E1: срочные задачи всегда наверху колонки
-    return [...filtered].sort((a, b) => {
-      const ua = (a.order.urgency ?? a.order.priority) === 'urgent' ? 0 : 1;
-      const ub = (b.order.urgency ?? b.order.priority) === 'urgent' ? 0 : 1;
-      return ua - ub;
+  const clearSelection = () => {
+    setSelectedIds(new Set());
+    setShowOnlySelected(false);
+  };
+
+  const handleMarkDone = async (taskId: string, currentStatus: ProductionStatus) => {
+    setPendingDoneIds((prev) => new Set([...prev, taskId]));
+    setSelectedIds((prev) => {
+      const n = new Set(prev);
+      n.delete(taskId);
+      return n;
     });
-  }, [tasks]);
-  const runningTasks = useMemo(() => {
-    const filtered = tasksFiltered.filter((task) => task.status === 'in_progress');
-    // E1: срочные задачи всегда наверху колонки
-    return [...filtered].sort((a, b) => {
-      const ua = (a.order.urgency ?? a.order.priority) === 'urgent' ? 0 : 1;
-      const ub = (b.order.urgency ?? b.order.priority) === 'urgent' ? 0 : 1;
-      return ua - ub;
-    });
-  }, [tasks]);
 
-  async function handleClaim(taskId: string) {
-    await claimTask.mutateAsync(taskId);
-  }
+    try {
+      if (currentStatus === 'queued') {
+        await claimTask.mutateAsync(taskId);
+      }
+      await updateStatus.mutateAsync({ taskId, status: 'done' });
+    } catch (err) {
+      setPendingDoneIds((prev) => {
+        const n = new Set(prev);
+        n.delete(taskId);
+        return n;
+      });
+    }
+  };
 
-  async function handleMarkDone(taskId: string) {
-    await updateStatus.mutateAsync({ taskId, status: 'done' });
-  }
+  const handleAssignWorker = async (taskId: string, worker: string) => {
+    await assignWorker.mutateAsync({ taskId, worker });
+  };
 
-  async function handleReturnToQueue(taskId: string) {
+  const handleFlagTask = async (taskId: string, reason: string) => {
+    await flagTask.mutateAsync({ taskId, reason });
+  };
+
+  const handleReturnToQueue = async (taskId: string) => {
     await assignWorker.mutateAsync({ taskId, worker: null });
     await updateStatus.mutateAsync({ taskId, status: 'queued' });
-  }
+  };
 
-  async function handleRejectChangeRequest() {
+  const handleRejectChangeRequest = async () => {
     if (!rejectModal || !rejectReason.trim()) return;
-    await rejectChangeRequest.mutateAsync({ crId: rejectModal.crId, rejectReason: rejectReason.trim() });
+    await rejectChangeRequest.mutateAsync({
+      crId: rejectModal.crId,
+      rejectReason: rejectReason.trim(),
+    });
     setRejectModal(null);
     setRejectReason('');
-  }
+  };
+
+  // Filtering pipeline
+  const visibleTasks = useMemo(() => {
+    let result = workshopData?.results ?? [];
+    result = result.filter((t) => !pendingDoneIds.has(t.id));
+    result = applySearch(result, deferredSearch);
+    result = applyDueDateFilter(result, dueDateFilter);
+    result = applyAcceptedFilter(result, acceptedFilter);
+    result = sortWorkshopTasks(result);
+    if (showOnlySelected && selectedIds.size > 0) {
+      result = result.filter((t) => selectedIds.has(t.id));
+    }
+    return result;
+  }, [workshopData, pendingDoneIds, deferredSearch, dueDateFilter, acceptedFilter, showOnlySelected, selectedIds]);
 
   return (
     <div className={styles.root}>
-      <div className={styles.header}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerTitle}>
-            <Factory size={18} />
-            <span>Цех</span>
-          </div>
-          <div className={styles.headerSub}>Пошив и контроль выполнения</div>
-        </div>
-
-        <div className={styles.headerRight}>
-          <div className={styles.searchFieldWrap}>
-            <Search size={13} className={styles.searchFieldIcon} />
-            <input
-              className={styles.searchInput}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="ЧП-номер или товар..."
-            />
-          </div>
-          <DateFilterButton value={dateFilter} onChange={setDateFilter} />
-
-          <button
-            className={`${styles.groupToggle} ${grouped ? styles.groupToggleActive : ''}`}
-            onClick={toggleGrouped}
-            title={grouped ? 'Отключить группировку' : 'Сгруппировать похожие задания'}
-          >
-            <Layers size={13} />
-            <span>Группировать</span>
-          </button>
-
-          <button
-            className={`${styles.groupToggle} ${layoutMode === 'list' ? styles.groupToggleActive : ''}`}
-            onClick={toggleLayoutMode}
-            title={layoutMode === 'list' ? 'Переключить на Канбан' : 'Переключить на Список'}
-          >
-            <LayoutList size={13} />
-            <span>Список</span>
-          </button>
-
-          {layoutMode === 'list' && (
-            <button
-              className={`${styles.groupToggle} ${showOnlyRunning ? styles.groupToggleActive : ''}`}
-              onClick={() => setShowOnlyRunning(!showOnlyRunning)}
-              title={showOnlyRunning ? 'Показать все заказы' : 'Показать только выполнение'}
-            >
-              <span>Выполнение</span>
-            </button>
-          )}
-
-          {!workshopDefault && (
-            <div className={styles.viewSwitch}>
-              <button
-                className={`${styles.switchBtn} ${view === 'manager' ? styles.switchActive : ''}`}
-                onClick={() => setView('manager')}
-              >
-                Управление
-              </button>
-              <button
-                className={`${styles.switchBtn} ${view === 'workshop' ? styles.switchActive : ''}`}
-                onClick={() => setView('workshop')}
-              >
-                Швея
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {dateFilter && (
-        <div className={styles.dateFilterBanner}>
-          <Filter size={13} />
-          <span>Фильтр по дате активен — показаны заказы со сроком в выбранном диапазоне.</span>
-          <button type="button" className={styles.dateFilterBannerClear} title="Сбросить фильтр" onClick={() => setDateFilter(null)}>
-            <XCircle size={14} />
-          </button>
-        </div>
-      )}
-
       {/* ── Change Request Alerts ──────────────────────────────────────── */}
-      {changeRequests && changeRequests.length > 0 && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flexShrink: 0 }}>
+      {canManageProduction && changeRequests && changeRequests.length > 0 && (
+        <div className={styles.alertsContainer}>
           {changeRequests.map((cr: ChapanChangeRequest) => (
-            <div
-              key={cr.id}
-              style={{
-                display: 'flex', alignItems: 'flex-start', gap: 12, padding: '14px 18px',
-                background: 'rgba(217,79,79,.09)', border: '1.5px solid rgba(217,79,79,.35)',
-                borderRadius: 12, flexWrap: 'wrap',
-              }}
-            >
-              <AlertTriangle size={18} style={{ color: '#D94F4F', flexShrink: 0, marginTop: 1 }} />
-              <div style={{ flex: 1, minWidth: 200 }}>
-                <div style={{ fontSize: 13, fontWeight: 600, color: '#D94F4F', marginBottom: 3 }}>
-                  Запрос на изменение позиций — #{cr.order.orderNumber}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.5 }}>
+            <div key={cr.id} className={styles.alertBanner}>
+              <AlertTriangle size={18} className={styles.alertIcon} />
+              <div className={styles.alertContent}>
+                <div className={styles.alertTitle}>Запрос на изменение позиций — #{cr.order.orderNumber}</div>
+                <div>
                   Менеджер <strong>{cr.requestedBy}</strong> просит изменить позиции заказа.
                   {cr.managerNote && (
-                    <span style={{ marginLeft: 4, color: 'var(--text-tertiary)' }}>
-                      Пояснение: «{cr.managerNote}»
-                    </span>
+                    <span className={styles.alertNote}>Пояснение: «{cr.managerNote}»</span>
                   )}
                 </div>
-                <div style={{ marginTop: 6, fontSize: 11, color: 'var(--text-tertiary)' }}>
-                  Новые позиции: {(cr.proposedItems ?? []).map((item) =>
-                    `${buildItemLine(item)} - ${item.size} × ${item.quantity}`
-                  ).join(', ')}
+                <div style={{ marginTop: 6, fontSize: 11, color: 'var(--ch-text-muted)' }}>
+                  Новые позиции:{' '}
+                  {(cr.proposedItems ?? [])
+                    .map((item) => `${buildItemLine(item)} - ${item.size} × ${item.quantity}`)
+                    .join(', ')}
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 8, flexShrink: 0, alignItems: 'center' }}>
+              <div className={styles.alertActions}>
                 <button
-                  style={{
-                    padding: '7px 14px', background: 'rgba(16,185,129,.12)',
-                    border: '1px solid rgba(16,185,129,.3)', borderRadius: 8,
-                    color: 'var(--fill-positive, #10b981)', fontSize: 12, fontWeight: 600,
-                    fontFamily: 'inherit', cursor: 'pointer',
-                    opacity: approveChangeRequest.isPending ? .6 : 1,
-                  }}
+                  className={styles.alertBtn}
                   onClick={() => approveChangeRequest.mutate(cr.id)}
-                  disabled={approveChangeRequest.isPending}
                 >
-                  Одобрить
+                  Принять
                 </button>
                 <button
-                  style={{
-                    padding: '7px 14px', background: 'rgba(239,68,68,.08)',
-                    border: '1px solid rgba(239,68,68,.25)', borderRadius: 8,
-                    color: '#D94F4F', fontSize: 12, fontWeight: 600,
-                    fontFamily: 'inherit', cursor: 'pointer',
-                  }}
-                  onClick={() => {
-                    setRejectModal({ crId: cr.id, orderNumber: cr.order.orderNumber });
-                    setRejectReason('');
-                  }}
+                  className={`${styles.alertBtn} ${styles.alertBtnSecondary}`}
+                  onClick={() => setRejectModal({ crId: cr.id, orderNumber: cr.order.orderNumber })}
                 >
                   Отклонить
                 </button>
@@ -550,703 +259,181 @@ export default function ChapanProductionPage() {
         </div>
       )}
 
-      {isLoading && (
-        <div className={styles.loadingGrid}>
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className={styles.skeleton} />
-          ))}
-        </div>
-      )}
-
-      {!isLoading && tasks.length === 0 && (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyTitle}>Активных производственных карточек нет</div>
-          <div className={styles.emptyText}>
-            Новые подтвержденные заказы появятся здесь автоматически.
-          </div>
-        </div>
-      )}
-
-      {!isLoading && tasks.length > 0 && layoutMode === 'kanban' && (
-        <div className={styles.board}>
-          {COLUMNS.map((column) => {
-            const columnTasks = column.key === 'queued' ? queuedTasks : runningTasks;
-            const displayGroups = grouped
-              ? buildTaskGroups(columnTasks)
-              : columnTasks.map((task) => ({ kind: 'single' as const, task }));
-
-            return (
-              <section key={column.key} className={styles.column}>
-                <div className={styles.columnHeader}>
-                  <div className={styles.columnTitle}>{column.label}</div>
-                  <span className={styles.columnCount}>{displayGroups.length}</span>
-                </div>
-
-                <div className={styles.columnCards}>
-                  {displayGroups.map((group, index) => (
-                    group.kind === 'single' ? (
-                      <TaskCard
-                        key={group.task.id}
-                        task={group.task}
-                        column={column.key}
-                        mode={view}
-                        currentWorkerName={currentWorkerName}
-                        onClaim={handleClaim}
-                        onDone={handleMarkDone}
-                        onReturnToQueue={handleReturnToQueue}
-                      />
-                    ) : (
-                      <BatchTaskCard
-                        key={`${column.key}-${index}`}
-                        tasks={group.tasks}
-                        column={column.key}
-                        mode={view}
-                        currentWorkerName={currentWorkerName}
-                        onClaim={handleClaim}
-                        onDone={handleMarkDone}
-                        onReturnToQueue={handleReturnToQueue}
-                      />
-                    )
-                  ))}
-
-                  {displayGroups.length === 0 && (
-                    <div className={styles.columnEmpty}>Пока пусто</div>
-                  )}
-                </div>
-              </section>
-            );
-          })}
-        </div>
-      )}
-
-      {!isLoading && tasks.length > 0 && layoutMode === 'list' && (
-        <ProductionListView
-          queuedTasks={queuedTasks}
-          runningTasks={runningTasks}
-          mode={view}
-          grouped={grouped}
-          showOnlyRunning={showOnlyRunning}
-          currentWorkerName={currentWorkerName}
-          onClaim={handleClaim}
-          onDone={handleMarkDone}
-          onReturnToQueue={handleReturnToQueue}
-        />
-      )}
-
+      {/* ── Reject Modal ────────────────────────────────────────────────── */}
       {rejectModal && (
-        <div className={styles.modalOverlay} onClick={() => setRejectModal(null)}>
-          <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
-            <div className={styles.modalHeader}>
-              <span>Отклонить запрос — #{rejectModal.orderNumber}</span>
-              <button className={styles.modalClose} onClick={() => setRejectModal(null)}>
-                <X size={16} />
-              </button>
-            </div>
-            <div className={styles.modalBody}>
-              <label className={styles.modalLabel}>Причина отказа</label>
-              <input
-                className={styles.modalInput}
-                value={rejectReason}
-                onChange={(event) => setRejectReason(event.target.value)}
-                placeholder="Например: изделие уже раскроено, нельзя изменить размер"
-                autoFocus
-                onKeyDown={(event) => event.key === 'Enter' && handleRejectChangeRequest()}
-              />
-            </div>
-            <div className={styles.modalFooter}>
-              <button className={styles.modalCancel} onClick={() => setRejectModal(null)}>
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 200,
+            background: 'rgba(0,0,0,0.3)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setRejectModal(null)}
+        >
+          <div
+            style={{
+              background: 'var(--ch-card)',
+              borderRadius: 12,
+              padding: 20,
+              minWidth: 300,
+              maxWidth: 500,
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: '0 0 12px 0', fontSize: 14, fontWeight: 600 }}>
+              Отклонить запрос на изменение #{rejectModal.orderNumber}
+            </h3>
+            <textarea
+              title="Введите причину отклонения запроса"
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              placeholder="Причина отклонения..."
+              rows={3}
+              style={{
+                width: '100%',
+                padding: 8,
+                border: '1px solid var(--ch-border)',
+                borderRadius: 6,
+                fontSize: 12,
+                fontFamily: 'inherit',
+                marginBottom: 12,
+                boxSizing: 'border-box',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setRejectModal(null)}
+                style={{
+                  padding: '6px 12px',
+                  background: 'transparent',
+                  border: '1px solid var(--ch-border)',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 12,
+                }}
+              >
                 Отмена
               </button>
               <button
-                className={styles.modalSubmit}
                 onClick={handleRejectChangeRequest}
-                disabled={!rejectReason.trim() || rejectChangeRequest.isPending}
+                disabled={!rejectReason.trim()}
+                style={{
+                  padding: '6px 12px',
+                  background: '#d94f4f',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontSize: 12,
+                  fontWeight: 600,
+                  opacity: rejectReason.trim() ? 1 : 0.5,
+                }}
               >
-                Отклонить запрос
+                Отклонить
               </button>
             </div>
           </div>
         </div>
       )}
 
-    </div>
-  );
-}
-
-interface CollapsibleSectionProps {
-  title: string;
-  count: number;
-  defaultOpen?: boolean;
-  children: React.ReactNode;
-}
-
-function CollapsibleSection({ title, count, defaultOpen = true, children }: CollapsibleSectionProps) {
-  const [open, setOpen] = useState(defaultOpen);
-
-  return (
-    <section className={styles.collapsibleSection}>
-      <div className={styles.sectionHeader}>
-        <span className={styles.sectionTitle}>{title}</span>
-        <span className={styles.columnCount}>{count}</span>
-        <button
-          className={styles.sectionToggle}
-          onClick={() => setOpen((v) => !v)}
-          title={open ? 'Свернуть' : 'Развернуть'}
-        >
-          {open ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
-      </div>
-      {open && <div className={styles.sectionBody}>{children}</div>}
-    </section>
-  );
-}
-
-interface TaskListCardProps {
-  task: ProductionTask;
-  column: ColumnKey;
-  mode: ProductionMode;
-  currentWorkerName: string | null;
-  onClaim: (taskId: string) => Promise<void>;
-  onDone: (taskId: string) => Promise<void>;
-  onReturnToQueue: (taskId: string) => Promise<void>;
-  showBanner?: boolean;
-}
-
-function TaskListCard({
-  task,
-  column,
-  mode,
-  currentWorkerName,
-  onClaim,
-  onDone,
-  onReturnToQueue,
-  showBanner = true,
-}: TaskListCardProps) {
-  const deadline = formatDeadline(task.order.dueDate);
-  const isUrgent = (task.order.urgency ?? task.order.priority) === 'urgent';
-  const isDemanding = task.order.isDemandingClient ?? (task.order.priority === 'vip');
-  const canClaim = !task.assignedTo || task.assignedTo === currentWorkerName;
-  const hasBanner = showBanner && (isUrgent || (isDemanding && !isUrgent));
-
-  const itemLine = buildItemLine({ productName: task.productName, color: task.color, gender: task.gender }) || task.productName;
-
-  return (
-    <article
-      className={`${styles.taskListCard} ${isUrgent ? styles.taskListCardUrgent : ''} ${isDemanding && !isUrgent ? styles.taskListCardDemanding : ''}`}
-    >
-      {showBanner && isUrgent && (
-        <div className={styles.taskListCardUrgentBanner}>
-          <AlertTriangle size={11} />
-          <span>Срочно</span>
-        </div>
-      )}
-      {showBanner && isDemanding && !isUrgent && (
-        <div className={styles.taskListCardDemandBanner}>
-          <Star size={10} />
-          <span>Требовательный</span>
-        </div>
-      )}
-
-      <div className={`${styles.taskListCardMain} ${hasBanner ? styles.taskListCardMainWithBanner : ''}`}>
-        <div className={styles.taskListCardRow}>
-          <div className={styles.taskListCardValue}>{task.productName}</div>
-          <div className={styles.taskListCardValue}>{task.color || '—'}</div>
-          <div className={styles.taskListCardValue}>{task.size}</div>
-          <div className={styles.taskListCardValue}>{task.length || '—'}</div>
-          <div className={styles.taskListCardValue}>{task.quantity} шт.</div>
-          <div className={styles.taskListCardValue}>{deadline || '—'}</div>
-          <div className={styles.taskListCardValue}>#{task.order.orderNumber}</div>
-        </div>
-
-        {(task.notes || task.workshopNotes) && (
-          <div className={styles.taskListCardComment}>
-            {task.workshopNotes && (
-              <div>
-                <span className={styles.taskListCardCommentLabel}>Коммент: </span>
-                {task.workshopNotes}
-              </div>
-            )}
-            {task.notes && !task.workshopNotes && (
-              <div>
-                <span className={styles.taskListCardCommentLabel}>Примечание: </span>
-                {task.notes}
-              </div>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className={styles.taskListCardAction}>
-        {column === 'queued' && mode === 'workshop' && (
-          <button
-            className={styles.taskListCardActionBtn}
-            onClick={() => onClaim(task.id)}
-            disabled={!canClaim}
-          >
-            Взять в работу
-          </button>
-        )}
-
-        {column === 'in_progress' && mode === 'workshop' && (
-          <button
-            className={`${styles.taskListCardActionBtn} ${styles.taskListCardActionSuccess}`}
-            onClick={() => onDone(task.id)}
-          >
-            <Check size={11} />
-            Готово
-          </button>
-        )}
-      </div>
-    </article>
-  );
-}
-
-type UrgencyGroupType = 'urgent' | 'demanding' | 'normal';
-
-function groupByUrgency(tasks: ProductionTask[]): Record<UrgencyGroupType, ProductionTask[]> {
-  return {
-    urgent: tasks.filter(t => (t.order.urgency ?? t.order.priority) === 'urgent'),
-    demanding: tasks.filter(t =>
-      (t.order.urgency ?? t.order.priority) !== 'urgent' &&
-      (t.order.isDemandingClient ?? t.order.priority === 'vip')
-    ),
-    normal: tasks.filter(t =>
-      (t.order.urgency ?? t.order.priority) !== 'urgent' &&
-      !(t.order.isDemandingClient ?? t.order.priority === 'vip')
-    ),
-  };
-}
-
-function numTasksLabel(n: number): string {
-  const mod10 = n % 10; const mod100 = n % 100;
-  if (mod100 >= 11 && mod100 <= 19) return 'задач';
-  if (mod10 === 1) return 'задача';
-  if (mod10 >= 2 && mod10 <= 4) return 'задачи';
-  return 'задач';
-}
-
-const URGENCY_GROUP_CONFIG: Record<UrgencyGroupType, { label: string; headClass: string }> = {
-  urgent:    { label: 'Срочно',         headClass: 'urgHeadUrgent' },
-  demanding: { label: 'Требовательный', headClass: 'urgHeadDemanding' },
-  normal:    { label: 'Стандартные',    headClass: 'urgHeadNormal' },
-};
-
-interface UrgencyGroupBlockProps {
-  type: UrgencyGroupType;
-  tasks: ProductionTask[];
-  column: ColumnKey;
-  mode: ProductionMode;
-  currentWorkerName: string | null;
-  onClaim: (taskId: string) => Promise<void>;
-  onDone: (taskId: string) => Promise<void>;
-  onReturnToQueue: (taskId: string) => Promise<void>;
-}
-
-function UrgencyGroupBlock({ type, tasks, ...cardProps }: UrgencyGroupBlockProps) {
-  if (!tasks.length) return null;
-  const config = URGENCY_GROUP_CONFIG[type];
-  return (
-    <>
-      <div className={`${styles.urgencyGroupHead} ${styles[config.headClass]}`}>
-        {type === 'urgent'    && <AlertTriangle size={10} />}
-        {type === 'demanding' && <Star size={10} />}
-        <span className={styles.urgencyGroupLabel}>{config.label}</span>
-        <span className={styles.urgencyGroupCount}>· {tasks.length} {numTasksLabel(tasks.length)}</span>
-        <div className={styles.urgencyGroupLine} />
-      </div>
-      {tasks.map(task => (
-        <TaskListCard key={task.id} task={task} showBanner={false} {...cardProps} />
-      ))}
-    </>
-  );
-}
-
-interface ProductionListViewProps {
-  queuedTasks: ProductionTask[];
-  runningTasks: ProductionTask[];
-  mode: ProductionMode;
-  grouped: boolean;
-  showOnlyRunning: boolean;
-  currentWorkerName: string | null;
-  onClaim: (taskId: string) => Promise<void>;
-  onDone: (taskId: string) => Promise<void>;
-  onReturnToQueue: (taskId: string) => Promise<void>;
-}
-
-function ProductionListView({
-  queuedTasks,
-  runningTasks,
-  mode,
-  grouped,
-  showOnlyRunning,
-  currentWorkerName,
-  onClaim,
-  onDone,
-  onReturnToQueue,
-}: ProductionListViewProps) {
-  const displayQueuedGroups = grouped ? buildTaskGroups(queuedTasks) : queuedTasks.map((task) => ({ kind: 'single' as const, task }));
-  const displayRunningGroups = grouped ? buildTaskGroups(runningTasks) : runningTasks.map((task) => ({ kind: 'single' as const, task }));
-
-  const queuedDisplayTasks = displayQueuedGroups.flatMap((group) => (group.kind === 'single' ? [group.task] : group.tasks));
-  const runningDisplayTasks = displayRunningGroups.flatMap((group) => (group.kind === 'single' ? [group.task] : group.tasks));
-
-  const runningGroups = groupByUrgency(runningDisplayTasks);
-  const queuedGroups = groupByUrgency(queuedDisplayTasks);
-
-  const listCardProps = { mode, currentWorkerName, onClaim, onDone, onReturnToQueue };
-
-  const tableHeader = (
-    <div className={styles.taskListHeader}>
-      <div className={styles.taskListHeaderContent}>
-        <div className={styles.taskListHeaderLabel}>Товар</div>
-        <div className={styles.taskListHeaderLabel}>Цвет</div>
-        <div className={styles.taskListHeaderLabel}>Размер</div>
-        <div className={styles.taskListHeaderLabel}>Длина</div>
-        <div className={styles.taskListHeaderLabel}>Кол-во</div>
-        <div className={styles.taskListHeaderLabel}>Срок</div>
-        <div className={styles.taskListHeaderLabel}>Заказ</div>
-      </div>
-      <div className={styles.taskListHeaderSpacer} />
-    </div>
-  );
-
-  return (
-    <div className={styles.listView}>
-      <CollapsibleSection title="Выполнение" count={displayRunningGroups.length} defaultOpen={true}>
-        {runningDisplayTasks.length > 0 && tableHeader}
-        <UrgencyGroupBlock type="urgent"    tasks={runningGroups.urgent}    column="in_progress" {...listCardProps} />
-        <UrgencyGroupBlock type="demanding" tasks={runningGroups.demanding} column="in_progress" {...listCardProps} />
-        <UrgencyGroupBlock type="normal"    tasks={runningGroups.normal}    column="in_progress" {...listCardProps} />
-      </CollapsibleSection>
-
-      {!showOnlyRunning && (
-        <CollapsibleSection title="Новые заказы" count={displayQueuedGroups.length} defaultOpen={true}>
-          {queuedDisplayTasks.length > 0 && tableHeader}
-          <UrgencyGroupBlock type="urgent"    tasks={queuedGroups.urgent}    column="queued" {...listCardProps} />
-          <UrgencyGroupBlock type="demanding" tasks={queuedGroups.demanding} column="queued" {...listCardProps} />
-          <UrgencyGroupBlock type="normal"    tasks={queuedGroups.normal}    column="queued" {...listCardProps} />
-        </CollapsibleSection>
-      )}
-    </div>
-  );
-}
-
-function TaskDetailPanel({ task }: { task: ProductionTask }) {
-  const deadline = formatDeadline(task.order.dueDate);
-
-  return (
-    <div className={styles.detailPanel}>
-      <div className={styles.detailSection}>
-        <div className={styles.detailSectionLabel}>Изделие</div>
-        <div className={styles.detailGrid}>
-          <span className={styles.detailLabel}>Товар:</span>
-          <span className={styles.detailValue}>{task.productName}</span>
-
-          {task.color && (
-            <>
-              <span className={styles.detailLabel}>Цвет:</span>
-              <span className={styles.detailValue}>{task.color}</span>
-            </>
-          )}
-
-          {task.gender && (
-            <>
-              <span className={styles.detailLabel}>Пол:</span>
-              <span className={styles.detailValue}>{task.gender}</span>
-            </>
-          )}
-
-
-          <span className={styles.detailLabel}>Размер:</span>
-          <span className={styles.detailValue}>{task.size}</span>
-
-          {task.length && (
-            <>
-              <span className={styles.detailLabel}>Длина:</span>
-              <span className={styles.detailValue}>{task.length}</span>
-            </>
-          )}
-
-          <span className={styles.detailLabel}>Кол-во:</span>
-          <span className={styles.detailValue}>{task.quantity} шт.</span>
-        </div>
-      </div>
-
-      {(task.notes || task.workshopNotes) && (
-        <div className={styles.detailSection}>
-          <div className={styles.detailSectionLabel}>Примечания</div>
-          {task.notes && (
-            <div className={styles.noteItem}>
-              <span className={styles.noteLabel}>К заданию:</span>
-              <span className={styles.noteText}>{task.notes}</span>
-            </div>
-          )}
-          {task.workshopNotes && (
-            <div className={styles.noteItem}>
-              <span className={styles.noteLabel}>К позиции:</span>
-              <span className={styles.noteText}>{task.workshopNotes}</span>
-            </div>
-          )}
-        </div>
-      )}
-
-      {task.defects && (
-        <div className={`${styles.detailSection} ${styles.defectSection}`}>
-          <div className={styles.detailSectionLabel}>Дефекты</div>
-          <div className={styles.defectNote}>{task.defects}</div>
-        </div>
-      )}
-
-      <div className={styles.detailSection}>
-        <div className={styles.detailSectionLabel}>Детали заказа</div>
-        <div className={styles.detailGrid}>
-          <span className={styles.detailLabel}>Заказ:</span>
-          <span className={styles.detailValue}>#{task.order.orderNumber}</span>
-
-          {deadline && (
-            <>
-              <span className={styles.detailLabel}>Срок:</span>
-              <span className={styles.detailValue}>{deadline}</span>
-            </>
-          )}
-
-          {task.assignedTo && (
-            <>
-              <span className={styles.detailLabel}>Исполнитель:</span>
-              <span className={styles.detailValue}>{task.assignedTo}</span>
-            </>
-          )}
-
-          <span className={styles.detailLabel}>Статус:</span>
-          <span className={styles.detailValue}>
-            {task.status === 'queued' ? 'В очереди' : task.status === 'in_progress' ? 'В работе' : 'Готово'}
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-interface TaskCardProps {
-  task: ProductionTask;
-  column: ColumnKey;
-  mode: ProductionMode;
-  currentWorkerName: string | null;
-  onClaim: (taskId: string) => Promise<void>;
-  onDone: (taskId: string) => Promise<void>;
-  onReturnToQueue: (taskId: string) => Promise<void>;
-}
-
-function TaskCard({
-  task,
-  column,
-  mode,
-  currentWorkerName,
-  onClaim,
-  onDone,
-  onReturnToQueue,
-}: TaskCardProps) {
-  const deadline = formatDeadline(task.order.dueDate);
-  const canClaim = !task.assignedTo || task.assignedTo === currentWorkerName;
-  const isUrgent = (task.order.urgency ?? task.order.priority) === 'urgent';
-  const isDemanding = task.order.isDemandingClient ?? (task.order.priority === 'vip');
-
-  return (
-    <article className={`${styles.card} ${isUrgent ? styles.cardUrgent : ''} ${isDemanding && !isUrgent ? styles.cardDemanding : ''}`}>
-      {isUrgent && (
-        <div className={styles.urgentBanner}>
-          <AlertTriangle size={11} />
-          <span>Срочно</span>
-        </div>
-      )}
-      {isDemanding && !isUrgent && (
-        <div className={styles.demandBanner}>
-          <Star size={10} /><span>Требовательный клиент</span>
-        </div>
-      )}
-      {isUrgent && isDemanding && (
-        <div className={styles.demandBanner} style={{ marginTop: 2 }}>
-          <Star size={10} /><span>Требовательный</span>
-        </div>
-      )}
-
-      {/* E3: compact head — номер + клиент в одну строку */}
-      <div className={styles.cardHead}>
-        <span
-          className={styles.orderNumber}
-          style={{ borderLeftColor: getUrgencyDot(task) }}
-        >
-          #{task.order.orderNumber}
-        </span>
-        <div className={styles.cardHeadRight}>
-          {deadline && <span className={styles.deadline}>{deadline}</span>}
-          {mode === 'manager' && task.order.clientName && (
-            <span className={styles.clientName}>{task.order.clientName.split(' ')[0]}</span>
-          )}
-        </div>
-      </div>
-
-      <div className={styles.productName}>
-        {buildItemLine({ productName: task.productName, color: task.color, gender: task.gender }) || task.productName}
-      </div>
-      <div className={styles.metaLine}>{buildTaskMetaLine(task)}</div>
-
-      {task.notes && (
-        <div className={styles.workshopNote}>
-          <MessageSquare size={11} className={styles.workshopNoteIcon} />
-          <span>{task.notes}</span>
-        </div>
-      )}
-
-      {task.assignedTo && (
-        <div className={styles.infoRow}>
-          <span className={styles.workerChip}>
-            <User size={11} />
-            {task.assignedTo}
-          </span>
-        </div>
-      )}
-
-      <div className={styles.cardActions}>
-        {column === 'queued' && mode === 'workshop' && (
-          <button
-            className={styles.primaryAction}
-            onClick={() => onClaim(task.id)}
-            disabled={!canClaim}
-          >
-            Взять в работу
-          </button>
-        )}
-
-        {column === 'in_progress' && (
-          <>
-            <button
-              className={styles.successAction}
-              onClick={() => onDone(task.id)}
-            >
-              <CheckCircle2 size={13} />
-              Готово
-            </button>
-            {mode === 'manager' && (
-              <button className={styles.secondaryAction} onClick={() => onReturnToQueue(task.id)}>
-                Вернуть
-              </button>
-            )}
-          </>
-        )}
-      </div>
-
-      {mode === 'workshop' && <TaskDetailPanel task={task} />}
-    </article>
-  );
-}
-
-interface BatchTaskCardProps {
-  tasks: ProductionTask[];
-  column: ColumnKey;
-  mode: ProductionMode;
-  currentWorkerName: string | null;
-  onClaim: (taskId: string) => Promise<void>;
-  onDone: (taskId: string) => Promise<void>;
-  onReturnToQueue: (taskId: string) => Promise<void>;
-}
-
-function BatchTaskCard({
-  tasks,
-  column,
-  mode,
-  currentWorkerName,
-  onClaim,
-  onDone,
-  onReturnToQueue,
-}: BatchTaskCardProps) {
-  const [expanded, setExpanded] = useState(false);
-  const firstTask = tasks[0];
-  const batchColor = getTaskBatchColor(firstTask);
-  const totalQty = tasks.reduce((sum, task) => sum + task.quantity, 0);
-
-  const dateRange = useMemo(() => {
-    const dated = tasks
-      .filter((task) => task.order.dueDate)
-      .sort((a, b) => +new Date(a.order.dueDate!) - +new Date(b.order.dueDate!));
-
-    if (!dated.length) return null;
-
-    const first = formatDeadline(dated[0].order.dueDate);
-    const last = formatDeadline(dated[dated.length - 1].order.dueDate);
-
-    return first === last ? first : `${first} – ${last}`;
-  }, [tasks]);
-
-  async function handleClaimAll() {
-    for (const task of tasks) {
-      const canClaim = !task.assignedTo || task.assignedTo === currentWorkerName;
-      if (canClaim) {
-        await onClaim(task.id);
-      }
-    }
-  }
-
-  async function handleDoneAll() {
-    for (const task of tasks) {
-      await onDone(task.id);
-    }
-  }
-
-  const cardStyle = { '--batch-color': batchColor } as CSSProperties;
-
-  return (
-    <div className={styles.batchWrap} style={cardStyle}>
-      <div className={`${styles.batchCard} ${expanded ? styles.batchOpen : ''}`}>
-        <div className={styles.batchHead}>
-          <span className={styles.batchBadge}>{tasks.length}</span>
-          <span className={styles.batchLabel}>карточки</span>
-          <button className={styles.batchExpand} onClick={() => setExpanded((value) => !value)}>
-            {expanded ? 'Скрыть' : 'Открыть'}
-          </button>
-        </div>
-
-        <div className={styles.productName}>
-          {buildItemLine({ productName: firstTask.productName, color: firstTask.color, gender: firstTask.gender }) || firstTask.productName}
-        </div>
-        <div className={styles.metaLine}>
-          {buildTaskMetaLine({ ...firstTask, quantity: undefined })} · {totalQty} шт.
-        </div>
-
-        <div className={styles.batchMeta}>
-          {dateRange && <span>{dateRange}</span>}
-        </div>
-
-        {column === 'queued' && mode === 'workshop' && (
-          <button className={styles.primaryAction} onClick={handleClaimAll}>
-            Взять все
-          </button>
-        )}
-
-        {column === 'in_progress' && (
-          <button className={styles.successAction} onClick={handleDoneAll}>
-            <CheckCircle2 size={13} />
-            Готово ×{tasks.length}
-          </button>
-        )}
-      </div>
-
-      {expanded && (
-        <div className={styles.batchList}>
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              column={column}
-              mode={mode}
-              currentWorkerName={currentWorkerName}
-              onClaim={onClaim}
-              onDone={onDone}
-              onReturnToQueue={onReturnToQueue}
+      {/* ── Page Header ────────────────────────────────────────────────── */}
+      <header className={styles.pageHeader}>
+        <h1 className={styles.title}>
+          <Factory size={18} />
+          Цех
+          <span className={styles.count}>{visibleTasks.length} позиций</span>
+        </h1>
+        <div className={styles.controls}>
+          <div className={styles.searchInput}>
+            <Search size={13} />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Заказ или товар..."
+              type="text"
             />
-          ))}
+          </div>
+          <DatePickerPopover label="Срок сдачи" value={dueDateFilter} onChange={setDueDateFilter} />
+          <DatePickerPopover label="Принят" value={acceptedFilter} onChange={setAcceptedFilter} />
+          {selectedIds.size > 0 && (
+            <button
+              className={`${styles.onlySelBtn} ${showOnlySelected ? styles.active : ''}`}
+              onClick={() => setShowOnlySelected(!showOnlySelected)}
+            >
+              Только выбранные
+            </button>
+          )}
+        </div>
+      </header>
+
+      {/* ── Selection Bar ──────────────────────────────────────────────── */}
+      {selectedIds.size > 0 && (
+        <div className={styles.selectionBar}>
+          <input
+            type="checkbox"
+            checked={true}
+            onChange={clearSelection}
+            className={styles.selectionCheckbox}
+          />
+          <span>{selectedIds.size} выбрано</span>
+          <button className={styles.selectionClear} onClick={clearSelection} title="Очистить выбор">
+            ✕
+          </button>
         </div>
       )}
+
+      {/* ── Table Header ────────────────────────────────────────────────── */}
+      <div className={styles.tableHeader}>
+        <div className={styles.tableHeaderCol}>✓</div>
+        <div className={styles.tableHeaderCol}>!</div>
+        <div className={styles.tableHeaderCol}>№</div>
+        <div className={styles.tableHeaderCol}>Товар</div>
+        <div className={styles.tableHeaderCol}>Пол</div>
+        <div className={styles.tableHeaderCol}>Длина</div>
+        <div className={styles.tableHeaderCol}>Цвет</div>
+        <div className={styles.tableHeaderCol}>Кол.во</div>
+        <div className={styles.tableHeaderCol}>Разм.</div>
+        <div className={styles.tableHeaderCol}>Принят</div>
+        <div className={styles.tableHeaderCol}>Срок</div>
+        <div className={styles.tableHeaderCol}>Действие</div>
+      </div>
+
+      {/* ── Card List ──────────────────────────────────────────────────── */}
+      <div className={styles.cardList}>
+        {isLoading && (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyText}>Загрузка...</div>
+          </div>
+        )}
+        {!isLoading && visibleTasks.length === 0 && (
+          <div className={styles.emptyState}>
+            <div className={styles.emptyIcon}>📋</div>
+            <div className={styles.emptyText}>Нет заданий</div>
+            <div className={styles.emptySubtext}>Все позиции выполнены или отфильтрованы</div>
+          </div>
+        )}
+        {visibleTasks.map((task) => (
+          <WorkshopTaskCard
+            key={task.id}
+            task={task}
+            isSelected={selectedIds.has(task.id)}
+            onToggleSelect={toggleSelect}
+            onMarkDone={handleMarkDone}
+            isPending={pendingDoneIds.has(task.id)}
+            {...(canManageProduction
+              ? {
+                  onAssign: handleAssignWorker,
+                  onFlag: handleFlagTask,
+                  onReturnToQueue: handleReturnToQueue,
+                  workers: catalogs?.workers ?? [],
+                }
+              : {})}
+          />
+        ))}
+      </div>
     </div>
   );
 }

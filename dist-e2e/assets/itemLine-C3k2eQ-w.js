@@ -1,0 +1,1 @@
+function i(r){if(!r)return"";const t=(r.productName??"").trim(),c=(r.color??"").trim(),e=(r.gender??"").trim(),n=[];t&&n.push(t),c&&n.push(c);const o=n.join(" - ");return o?e?`${o} (${e})`:o:""}export{i as b};

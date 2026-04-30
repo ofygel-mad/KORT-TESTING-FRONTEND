@@ -1,1 +1,0 @@
-function u(n){if(!n)return"";const e=(n.productName??"").trim(),o=(n.color??"").trim(),i=(n.gender??"").trim(),r=[];e&&r.push(e),o&&r.push(o);const t=r.join(" - ");return t?i?`${t} (${i})`:t:""}function c(n){return[n.size,n.length?`дл. ${n.length}`:"",(n.quantity??0)>1?`× ${n.quantity}`:""].filter(Boolean).join(" · ")}export{c as a,u as b};

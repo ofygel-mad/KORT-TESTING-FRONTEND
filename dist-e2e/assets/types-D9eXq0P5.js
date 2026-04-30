@@ -1,0 +1,1 @@
+const e={defect:"Дефект товара",wrong_size:"Не тот размер",wrong_item:"Не тот товар",customer_refusal:"Отказ клиента",other:"Другое"},o={good:"Хорошее",defective:"Дефект",damaged:"Повреждение"},s={cash:"Наличные",bank:"На счёт"};export{e as R,o as a,s as b};
