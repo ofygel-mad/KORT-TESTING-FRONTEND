@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { normalizeCurrency } from '../utils/format';
 
 export type MembershipStatus = 'none' | 'pending' | 'active' | 'rejected';
 export type MembershipRole = 'owner' | 'admin' | 'manager' | 'viewer';
@@ -83,6 +84,24 @@ export const DEFAULT_MEMBERSHIP: Membership = {
   updatedAt: null,
 };
 
+function normalizeOrgState(org: Org | null): Org | null {
+  if (!org) {
+    return null;
+  }
+
+  return {
+    ...org,
+    currency: normalizeCurrency(org.currency),
+  };
+}
+
+function normalizeOrgSummaryState(org: OrgSummary): OrgSummary {
+  return {
+    ...org,
+    currency: normalizeCurrency(org.currency),
+  };
+}
+
 function buildOrgFromMembership(membership: Membership, currentOrg: Org | null): Org | null {
   if (
     membership.status !== 'active'
@@ -92,7 +111,7 @@ function buildOrgFromMembership(membership: Membership, currentOrg: Org | null):
     return null;
   }
 
-  return {
+  return normalizeOrgState({
     id: membership.companyId,
     name: membership.companyName,
     slug: membership.companySlug ?? currentOrg?.slug ?? 'company',
@@ -100,7 +119,7 @@ function buildOrgFromMembership(membership: Membership, currentOrg: Org | null):
     currency: currentOrg?.currency ?? 'KZT',
     is_demo: currentOrg?.is_demo,
     onboarding_completed: currentOrg?.onboarding_completed,
-  };
+  });
 }
 
 function deriveStoredRole(membership: Membership, fallbackRole: string) {
@@ -188,32 +207,36 @@ export const useAuthStore = create<AuthState>()(
 
         set({
           user,
-          org: membership.status === 'active' ? (org ?? buildOrgFromMembership(membership, org)) : null,
+          org: membership.status === 'active'
+            ? normalizeOrgState(org ?? buildOrgFromMembership(membership, org))
+            : null,
           token,
           refreshToken: refresh,
           capabilities,
           role: deriveStoredRole(membership, role),
           inviteContext: options?.inviteContext ?? null,
           membership,
-          userOrgs: options?.orgs ?? get().userOrgs,
+          userOrgs: options?.orgs?.map(normalizeOrgSummaryState) ?? get().userOrgs,
         });
       },
       setTokens: (token, refreshToken) => set({ token, refreshToken }),
       syncSession: ({ user, org, capabilities, role = 'viewer', membership, inviteContext, orgs }) => set((state) => ({
         user,
-        org: membership.status === 'active' ? (org ?? buildOrgFromMembership(membership, state.org)) : null,
+        org: membership.status === 'active'
+          ? normalizeOrgState(org ?? buildOrgFromMembership(membership, state.org))
+          : null,
         capabilities,
         role: deriveStoredRole(membership, role),
         membership,
         inviteContext: inviteContext ?? state.inviteContext,
-        userOrgs: orgs ?? state.userOrgs,
+        userOrgs: orgs?.map(normalizeOrgSummaryState) ?? state.userOrgs,
       })),
       setRole: (role) => set({ role }),
       setUser: (partial) => set((state) => ({
         user: state.user ? { ...state.user, ...partial } : null,
       })),
       setOrg: (partial) => set((state) => {
-        const nextOrg = state.org ? { ...state.org, ...partial } : null;
+        const nextOrg = state.org ? normalizeOrgState({ ...state.org, ...partial }) : null;
         return {
           org: nextOrg,
           membership: {
@@ -258,7 +281,7 @@ export const useAuthStore = create<AuthState>()(
       }),
       unlock: () => set({ isUnlocked: true }),
       lock: () => set({ isUnlocked: false }),
-      setUserOrgs: (orgs) => set({ userOrgs: orgs }),
+      setUserOrgs: (orgs) => set({ userOrgs: orgs.map(normalizeOrgSummaryState) }),
       setSelectedOrgId: (orgId) => set({ selectedOrgId: orgId }),
     }),
     {

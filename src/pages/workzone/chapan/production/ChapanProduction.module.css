@@ -1,5 +1,8 @@
 .root {
-  --workshop-columns: 40px 36px 82px minmax(198px, 1.42fr) 68px minmax(102px, 0.8fr) minmax(126px, 0.9fr) 64px 70px 88px 88px 212px;
+  --workshop-columns: 32px 24px 72px minmax(160px, 1.42fr) 54px minmax(82px, 0.74fr) minmax(98px, 0.82fr) 50px 58px 74px 74px 164px;
+  --workshop-leading-columns: 32px 24px 72px;
+  --workshop-grid-min-width: 942px;
+  --workshop-table-inline-padding: 16px;
   --workshop-header-offset: 74px;
   display: flex;
   flex-direction: column;
@@ -225,23 +228,20 @@
 }
 
 .tableHeader {
-  position: sticky;
-  top: var(--workshop-header-offset);
   z-index: 18;
   display: grid;
   grid-template-columns: var(--workshop-columns);
   align-items: center;
+  min-width: calc(var(--workshop-grid-min-width) + (var(--workshop-table-inline-padding) * 2));
   min-height: 54px;
-  padding: 0 24px 0 20px;
+  padding: 0 var(--workshop-table-inline-padding);
   background:
     linear-gradient(
       90deg,
       color-mix(in srgb, var(--ch-accent) 74%, white 26%) 0%,
       var(--ch-accent) 100%
     );
-  border-top: 1px solid color-mix(in srgb, white 18%, transparent);
   border-bottom: 1px solid color-mix(in srgb, var(--ch-accent) 42%, var(--ch-border));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, white 16%, transparent);
   color: var(--text-on-accent, #fff);
 }
 
@@ -250,11 +250,11 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  padding: 0 10px;
+  padding: 0 6px;
   color: inherit;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.03em;
   text-transform: uppercase;
   text-align: center;
   white-space: nowrap;
@@ -262,8 +262,7 @@
 
 /* FIX: Horizontal scroll wrapper for table header + cards */
 .tableScrollWrap {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
+  overflow-x: hidden;
   flex: 1;
   min-width: 0;
 }
@@ -272,8 +271,7 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  padding: 8px 20px 28px;
-  min-width: 1040px;
+  padding: 8px var(--workshop-table-inline-padding) 28px;
 }
 
 .emptyState {
@@ -313,6 +311,7 @@
   grid-template-columns: var(--workshop-columns);
   grid-auto-rows: minmax(58px, auto);
   align-items: stretch;
+  min-width: var(--workshop-grid-min-width);
   border: 1px solid color-mix(in srgb, var(--ch-accent) 10%, var(--ch-border));
   border-left: 3px solid color-mix(in srgb, var(--ch-accent) 12%, var(--ch-border));
   border-radius: 10px;
@@ -328,11 +327,33 @@
 }
 
 .cardUrgent {
-  border-left-color: color-mix(in srgb, var(--ch-red) 50%, transparent);
+  border-left-color: color-mix(in srgb, var(--ch-red) 82%, transparent);
+  border-color: color-mix(in srgb, var(--ch-red) 26%, var(--ch-border));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ch-red) 10%, var(--ch-card)) 0%,
+      color-mix(in srgb, var(--ch-red) 3%, var(--ch-card)) 22%,
+      color-mix(in srgb, var(--ch-card) 97%, white 3%) 100%
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ch-red) 10%, transparent),
+    var(--shadow-xs);
 }
 
 .cardVip {
-  border-left-color: color-mix(in srgb, var(--ch-blue) 50%, transparent);
+  border-left-color: color-mix(in srgb, var(--ch-blue) 78%, transparent);
+  border-color: color-mix(in srgb, var(--ch-blue) 24%, var(--ch-border));
+  background:
+    linear-gradient(
+      90deg,
+      color-mix(in srgb, var(--ch-blue) 11%, var(--ch-card)) 0%,
+      color-mix(in srgb, var(--ch-blue) 4%, var(--ch-card)) 24%,
+      color-mix(in srgb, var(--ch-card) 97%, white 3%) 100%
+    );
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--ch-blue) 10%, transparent),
+    var(--shadow-xs);
 }
 
 .cardSelected {
@@ -345,7 +366,7 @@
   align-items: center;
   min-width: 0;
   min-height: 58px;
-  padding: 10px 12px;
+  padding: 10px 8px;
   overflow: hidden;
   grid-row: 1;
   border-right: 1px solid color-mix(in srgb, var(--ch-accent) 8%, var(--ch-border));
@@ -370,8 +391,8 @@
   align-items: center;
   justify-content: center;
   min-width: 0;
-  min-height: 68px;
-  padding: 10px 16px;
+  min-height: 58px;
+  padding: 8px 10px;
   border-left: 1px solid color-mix(in srgb, var(--ch-accent) 8%, var(--ch-border));
 }
 
@@ -404,21 +425,23 @@
 }
 
 .badge {
-  background: color-mix(in srgb, var(--ch-red) 12%, var(--ch-card));
-  border: 1px solid color-mix(in srgb, var(--ch-red) 24%, var(--ch-border));
+  background: color-mix(in srgb, var(--ch-red) 20%, var(--ch-card));
+  border: 1px solid color-mix(in srgb, var(--ch-red) 44%, var(--ch-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ch-red) 10%, transparent);
 }
 
 .badgeVip {
-  background: color-mix(in srgb, var(--ch-blue) 12%, var(--ch-card));
-  border: 1px solid color-mix(in srgb, var(--ch-blue) 24%, var(--ch-border));
+  background: color-mix(in srgb, var(--ch-blue) 20%, var(--ch-card));
+  border: 1px solid color-mix(in srgb, var(--ch-blue) 42%, var(--ch-border));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--ch-blue) 10%, transparent);
 }
 
 .badgeIcon {
-  color: var(--ch-red);
+  color: color-mix(in srgb, var(--ch-red) 88%, #fff 12%);
 }
 
 .badgeIconVip {
-  color: var(--ch-blue);
+  color: color-mix(in srgb, var(--ch-blue) 86%, #fff 14%);
 }
 
 .orderNum {
@@ -426,7 +449,7 @@
   min-width: 0;
   color: var(--ch-accent);
   font-family: var(--font-mono, "JetBrains Mono", monospace);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
@@ -449,7 +472,7 @@
   display: block;
   overflow: hidden;
   color: var(--ch-text);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.4;
   white-space: nowrap;
@@ -464,6 +487,24 @@
   min-width: 0;
   padding: 0 16px 12px 0;
   border-top: 1px solid color-mix(in srgb, var(--ch-accent) 10%, var(--ch-border));
+}
+
+.notesStub {
+  grid-column: 1 / 4;
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: var(--workshop-leading-columns);
+  min-width: 0;
+  border-top: 1px solid color-mix(in srgb, var(--ch-accent) 10%, var(--ch-border));
+}
+
+.notesStubCell {
+  min-height: 44px;
+  border-right: 1px solid color-mix(in srgb, var(--ch-accent) 8%, var(--ch-border));
+}
+
+.notesStubCell:last-child {
+  border-right: none;
 }
 
 .notePanel {
@@ -493,7 +534,7 @@
   display: inline-block;
   min-width: 0;
   color: var(--ch-text-dim);
-  font-size: 13px;
+  font-size: 12px;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -504,7 +545,7 @@
   display: inline-block;
   min-width: 0;
   color: var(--ch-text);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
   text-align: center;
   white-space: nowrap;
@@ -514,7 +555,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   min-width: 0;
 }
@@ -524,16 +565,17 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  flex: 1 1 auto;
-  width: 100%;
-  min-height: 42px;
-  min-width: 132px;
-  padding: 0 18px;
-  border-radius: 999px;
+  flex: 1 1 0;
+  width: auto;
+  min-height: 38px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 12px;
+  border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--fill-positive) 26%, var(--ch-border));
   background: color-mix(in srgb, var(--fill-positive-soft) 84%, var(--ch-card));
   color: var(--fill-positive, #10b981);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
@@ -541,7 +583,9 @@
 }
 
 .doneBtnLabel {
+  overflow: hidden;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .doneBtn:hover:not(:disabled) {
@@ -674,7 +718,9 @@
 
 @media (max-width: 1360px) {
   .root {
-    --workshop-columns: 38px 34px 78px minmax(180px, 1.3fr) 64px minmax(96px, 0.76fr) minmax(116px, 0.86fr) 60px 66px 84px 84px 196px;
+    --workshop-columns: 30px 22px 68px minmax(148px, 1.26fr) 50px minmax(74px, 0.7fr) minmax(92px, 0.78fr) 46px 54px 70px 70px 154px;
+    --workshop-leading-columns: 30px 22px 68px;
+    --workshop-grid-min-width: 878px;
   }
 }
 
@@ -690,19 +736,14 @@
   }
 
   .cardList {
-    overflow-x: auto;
     padding-bottom: 18px;
-  }
-
-  .tableHeader,
-  .card {
-    min-width: 1030px;
   }
 }
 
 @media (max-width: 768px) {
   .root {
     --workshop-header-offset: 0px;
+    --workshop-table-inline-padding: 12px;
   }
 
   .pageHeader,

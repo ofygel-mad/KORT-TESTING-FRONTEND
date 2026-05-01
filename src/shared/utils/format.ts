@@ -1,20 +1,31 @@
 export const CURRENCY_SYMBOLS: Record<string, string> = {
-  KZT: '₸', RUB: '₽', USD: '$', EUR: '€', CNY: '¥',
+  KZT: '₸', USD: '$', EUR: '€', CNY: '¥',
 };
 
 const CURRENCY_LOCALES: Record<string, string> = {
-  KZT: 'kk-KZ', RUB: 'ru-RU', USD: 'en-US', EUR: 'de-DE', CNY: 'zh-CN',
+  KZT: 'kk-KZ', USD: 'en-US', EUR: 'de-DE', CNY: 'zh-CN',
 };
+
+export function normalizeCurrency(currency: string | null | undefined): string {
+  const normalized = currency?.trim().toUpperCase() ?? '';
+
+  if (!normalized) {
+    return 'KZT';
+  }
+
+  return normalized in CURRENCY_LOCALES ? normalized : 'KZT';
+}
 
 export function formatMoney(
   amount: number,
   currency = 'KZT',
   compact = false,
 ): string {
-  const locale = CURRENCY_LOCALES[currency] ?? 'kk-KZ';
+  const normalizedCurrency = normalizeCurrency(currency);
+  const locale = CURRENCY_LOCALES[normalizedCurrency] ?? 'kk-KZ';
   return new Intl.NumberFormat(locale, {
     style: 'currency',
-    currency,
+    currency: normalizedCurrency,
     maximumFractionDigits: 0,
     currencyDisplay: 'narrowSymbol',
     ...(compact ? { notation: 'compact' } : {}),
@@ -30,5 +41,6 @@ export function formatNumber(
 }
 
 export function currencySymbol(currency: string): string {
-  return CURRENCY_SYMBOLS[currency] ?? currency;
+  const normalizedCurrency = normalizeCurrency(currency);
+  return CURRENCY_SYMBOLS[normalizedCurrency] ?? normalizedCurrency;
 }

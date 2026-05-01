@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Check, MessageSquare, MoreVertical, AlertCircle, Star } from 'lucide-react';
+import React from 'react';
+import { Check, MessageSquare, AlertCircle, Star } from 'lucide-react';
 import type { ProductionTask, ProductionStatus } from '@/entities/order/types';
 import styles from './ChapanProduction.module.css';
 
@@ -25,9 +25,6 @@ const TITLE_URGENT = '\u0421\u0440\u043e\u0447\u043d\u043e';
 const TITLE_VIP = 'VIP \u043a\u043b\u0438\u0435\u043d\u0442';
 const TITLE_DONE = '\u041e\u0442\u043c\u0435\u0442\u0438\u0442\u044c \u043a\u0430\u043a \u0433\u043e\u0442\u043e\u0432\u043e';
 const LABEL_DONE = '\u0413\u043e\u0442\u043e\u0432\u043e';
-const LABEL_BLOCK = '\u0417\u0430\u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u0430\u0442\u044c';
-const LABEL_BACK_TO_QUEUE = '\u0412\u0435\u0440\u043d\u0443\u0442\u044c \u0432 \u043e\u0447\u0435\u0440\u0435\u0434\u044c';
-const PLACEHOLDER_BLOCK_REASON = '\u041f\u0440\u0438\u0447\u0438\u043d\u0430 \u0431\u043b\u043e\u043a\u0438\u0440\u043e\u0432\u043a\u0438...';
 
 const getBorderColor = (task: ProductionTask): string => {
   const urgency = task.order.urgency ?? task.order.priority;
@@ -69,13 +66,7 @@ export default function WorkshopTaskCard({
   onToggleSelect,
   onMarkDone,
   isPending,
-  onFlag,
-  onReturnToQueue,
 }: WorkshopTaskCardProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [flagReason, setFlagReason] = useState('');
-  const [flagOpen, setFlagOpen] = useState(false);
-
   const urgency = task.order.urgency ?? task.order.priority;
   const isUrgent = urgency === 'urgent';
   const isVIP = task.order.isDemandingClient && !isUrgent;
@@ -153,12 +144,19 @@ export default function WorkshopTaskCard({
       </div>
 
       {showsNoteRow && (
-        <div className={styles.notesRow}>
-          <div className={styles.notePanel}>
-            <MessageSquare size={13} className={styles.noteIcon} />
-            <span className={styles.noteInlineText}>{noteText}</span>
+        <>
+          <div className={styles.notesStub} aria-hidden="true">
+            <span className={styles.notesStubCell} />
+            <span className={styles.notesStubCell} />
+            <span className={styles.notesStubCell} />
           </div>
-        </div>
+          <div className={styles.notesRow}>
+            <div className={styles.notePanel}>
+              <MessageSquare size={13} className={styles.noteIcon} />
+              <span className={styles.noteInlineText}>{noteText}</span>
+            </div>
+          </div>
+        </>
       )}
 
       <div className={`${styles.cellAction} ${showsNoteRow ? styles.cellActionWithNotes : ''}`}>
@@ -173,73 +171,6 @@ export default function WorkshopTaskCard({
             <Check size={12} />
             <span className={styles.doneBtnLabel}>{LABEL_DONE}</span>
           </button>
-
-          {(onFlag || onReturnToQueue) && (
-            <div className={styles.managerMenu}>
-              <button
-                type="button"
-                className={styles.moreBtn}
-                onClick={() => setMenuOpen(!menuOpen)}
-                disabled={isPending}
-              >
-                <MoreVertical size={14} />
-              </button>
-
-              {menuOpen && (
-                <div className={styles.dropdownMenu}>
-                  {onFlag && (
-                    <div className={styles.menuItem}>
-                      <button
-                        type="button"
-                        className={styles.menuAction}
-                        onClick={() => setFlagOpen(!flagOpen)}
-                      >
-                        {LABEL_BLOCK}
-                      </button>
-                      {flagOpen && (
-                        <div className={styles.submenu}>
-                          <textarea
-                            className={styles.flagInput}
-                            placeholder={PLACEHOLDER_BLOCK_REASON}
-                            value={flagReason}
-                            onChange={(e) => setFlagReason(e.target.value)}
-                            rows={2}
-                          />
-                          <button
-                            type="button"
-                            className={styles.flagConfirm}
-                            onClick={() => {
-                              if (flagReason.trim()) {
-                                onFlag(task.id, flagReason);
-                                setFlagReason('');
-                                setFlagOpen(false);
-                                setMenuOpen(false);
-                              }
-                            }}
-                          >
-                            {LABEL_BLOCK}
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {onReturnToQueue && (
-                    <button
-                      type="button"
-                      className={styles.menuAction}
-                      onClick={() => {
-                        onReturnToQueue(task.id);
-                        setMenuOpen(false);
-                      }}
-                    >
-                      {LABEL_BACK_TO_QUEUE}
-                    </button>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
         </div>
       </div>
     </div>

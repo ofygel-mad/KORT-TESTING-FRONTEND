@@ -224,7 +224,6 @@ function OrgSection() {
               <select {...register('currency')} defaultValue={org?.currency ?? 'KZT'} className={`kort-input ${s.selectInput}`}>
                 <option value="KZT">KZT — Казахстанский тенге ₸</option>
                 <option value="USD">USD — Доллар США $</option>
-                <option value="RUB">RUB — Российский рубль ₽</option>
                 <option value="EUR">EUR — Евро €</option>
               </select>
             </div>

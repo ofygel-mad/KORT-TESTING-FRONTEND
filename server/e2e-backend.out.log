@@ -1,7 +1,7 @@
-[dotenv@17.3.1] injecting env (12) from .env -- tip: ⚙️  suppress all logs with { quiet: true }
+[dotenv@17.3.1] injecting env (12) from .env -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
 Server running at http://127.0.0.1:8002
-[16:39:40.101] [32mINFO[39m (20672): [36mServer listening at http://127.0.0.1:8002[39m
-[16:39:40.102] [32mINFO[39m (20672): [36mCORS origins configured[39m
+[19:32:17.986] [32mINFO[39m (21116): [36mServer listening at http://127.0.0.1:8002[39m
+[19:32:17.986] [32mINFO[39m (21116): [36mCORS origins configured[39m
     [35morigins[39m: [
       "http://127.0.0.1:4174",
       "http://localhost:4174",
@@ -12,109 +12,88 @@ Server running at http://127.0.0.1:8002
       "http://localhost:4173",
       "http://127.0.0.1:4173"
     ]
-[16:39:40.104] [32mINFO[39m (20672): [36mWarehouse outbox worker started[39m
-[16:39:40.301] [32mINFO[39m (20672): [36mincoming request[39m
+[19:32:17.988] [32mINFO[39m (21116): [36mWarehouse outbox worker started[39m
+[19:32:18.784] [32mINFO[39m (21116): [36mincoming request[39m
     [35mreqId[39m: "req-1"
     [35mreq[39m: {
       "method": "GET",
       "url": "/api/v1/health",
       "host": "127.0.0.1:8002",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 51828
+      "remotePort": 55245
     }
-[16:39:40.311] [32mINFO[39m (20672): [36mrequest completed[39m
+[19:32:18.793] [32mINFO[39m (21116): [36mrequest completed[39m
     [35mreqId[39m: "req-1"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 7.698500000056811
-[16:40:16.860] [32mINFO[39m (20672): [36mincoming request[39m
+    [35mresponseTime[39m: 8.584299998357892
+[19:33:02.145] [32mINFO[39m (21116): [36mincoming request[39m
     [35mreqId[39m: "req-2"
     [35mreq[39m: {
       "method": "POST",
       "url": "/api/v1/auth/login/",
       "host": "127.0.0.1:8002",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 64896
+      "remotePort": 51374
     }
-[16:40:17.429] [32mINFO[39m (20672): [36mrequest completed[39m
+[19:33:02.737] [32mINFO[39m (21116): [36mrequest completed[39m
     [35mreqId[39m: "req-2"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 564.3425000000279
-[16:40:17.478] [32mINFO[39m (20672): [36mincoming request[39m
+    [35mresponseTime[39m: 591.4988000001758
+[19:33:02.778] [32mINFO[39m (21116): [36mincoming request[39m
     [35mreqId[39m: "req-3"
     [35mreq[39m: {
       "method": "GET",
       "url": "/api/v1/auth/bootstrap/",
       "host": "127.0.0.1:8002",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 64896
+      "remotePort": 51374
     }
-[16:40:17.503] [32mINFO[39m (20672): [36mrequest completed[39m
+[19:33:02.804] [32mINFO[39m (21116): [36mrequest completed[39m
     [35mreqId[39m: "req-3"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 23.769800000009127
-[16:40:20.571] [32mINFO[39m (20672): [36mincoming request[39m
+    [35mresponseTime[39m: 25.23850000090897
+[19:33:03.115] [32mINFO[39m (21116): [36mincoming request[39m
     [35mreqId[39m: "req-4"
     [35mreq[39m: {
       "method": "GET",
-      "url": "/api/v1/auth/bootstrap/",
+      "url": "/api/v1/notifications/",
       "host": "127.0.0.1:8002",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 64896
+      "remotePort": 51374
     }
-[16:40:20.583] [32mINFO[39m (20672): [36mrequest completed[39m
-    [35mreqId[39m: "req-4"
-    [35mres[39m: {
-      "statusCode": 200
-    }
-    [35mresponseTime[39m: 12.451999999932013
-[16:40:20.677] [32mINFO[39m (20672): [36mincoming request[39m
+[19:33:06.875] [32mINFO[39m (21116): [36mincoming request[39m
     [35mreqId[39m: "req-5"
     [35mreq[39m: {
       "method": "GET",
-      "url": "/api/v1/chapan/production/workshop",
+      "url": "/api/v1/auth/bootstrap/",
       "host": "127.0.0.1:8002",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 64896
+      "remotePort": 61087
     }
-[16:40:20.682] [32mINFO[39m (20672): [36mincoming request[39m
+[19:33:06.904] [32mINFO[39m (21116): [36mrequest completed[39m
+    [35mreqId[39m: "req-5"
+    [35mres[39m: {
+      "statusCode": 200
+    }
+    [35mresponseTime[39m: 27.49910000152886
+[19:33:07.138] [32mINFO[39m (21116): [36mincoming request[39m
     [35mreqId[39m: "req-6"
-    [35mreq[39m: {
-      "method": "GET",
-      "url": "/api/v1/chapan/orders/change-requests",
-      "host": "127.0.0.1:8002",
-      "remoteAddress": "127.0.0.1",
-      "remotePort": 52935
-    }
-[16:40:20.690] [32mINFO[39m (20672): [36mincoming request[39m
-    [35mreqId[39m: "req-7"
     [35mreq[39m: {
       "method": "GET",
       "url": "/api/v1/chapan/invoices?limit=100",
       "host": "127.0.0.1:8002",
       "remoteAddress": "127.0.0.1",
-      "remotePort": 52936
+      "remotePort": 61087
     }
-[16:40:20.757] [32mINFO[39m (20672): [36mrequest completed[39m
-    [35mreqId[39m: "req-7"
-    [35mres[39m: {
-      "statusCode": 200
-    }
-    [35mresponseTime[39m: 66.77610000001732
-[16:40:20.779] [32mINFO[39m (20672): [36mrequest completed[39m
+[19:33:07.291] [32mINFO[39m (21116): [36mrequest completed[39m
     [35mreqId[39m: "req-6"
     [35mres[39m: {
       "statusCode": 200
     }
-    [35mresponseTime[39m: 96.34990000003017
-[16:40:20.806] [32mINFO[39m (20672): [36mrequest completed[39m
-    [35mreqId[39m: "req-5"
-    [35mres[39m: {
-      "statusCode": 200
-    }
-    [35mresponseTime[39m: 128.70250000001397
+    [35mresponseTime[39m: 152.0971000008285

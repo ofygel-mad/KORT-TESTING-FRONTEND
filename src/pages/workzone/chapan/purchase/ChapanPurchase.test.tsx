@@ -46,7 +46,7 @@ describe('ChapanPurchasePage', () => {
               orgId: 'org-1',
               type: 'workshop',
               invoiceNum: 'MN-0001',
-              title: 'Тестовый закуп',
+              title: 'Test purchase',
               notes: null,
               createdById: 'user-1',
               createdByName: 'Owner',
@@ -54,7 +54,7 @@ describe('ChapanPurchasePage', () => {
               items: [
                 {
                   id: 'item-1',
-                  productName: 'Чапан',
+                  productName: 'Chapan',
                   quantity: 2,
                   unitPrice: 1000,
                 },
@@ -80,10 +80,10 @@ describe('ChapanPurchasePage', () => {
 
     render(<ChapanPurchasePage />);
 
-    await user.click(screen.getByRole('button', { name: 'Скачать XLSX' }));
+    await user.click(screen.getByRole('button', { name: /xlsx/i }));
 
     await waitFor(() => {
-      expect(downloadMock).toHaveBeenCalledWith('invoice-1');
+      expect(downloadMock).toHaveBeenCalledWith('invoice-1', 'KZT');
     });
     expect(openSpy).not.toHaveBeenCalled();
     expect(getFilenameFromContentDispositionMock).toHaveBeenCalled();
