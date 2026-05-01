@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Цех — исправленный грид</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+/* ── KORT design tokens ───────────────────────── */
+:root {
+  --font-display: 'Plus Jakarta Sans', sans-serif;
+  --font-body:    'DM Sans', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+  --bg-canvas:           #F4F6FA;
+  --bg-surface:          #FFFFFF;
+  --bg-surface-elevated: #F8FAFD;
+  --bg-hover:            #EAF0F8;
+  --border-subtle:       #D0D5DD;
+  --border-default:      #B8C2D1;
+  --text-primary:        #101828;
+  --text-secondary:      #344054;
+  --text-tertiary:       #667085;
+  --fill-accent:         #4A8BD4;
+  --fill-accent-subtle:  rgba(74,139,212,0.08);
+  --fill-positive:       #10B981;
+  --fill-positive-soft:  rgba(16,185,129,0.14);
+  --shadow-xs: 0 1px 2px rgba(16,24,40,0.04);
+  --shadow-sm: 0 2px 6px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.05);
+  --shadow-md: 0 8px 20px -8px rgba(16,24,40,0.18);
+
+  /* Chapan accent — warm amber */
+  --ch-bg:            var(--bg-canvas);
+  --ch-surface:       var(--bg-surface);
+  --ch-card:          var(--bg-surface-elevated);
+  --ch-border:        var(--border-subtle);
+  --ch-text:          var(--text-primary);
+  --ch-text-dim:      var(--text-secondary);
+  --ch-text-muted:    var(--text-tertiary);
+  --ch-accent:        #B07830;
+  --ch-accent-soft:   rgba(176,120,48,0.09);
+  --ch-accent-border: rgba(176,120,48,0.28);
+  --ch-red:           #EF4444;
+  --ch-blue:          #6E8EF0;
+  --ch-green:         #10B981;
+
+  /* workshop grid columns — same as original */
+  --workshop-columns: 40px 36px 82px minmax(198px, 1.42fr) 68px minmax(102px, 0.8fr) minmax(126px, 0.9fr) 64px 70px 88px 88px 212px;
+  --workshop-header-h: 74px;
+}
+
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; }
+body {
+  background: var(--ch-bg);
+  color: var(--ch-text);
+  font-family: var(--font-body);
+  font-size: 14px;
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-default); border-radius: 999px; }
+
+/* ── Page shell ─────────────────────────────────── */
+.page-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Sticky page header ─────────────────────────── */
+.page-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: var(--workshop-header-h);
+  padding: 16px 20px 12px;
+  background: color-mix(in srgb, var(--ch-surface) 92%, transparent);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  border-bottom: 1px solid color-mix(in srgb, var(--ch-accent) 14%, var(--ch-border));
+  flex-wrap: wrap;
+}
+.page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ch-text);
+}
+.page-title svg { color: var(--ch-accent); }
+.page-count {
+  color: var(--ch-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+}
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+.search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 290px;
+  min-height: 40px;
+  padding: 0 14px;
+  background: color-mix(in srgb, var(--ch-card) 90%, var(--ch-accent-soft));
+  border: 1px solid color-mix(in srgb, var(--ch-accent) 14%, var(--ch-border));
+  border-radius: 12px;
+  color: var(--ch-text-muted);
+}
+.search-wrap input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--ch-text);
+  outline: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+}
+.search-wrap input::placeholder { color: var(--ch-text-muted); }
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 1px solid color-mix(in srgb, var(--ch-accent) 16%, var(--ch-border));
+  background: color-mix(in srgb, var(--ch-card) 92%, transparent);
+  color: var(--ch-text-dim);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 140ms, background 140ms, color 140ms;
+}
+.filter-btn:hover {
+  border-color: var(--ch-accent-border);
+  background: color-mix(in srgb, var(--ch-accent-soft) 72%, var(--ch-card));
+  color: var(--ch-text);
+}
+
+/* ── FIX 1: Shared horizontal scroll wrapper ────
+   Wraps BOTH the table header and card list.
+   Horizontal scroll applies to both simultaneously.
+   This prevents the header from being out-of-sync
+   with card columns when the viewport is narrow.     */
+.table-scroll-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ── FIX 2: Table header ──
+   Now inside the shared scroll wrapper,
+   stays sticky vertically but scrolls horizontally.  */
+.table-header {
+  display: grid;
+  grid-template-columns: var(--workshop-columns);
+  align-items: center;
+  min-height: 48px;
+  /* min-width must match min-width of cards */
+  min-width: 1040px;
+  padding: 0 20px;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--ch-accent) 74%, white 26%) 0%,
+    var(--ch-accent) 100%
+  );
+  border-bottom: 1px solid color-mix(in srgb, var(--ch-accent) 42%, var(--ch-border));
+  color: #fff;
+}
+.th-col {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: rgba(255,255,255,0.92);
+}
+.th-col:first-child { justify-content: center; }
+
+/* ── Card list ──────────────────────────────────── */
+.card-list {
+  display: flex;
+  flex-direction: column;
+  /* FIX 3: gap reduced from 12px → 4px — tighter table feel */
+  gap: 4px;
+  padding: 8px 20px 28px;
+  /* FIX 4: min-width on card-list makes cards consistent with header */
+  min-width: 1040px;
+}
+
+/* ── FIX 5: Card border-radius 22px → 10px ──────── */
+.card {
+  display: grid;
+  grid-template-columns: var(--workshop-columns);
+  grid-auto-rows: minmax(58px, auto);
+  align-items: stretch;
+  border: 1px solid color-mix(in srgb, var(--ch-accent) 10%, var(--ch-border));
+  border-left: 3px solid color-mix(in srgb, var(--ch-accent) 12%, var(--ch-border));
+  /* ✅ FIXED: was 22px */
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--ch-card) 96%, white 4%);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+  transition: border-color 140ms, box-shadow 140ms, background 140ms;
+}
+.card:hover {
+  border-color: color-mix(in srgb, var(--ch-accent) 22%, var(--ch-border));
+  box-shadow: var(--shadow-sm);
+  background: color-mix(in srgb, var(--ch-card) 88%, var(--ch-accent-soft));
+}
+.card-urgent { border-left-color: rgba(239,68,68,0.5); }
+.card-vip    { border-left-color: rgba(110,142,240,0.5); }
+.card-selected {
+  background: color-mix(in srgb, var(--ch-accent-soft) 68%, var(--ch-card));
+  border-color: color-mix(in srgb, var(--ch-accent) 26%, var(--ch-border));
+}
+
+/* ── Cells ──────────────────────────────────────── */
+.cell {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  min-height: 58px;
+  padding: 10px 12px;
+  overflow: hidden;
+  grid-row: 1;
+  border-right: 1px solid color-mix(in srgb, var(--ch-accent) 7%, var(--ch-border));
+}
+.cell:nth-child(1)  { grid-column: 1;  justify-content: center; }
+.cell:nth-child(2)  { grid-column: 2;  justify-content: center; }
+.cell:nth-child(3)  { grid-column: 3; }
+.cell:nth-child(4)  { grid-column: 4; }
+.cell:nth-child(5)  { grid-column: 5;  justify-content: center; }
+.cell:nth-child(6)  { grid-column: 6; }
+.cell:nth-child(7)  { grid-column: 7; }
+.cell:nth-child(8)  { grid-column: 8;  justify-content: center; }
+.cell:nth-child(9)  { grid-column: 9;  justify-content: center; }
+.cell:nth-child(10) { grid-column: 10; justify-content: center; }
+.cell:nth-child(11) { grid-column: 11; justify-content: center; border-right: none; }
+
+/* ── Notes row ──────────────────────────────────── */
+.notes-row {
+  grid-column: 4 / 12;
+  grid-row: 2;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  padding: 0 12px 10px 12px;
+  border-top: 1px solid color-mix(in srgb, var(--ch-accent) 10%, var(--ch-border));
+}
+.note-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--ch-accent) 12%, var(--ch-border));
+  background: color-mix(in srgb, var(--ch-accent-soft) 56%, transparent);
+}
+.note-inner svg { color: var(--ch-text-muted); flex-shrink: 0; margin-top: 2px; }
+.note-text {
+  min-width: 0;
+  color: var(--ch-text-dim);
+  font-size: 11px;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* ── Action cell ────────────────────────────────── */
+.cell-action {
+  grid-column: 12;
+  grid-row: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 58px;
+  padding: 10px 14px;
+  border-left: 1px solid color-mix(in srgb, var(--ch-accent) 8%, var(--ch-border));
+}
+/* FIX 6: when notes present, action spans both rows */
+.cell-action-span { grid-row: 1 / span 2; }
+
+.action-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+/* ── FIX 7: Done button — border-radius 999px → 10px
+   Also removed flex:1/width:100% to avoid overflow     */
+.done-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  /* ✅ FIXED: was 999px */
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--fill-positive) 28%, var(--ch-border));
+  background: color-mix(in srgb, var(--fill-positive-soft) 84%, var(--ch-card));
+  color: var(--ch-green);
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-body);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms, transform 140ms, opacity 140ms;
+  /* Fit the available space neatly */
+  flex: 1;
+  min-height: 38px;
+  min-width: 0;
+  padding: 0 14px;
+}
+.done-btn:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--fill-positive-soft) 100%, var(--ch-card));
+  border-color: color-mix(in srgb, var(--fill-positive) 42%, var(--ch-border));
+  transform: translateY(-1px);
+}
+.done-btn:active:not(:disabled) { transform: scale(0.985); }
+.done-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.done-btn-done {
+  background: color-mix(in srgb, var(--fill-positive) 12%, var(--ch-card));
+  border-color: color-mix(in srgb, var(--fill-positive) 38%, var(--ch-border));
+  color: var(--ch-green);
+  cursor: default;
+}
+
+/* ── Other cell content ─────────────────────────── */
+.checkbox {
+  width: 18px; height: 18px; margin: 0;
+  cursor: pointer;
+  accent-color: var(--ch-accent);
+}
+.order-num {
+  color: var(--ch-accent);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.product-name {
+  display: block;
+  overflow: hidden;
+  color: var(--ch-text);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.cell-text {
+  display: inline-block;
+  min-width: 0;
+  color: var(--ch-text-dim);
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cell-num {
+  display: inline-block;
+  color: var(--ch-text);
+  font-size: 14px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+}
+.badge-urgent {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px; height: 26px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ch-red) 12%, var(--ch-card));
+  border: 1px solid color-mix(in srgb, var(--ch-red) 24%, var(--ch-border));
+  color: var(--ch-red);
+}
+
+/* ── Empty state ────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 200px;
+  border: 1px dashed color-mix(in srgb, var(--ch-accent) 18%, var(--ch-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ch-card) 88%, var(--ch-accent-soft));
+  text-align: center;
+  padding: 24px;
+  margin: 8px 20px 28px;
+}
+.empty-icon { font-size: 28px; opacity: 0.6; }
+.empty-text { color: var(--ch-text); font-size: 14px; font-weight: 700; }
+.empty-sub  { color: var(--ch-text-muted); font-size: 12px; }
+
+/* ── Diff badge ─────────────────────────────────── */
+.diff-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  color: #EF4444;
+}
+.diff-pill.ok {
+  background: rgba(16,185,129,0.1);
+  border-color: rgba(16,185,129,0.25);
+  color: #10B981;
+}
+
+/* ── Toggle switch ──────────────────────────────── */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  border-bottom: 1px solid var(--border-subtle);
+  background: var(--bg-surface);
+  font-size: 12px;
+  color: var(--ch-text-muted);
+}
+.toggle {
+  position: relative;
+  width: 38px; height: 22px;
+  flex-shrink: 0;
+}
+.toggle input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute;
+  cursor: pointer;
+  inset: 0;
+  border-radius: 999px;
+  background: var(--border-default);
+  transition: 200ms;
+}
+.toggle-slider::before {
+  content: '';
+  position: absolute;
+  height: 16px; width: 16px;
+  left: 3px; top: 3px;
+  border-radius: 50%;
+  background: white;
+  transition: 200ms;
+}
+.toggle input:checked + .toggle-slider { background: var(--ch-accent); }
+.toggle input:checked + .toggle-slider::before { transform: translateX(16px); }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useMemo } = React;
+
+const DASH = '—';
+
+const MOCK_TASKS = [
+  { id:'t1', orderNum:'157-1', product:'Байсал жилеті', gender:'муж', length:DASH, color:'Черный', qty:1, size:52, accepted:'24 апр.', due:'18 апр.', urgent:false, vip:false, notes:null },
+  { id:'t2', orderNum:'157-2', product:'Байсал жилеті', gender:'жен', length:DASH, color:'Черный', qty:1, size:48, accepted:'24 апр.', due:'18 апр.', urgent:false, vip:false, notes:null },
+  { id:'t3', orderNum:'147-1', product:'Баян сулу жилеті', gender:'жен', length:DASH, color:'Оранжевый', qty:1, size:46, accepted:'24 апр.', due:'21 апр.', urgent:false, vip:false, notes:null },
+  { id:'t4', orderNum:'147-2', product:'Жар шапаны', gender:'жен', length:'Короткий', color:'Светлый беж', qty:1, size:50, accepted:'24 апр.', due:'21 апр.', urgent:true, vip:false, notes:null },
+  { id:'t5', orderNum:'147-3', product:'Жар шапаны', gender:'жен', length:'Длинный', color:'Светлый беж', qty:1, size:48, accepted:DASH, due:'21 апр.', urgent:false, vip:false, notes:null },
+  { id:'t6', orderNum:'315-1', product:'Product B', gender:'муж', length:'Укороченный', color:'Голубой', qty:1, size:42, accepted:DASH, due:'8 мая', urgent:false, vip:true, notes:'ОЧЕНЬ БОЛЬШОЙ КОММЕНТАРИЙ ПРЯМ БААААААААААЛЬШОООООЙ — важная заметка от клиента по цвету подкладки и длине рукавов' },
+  { id:'t7', orderNum:'201-1', product:'Нур шапаны', gender:'жен', length:'Стандарт', color:'Бордо', qty:2, size:44, accepted:'28 апр.', due:'5 мая', urgent:false, vip:false, notes:null },
+  { id:'t8', orderNum:'201-2', product:'Нур шапаны', gender:'муж', length:'Длинный', color:'Темно-синий', qty:1, size:54, accepted:'28 апр.', due:'5 мая', urgent:true, vip:false, notes:'Срочно — клиент забирает 5 мая утром' },
+];
+
+function SearchIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    </svg>
+  );
+}
+function CalIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+    </svg>
+  );
+}
+function CheckIcon({ size=12 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12"/>
+    </svg>
+  );
+}
+function MsgIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+    </svg>
+  );
+}
+function WarnIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+      <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+    </svg>
+  );
+}
+function FactoryIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 20a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V8l-7 5V8l-7 5V4a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v16z"/>
+    </svg>
+  );
+}
+
+const HEADERS = ['✓','!','№','Товар','Пол','Длина','Цвет','Кол.во','Разм.','Принят','Срок','Действие'];
+
+function TaskCard({ task, isSelected, onToggle, onDone, isDone }) {
+  const hasNotes = Boolean(task.notes);
+  return (
+    <div
+      className={[
+        'card',
+        task.urgent ? 'card-urgent' : '',
+        task.vip    ? 'card-vip'    : '',
+        isSelected  ? 'card-selected' : '',
+      ].filter(Boolean).join(' ')}
+    >
+      {/* col 1: checkbox */}
+      <div className="cell">
+        <input
+          type="checkbox"
+          className="checkbox"
+          checked={isSelected}
+          onChange={() => onToggle(task.id)}
+          disabled={isDone}
+        />
+      </div>
+
+      {/* col 2: urgent badge */}
+      <div className="cell">
+        {task.urgent && (
+          <div className="badge-urgent" title="Срочно">
+            <WarnIcon />
+          </div>
+        )}
+      </div>
+
+      {/* col 3: order number */}
+      <div className="cell">
+        <span className="order-num">№{task.orderNum}</span>
+      </div>
+
+      {/* col 4: product */}
+      <div className="cell">
+        <span className="product-name">{task.product}</span>
+      </div>
+
+      {/* col 5: gender */}
+      <div className="cell">
+        <span className="cell-text">{task.gender}</span>
+      </div>
+
+      {/* col 6: length */}
+      <div className="cell">
+        <span className="cell-text">{task.length}</span>
+      </div>
+
+      {/* col 7: color */}
+      <div className="cell">
+        <span className="cell-text">{task.color}</span>
+      </div>
+
+      {/* col 8: qty */}
+      <div className="cell">
+        <span className="cell-num">{task.qty}</span>
+      </div>
+
+      {/* col 9: size */}
+      <div className="cell">
+        <span className="cell-num">{task.size}</span>
+      </div>
+
+      {/* col 10: accepted */}
+      <div className="cell">
+        <span className="cell-text">{task.accepted}</span>
+      </div>
+
+      {/* col 11: due */}
+      <div className="cell">
+        <span className="cell-text">{task.due}</span>
+      </div>
+
+      {/* notes row */}
+      {hasNotes && (
+        <div className="notes-row">
+          <div className="note-inner">
+            <MsgIcon />
+            <span className="note-text">{task.notes}</span>
+          </div>
+        </div>
+      )}
+
+      {/* col 12: action — spans 2 rows when notes present */}
+      <div className={`cell-action ${hasNotes ? 'cell-action-span' : ''}`}>
+        <div className="action-group">
+          <button
+            type="button"
+            className={`done-btn ${isDone ? 'done-btn-done' : ''}`}
+            onClick={() => !isDone && onDone(task.id)}
+            disabled={isDone}
+            title="Отметить как готово"
+          >
+            <CheckIcon size={12} />
+            {isDone ? 'Выполнено' : 'Готово'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState(new Set());
+  const [done, setDone] = useState(new Set());
+  const [showFixed, setShowFixed] = useState(true);
+
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let tasks = MOCK_TASKS.filter(t => !done.has(t.id));
+    if (q) tasks = tasks.filter(t =>
+      t.orderNum.toLowerCase().includes(q) ||
+      t.product.toLowerCase().includes(q) ||
+      t.color.toLowerCase().includes(q)
+    );
+    return tasks;
+  }, [search, done]);
+
+  const toggle = (id) => {
+    setSelected(prev => {
+      const n = new Set(prev);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
+  };
+  const markDone = (id) => {
+    setDone(prev => new Set([...prev, id]));
+    setSelected(prev => { const n=new Set(prev); n.delete(id); return n; });
+  };
+
+  // card-radius and btn-radius override for "before" mode
+  const beforeStyle = !showFixed ? `
+    .card { border-radius: 22px !important; }
+    .done-btn { border-radius: 999px !important; }
+    .card-list { gap: 12px !important; }
+    .table-scroll-wrap { overflow-x: visible !important; }
+    .table-header { position: sticky; min-width: unset; overflow: hidden; }
+    .card-list { min-width: unset !important; }
+  ` : '';
+
+  return (
+    <>
+      {!showFixed && <style>{beforeStyle}</style>}
+
+      <div className="page-root">
+
+        {/* ── Toggle bar ── */}
+        <div className="toggle-row">
+          <label className="toggle">
+            <input type="checkbox" checked={showFixed} onChange={e => setShowFixed(e.target.checked)} />
+            <span className="toggle-slider"></span>
+          </label>
+          <span style={{fontWeight:700, color: showFixed ? 'var(--ch-green)' : '#EF4444'}}>
+            {showFixed ? '✅ ИСПРАВЛЕННЫЙ вариант' : '❌ КАК БЫЛО (баги активны)'}
+          </span>
+          <span style={{marginLeft:'auto', display:'flex', gap:8}}>
+            {showFixed ? (
+              <>
+                <span className="diff-pill ok">border-radius: 10px</span>
+                <span className="diff-pill ok">gap: 4px</span>
+                <span className="diff-pill ok">shared scroll</span>
+                <span className="diff-pill ok">btn: 10px</span>
+              </>
+            ) : (
+              <>
+                <span className="diff-pill">border-radius: 22px</span>
+                <span className="diff-pill">gap: 12px</span>
+                <span className="diff-pill">split scroll</span>
+                <span className="diff-pill">btn: 999px</span>
+              </>
+            )}
+          </span>
+        </div>
+
+        {/* ── Page header (sticky, outside scroll wrap) ── */}
+        <header className="page-header">
+          <h1 className="page-title">
+            <FactoryIcon />
+            Цех
+            <span className="page-count">{filtered.length} позиций</span>
+          </h1>
+          <div className="controls">
+            <div className="search-wrap">
+              <SearchIcon />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Заказ или товар..."
+                type="text"
+              />
+            </div>
+            <button className="filter-btn">
+              <CalIcon /> Срок сдачи
+            </button>
+            <button className="filter-btn">
+              <CalIcon /> Принят
+            </button>
+          </div>
+        </header>
+
+        {/* ╔══════════════════════════════════════════════════════════╗
+            ║  KEY FIX: table-scroll-wrap contains BOTH header+rows  ║
+            ║  so they scroll horizontally as one unit               ║
+            ╚══════════════════════════════════════════════════════════╝ */}
+        <div className="table-scroll-wrap">
+
+          {/* Table header — now sticky within shared wrapper */}
+          <div className="table-header">
+            {HEADERS.map((h, i) => (
+              <div key={i} className="th-col">{h}</div>
+            ))}
+          </div>
+
+          {/* Card list */}
+          <div className="card-list">
+            {filtered.length === 0 ? (
+              <div className="empty-state" style={{margin:'8px 0 20px'}}>
+                <div className="empty-icon">📋</div>
+                <div className="empty-text">Нет заданий</div>
+                <div className="empty-sub">Все позиции выполнены или отфильтрованы</div>
+              </div>
+            ) : (
+              filtered.map(task => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
+                  isSelected={selected.has(task.id)}
+                  onToggle={toggle}
+                  onDone={markDone}
+                  isDone={done.has(task.id)}
+                />
+              ))
+            )}
+          </div>
+
+        </div>
+      </div>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>

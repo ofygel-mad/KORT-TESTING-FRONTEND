@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Handoff — Цех: исправление грида</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=DM+Sans:wght@400;500&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg:        #F4F6FA;
+  --surface:   #FFFFFF;
+  --elevated:  #F8FAFD;
+  --border:    #D0D5DD;
+  --border-strong: #B8C2D1;
+  --text:      #101828;
+  --text-2:    #344054;
+  --text-3:    #667085;
+  --accent:    #4A8BD4;
+  --accent-s:  rgba(74,139,212,0.10);
+  --green:     #10B981;
+  --green-s:   rgba(16,185,129,0.12);
+  --red:       #EF4444;
+  --red-s:     rgba(239,68,68,0.10);
+  --amber:     #B07830;
+  --amber-s:   rgba(176,120,48,0.10);
+  --mono:      'JetBrains Mono', monospace;
+  --sans:      'DM Sans', sans-serif;
+  --display:   'Plus Jakarta Sans', sans-serif;
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-font-smoothing: antialiased; scroll-behavior: smooth; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 14px;
+  line-height: 1.6;
+}
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 99px; }
+
+/* Layout */
+.wrap { max-width: 900px; margin: 0 auto; padding: 48px 32px 80px; }
+
+/* Nav sidebar */
+.layout { display: grid; grid-template-columns: 200px 1fr; gap: 48px; align-items: start; max-width: 1100px; margin: 0 auto; padding: 48px 32px 80px; }
+.sidebar {
+  position: sticky;
+  top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.nav-label {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+  padding: 0 10px;
+  margin-bottom: 4px;
+}
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-2);
+  transition: background 140ms, color 140ms;
+}
+.nav-link:hover { background: var(--surface); color: var(--text); }
+.nav-link.active { background: var(--accent-s); color: var(--accent); font-weight: 600; }
+.dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+.dot-red    { background: var(--red); }
+.dot-green  { background: var(--green); }
+.dot-amber  { background: var(--amber); }
+
+/* Page header */
+.page-hero {
+  margin-bottom: 40px;
+}
+.page-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: var(--amber-s);
+  border: 1px solid rgba(176,120,48,0.22);
+  color: var(--amber);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.page-title {
+  font-family: var(--display);
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+.page-sub {
+  font-size: 15px;
+  color: var(--text-2);
+  max-width: 600px;
+  line-height: 1.65;
+}
+.file-path {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* Summary grid */
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-bottom: 48px;
+}
+.summary-card {
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.summary-num {
+  font-family: var(--display);
+  font-size: 36px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+.summary-label { font-size: 12px; color: var(--text-3); margin-top: 4px; }
+
+/* Section */
+.section { margin-bottom: 56px; scroll-margin-top: 32px; }
+.section-title {
+  font-family: var(--display);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text);
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.section-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--accent-s);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+/* Bug card */
+.bug-card {
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--red);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.bug-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  background: var(--elevated);
+}
+.bug-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: var(--red-s);
+  border: 1px solid rgba(239,68,68,0.2);
+  color: var(--red);
+}
+.bug-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+.bug-body { padding: 16px 20px; }
+.bug-desc {
+  font-size: 13px;
+  color: var(--text-2);
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+/* Diff block */
+.diff-block {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.diff-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--elevated);
+  border-bottom: 1px solid var(--border);
+  font-size: 11px;
+  color: var(--text-3);
+  font-family: var(--sans);
+}
+.diff-file { font-family: var(--mono); color: var(--text-2); font-size: 11px; }
+.diff-lines { display: flex; flex-direction: column; }
+.diff-del {
+  background: #FEF2F2;
+  color: var(--red);
+  padding: 1px 14px;
+  border-left: 3px solid var(--red);
+  white-space: pre;
+}
+.diff-add {
+  background: #F0FDF4;
+  color: #16a34a;
+  padding: 1px 14px;
+  border-left: 3px solid var(--green);
+  white-space: pre;
+}
+.diff-ctx {
+  color: var(--text-3);
+  padding: 1px 14px 1px 17px;
+  white-space: pre;
+}
+.diff-hunk {
+  background: var(--accent-s);
+  color: var(--accent);
+  padding: 3px 14px;
+  font-size: 11px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+/* Fix card */
+.fix-card {
+  border: 1px solid rgba(16,185,129,0.25);
+  border-left: 3px solid var(--green);
+  border-radius: 12px;
+  background: var(--surface);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.fix-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(16,185,129,0.15);
+  background: var(--green-s);
+}
+.fix-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  background: rgba(16,185,129,0.15);
+  border: 1px solid rgba(16,185,129,0.25);
+  color: var(--green);
+}
+.fix-title { font-size: 14px; font-weight: 700; color: var(--text); }
+.fix-body { padding: 16px 20px; }
+
+/* Callout */
+.callout {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 10px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.callout-warn {
+  background: rgba(245,158,11,0.08);
+  border: 1px solid rgba(245,158,11,0.22);
+  color: #92400e;
+}
+.callout-info {
+  background: var(--accent-s);
+  border: 1px solid rgba(74,139,212,0.2);
+  color: #1e40af;
+}
+.callout-icon { font-size: 16px; flex-shrink: 0; line-height: 1.4; }
+
+/* Prototype link */
+.proto-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px 22px;
+  border-radius: 14px;
+  border: 1px solid rgba(74,139,212,0.25);
+  background: linear-gradient(135deg, var(--accent-s), var(--surface));
+  text-decoration: none;
+  color: var(--text);
+  transition: box-shadow 140ms, transform 140ms;
+  margin-bottom: 32px;
+}
+.proto-link:hover { box-shadow: 0 4px 16px rgba(74,139,212,0.14); transform: translateY(-1px); }
+.proto-link-label { font-size: 12px; color: var(--text-3); margin-bottom: 4px; }
+.proto-link-title { font-size: 15px; font-weight: 700; color: var(--accent); }
+.proto-link-arrow { font-size: 20px; color: var(--accent); }
+
+/* Table */
+.change-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 16px; }
+.change-table th {
+  text-align: left;
+  padding: 10px 14px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.change-table td {
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  vertical-align: top;
+  line-height: 1.55;
+}
+.change-table tr:nth-child(even) td { background: var(--elevated); }
+code {
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--elevated);
+  border: 1px solid var(--border);
+  color: var(--text-2);
+}
+code.del { background: #FEF2F2; border-color: rgba(239,68,68,0.2); color: var(--red); }
+code.add { background: #F0FDF4; border-color: rgba(16,185,129,0.2); color: #16a34a; }
+
+/* Divider */
+hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+/* Footer */
+.footer {
+  margin-top: 64px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-3);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@media (max-width: 768px) {
+  .layout { grid-template-columns: 1fr; padding: 24px 16px; }
+  .sidebar { display: none; }
+  .summary-grid { grid-template-columns: 1fr 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar nav -->
+  <aside class="sidebar">
+    <div class="nav-label">Содержание</div>
+    <a href="#bugs" class="nav-link"><span class="dot dot-red"></span>Жалобы</a>
+    <a href="#fixes" class="nav-link"><span class="dot dot-green"></span>Исправления</a>
+    <a href="#css-patch" class="nav-link"><span class="dot dot-amber"></span>CSS патч</a>
+    <a href="#tsx-patch" class="nav-link"><span class="dot dot-amber"></span>TSX патч</a>
+    <a href="#checklist" class="nav-link"><span class="dot dot-green"></span>Чеклист</a>
+  </aside>
+
+  <!-- Main content -->
+  <main>
+
+    <!-- Hero -->
+    <div class="page-hero">
+      <div class="page-tag">🔧 Frontend Handoff · Цех / ChapanProduction</div>
+      <h1 class="page-title">Исправление Grid-системы</h1>
+      <p class="page-sub">
+        Разбор пяти структурных багов в таблице производственных задач.
+        Для каждого — описание причины, конкретный diff и чеклист для разработчика.
+      </p>
+      <div class="file-path">
+        📁 src/pages/workzone/chapan/production/
+      </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+      <div class="summary-card">
+        <div class="summary-num" style="color:var(--red)">5</div>
+        <div class="summary-label">Задокументированных багов</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" style="color:var(--green)">2</div>
+        <div class="summary-label">Затронутых файла</div>
+      </div>
+      <div class="summary-card">
+        <div class="summary-num" style="color:var(--accent)">~20</div>
+        <div class="summary-label">Строк изменений в сумме</div>
+      </div>
+    </div>
+
+    <!-- Prototype link -->
+    <a class="proto-link" href="../ChapanProduction Fixed.html" target="_blank">
+      <div>
+        <div class="proto-link-label">Интерактивный прототип с переключателем ДО/ПОСЛЕ</div>
+        <div class="proto-link-title">→ ChapanProduction Fixed.html</div>
+      </div>
+      <div class="proto-link-arrow">↗</div>
+    </a>
+
+    <!-- BUGS SECTION -->
+    <section class="section" id="bugs">
+      <h2 class="section-title">
+        <span class="section-num" style="background:var(--red-s);color:var(--red)">!</span>
+        Жалобы и корневые причины
+      </h2>
+
+      <!-- BUG 1 -->
+      <div class="bug-card">
+        <div class="bug-header">
+          <span class="bug-badge">БАГ 1</span>
+          <span class="bug-title">Карточки — слишком большие скругления, выглядят как пилюли</span>
+        </div>
+        <div class="bug-body">
+          <p class="bug-desc">
+            Строки таблицы имеют <code>border-radius: 22px</code> — они выглядят как
+            огромные плавающие карточки, а не как строки таблицы. Особенно заметно
+            когда строк много: список похож на набор отдельных блоков.
+          </p>
+          <div class="diff-block">
+            <div class="diff-header">
+              <span class="diff-file">ChapanProduction.module.css</span>
+              <span>строка ~176</span>
+            </div>
+            <div class="diff-lines">
+              <div class="diff-hunk">@@ .card @@</div>
+              <div class="diff-ctx">  border: 1px solid ...;</div>
+              <div class="diff-del">- border-radius: 22px;</div>
+              <div class="diff-add">+ border-radius: 10px;</div>
+              <div class="diff-ctx">  background: ...;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUG 2 -->
+      <div class="bug-card">
+        <div class="bug-header">
+          <span class="bug-badge">БАГ 2</span>
+          <span class="bug-title">Кнопка «Готово» — полная таблетка, обрезается overflow</span>
+        </div>
+        <div class="bug-body">
+          <p class="bug-desc">
+            Кнопка имеет <code>border-radius: 999px</code> (pill) внутри карточки
+            с <code>overflow: hidden</code>. Комбинация приводит к тому что углы
+            кнопки обрезаются краями карточки. Визуально кнопка «торчит» и режется
+            справа — особенно при узком вьюпорте.
+          </p>
+          <div class="diff-block">
+            <div class="diff-header">
+              <span class="diff-file">ChapanProduction.module.css</span>
+              <span>строка ~253</span>
+            </div>
+            <div class="diff-lines">
+              <div class="diff-hunk">@@ .doneBtn @@</div>
+              <div class="diff-ctx">  min-height: 42px;</div>
+              <div class="diff-del">- border-radius: 999px;</div>
+              <div class="diff-add">+ border-radius: 10px;</div>
+              <div class="diff-ctx">  border: 1px solid ...;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUG 3 -->
+      <div class="bug-card">
+        <div class="bug-header">
+          <span class="bug-badge">БАГ 3</span>
+          <span class="bug-title">Хедер таблицы обрезан справа — «ДЕЙСТВИЕ» не видно</span>
+        </div>
+        <div class="bug-body">
+          <p class="bug-desc">
+            Это <strong>архитектурный баг</strong>: <code>.tableHeader</code> и
+            <code>.cardList</code> находятся в разных DOM-контейнерах.
+            При ширине &lt;1080px у <code>.cardList</code> включается
+            <code>overflow-x: auto</code> с <code>min-width: 1030px</code> на карточках,
+            а хедер остаётся в родительском <code>.root</code> без скролла — его
+            правая часть просто обрезается вьюпортом и колонки расходятся.
+          </p>
+          <div class="callout callout-warn">
+            <span class="callout-icon">⚠️</span>
+            <span>Положить <code>.tableHeader</code> и <code>.cardList</code> в один общий
+            <code>&lt;div&gt;</code> с <code>overflow-x: auto</code> — они должны
+            скроллиться горизонтально как одно целое.</span>
+          </div>
+          <div class="diff-block">
+            <div class="diff-header">
+              <span class="diff-file">ChapanProduction.tsx — структурное изменение JSX</span>
+            </div>
+            <div class="diff-lines">
+              <div class="diff-hunk">@@ return ( ... ) @@</div>
+              <div class="diff-ctx">  &lt;header className={styles.pageHeader}&gt;...&lt;/header&gt;</div>
+              <div class="diff-add">+ &lt;div className={styles.tableScrollWrap}&gt;</div>
+              <div class="diff-ctx">    &lt;div className={styles.tableHeader}&gt;...&lt;/div&gt;</div>
+              <div class="diff-ctx">    &lt;div className={styles.cardList}&gt;...&lt;/div&gt;</div>
+              <div class="diff-add">+ &lt;/div&gt;</div>
+            </div>
+          </div>
+          <div class="diff-block" style="margin-top:10px">
+            <div class="diff-header">
+              <span class="diff-file">ChapanProduction.module.css — новый класс</span>
+            </div>
+            <div class="diff-lines">
+              <div class="diff-add">+ .tableScrollWrap {</div>
+              <div class="diff-add">+   overflow-x: auto;</div>
+              <div class="diff-add">+   -webkit-overflow-scrolling: touch;</div>
+              <div class="diff-add">+ }</div>
+            </div>
+          </div>
+          <div class="diff-block" style="margin-top:10px">
+            <div class="diff-header">
+              <span class="diff-file">ChapanProduction.module.css — убрать overflow из cardList</span>
+            </div>
+            <div class="diff-lines">
+              <div class="diff-hunk">@@ @media (max-width: 1080px) @@</div>
+              <div class="diff-ctx">  .cardList {</div>
+              <div class="diff-del">-   overflow-x: auto;</div>
+              <div class="diff-del">-   padding-bottom: 18px;</div>
+              <div class="diff-ctx">  }</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUG 4 -->
+      <div class="bug-card">
+        <div class="bug-header">
+          <span class="bug-badge">БАГ 4</span>
+          <span class="bug-title">Большой gap между строками — не таблица, а стопка карточек</span>
+        </div>
+        <div class="bug-body">
+          <p class="bug-desc">
+            <code>gap: 12px</code> в <code>.cardList</code> создаёт слишком большой
+            вертикальный отступ между строками — они "плавают" как отдельные карточки.
+            Для таблицы производственных задач нужен более компактный ритм.
+          </p>
+          <div class="diff-block">
+            <div class="diff-header">
+              <span class="diff-file">ChapanProduction.module.css</span>
+              <span>строка ~225</span>
+            </div>
+            <div class="diff-lines">
+              <div class="diff-hunk">@@ .cardList @@</div>
+              <div class="diff-ctx">  display: flex;</div>
+              <div class="diff-ctx">  flex-direction: column;</div>
+              <div class="diff-del">- gap: 12px;</div>
+              <div class="diff-add">+ gap: 4px;</div>
+              <div class="diff-ctx">  padding: 18px 24px 28px 20px;</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BUG 5 -->
+      <div class="bug-card">
+        <div class="bug-header">
+          <span class="bug-badge">БАГ 5</span>
+          <span class="bug-title">Хедер таблицы: border-top + inset shadow дают визуальный «отрыв»</span>
+        </div>
+        <div class="bug-body">
+          <p class="bug-desc">
+            У <code>.tableHeader</code> есть <code>border-top</code> белый полупрозрачный
+            и <code>box-shadow: inset 0 1px 0</code> — вместе они дают иллюзию
+            что хедер «висит» над страницей и не примыкает к pageHeader снизу.
+          </p>
+          <div class="diff-block">
+            <div class="diff-header">
+              <span class="diff-file">ChapanProduction.module.css</span>
+              <span>строка ~108</span>
+            </div>
+            <div class="diff-lines">
+              <div class="diff-hunk">@@ .tableHeader @@</div>
+              <div class="diff-ctx">  background: linear-gradient(...);</div>
+              <div class="diff-del">- border-top: 1px solid color-mix(in srgb, white 18%, transparent);</div>
+              <div class="diff-ctx">  border-bottom: 1px solid ...;</div>
+              <div class="diff-del">- box-shadow: inset 0 1px 0 color-mix(in srgb, white 16%, transparent);</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- FIXES SECTION -->
+    <section class="section" id="fixes">
+      <h2 class="section-title">
+        <span class="section-num">✓</span>
+        Итоговая таблица изменений
+      </h2>
+
+      <table class="change-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Файл</th>
+            <th>Свойство</th>
+            <th>Было</th>
+            <th>Стало</th>
+            <th>Эффект</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>1</td>
+            <td><code>*.module.css</code></td>
+            <td><code>.card</code></td>
+            <td><code class="del">border-radius: 22px</code></td>
+            <td><code class="add">border-radius: 10px</code></td>
+            <td>Строки выглядят как таблица, не как пилюли</td>
+          </tr>
+          <tr>
+            <td>2</td>
+            <td><code>*.module.css</code></td>
+            <td><code>.doneBtn</code></td>
+            <td><code class="del">border-radius: 999px</code></td>
+            <td><code class="add">border-radius: 10px</code></td>
+            <td>Кнопка прямоугольная, не обрезается overflow</td>
+          </tr>
+          <tr>
+            <td>3</td>
+            <td><code>*.tsx</code> + <code>*.module.css</code></td>
+            <td>DOM-структура</td>
+            <td>Header и cardList в разных контейнерах</td>
+            <td>Обёрнуты в <code class="add">.tableScrollWrap</code></td>
+            <td>Горизонтальный скролл синхронизирован</td>
+          </tr>
+          <tr>
+            <td>4</td>
+            <td><code>*.module.css</code></td>
+            <td><code>.cardList</code></td>
+            <td><code class="del">gap: 12px</code></td>
+            <td><code class="add">gap: 4px</code></td>
+            <td>Компактный табличный ритм</td>
+          </tr>
+          <tr>
+            <td>5</td>
+            <td><code>*.module.css</code></td>
+            <td><code>.tableHeader</code></td>
+            <td><code class="del">border-top + box-shadow inset</code></td>
+            <td>Убраны</td>
+            <td>Хедер примыкает заподлицо к pageHeader</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- CSS PATCH -->
+    <section class="section" id="css-patch">
+      <h2 class="section-title">
+        <span class="section-num" style="background:var(--amber-s);color:var(--amber)">CSS</span>
+        Полный патч — ChapanProduction.module.css
+      </h2>
+      <div class="callout callout-info">
+        <span class="callout-icon">ℹ️</span>
+        <span>Смотри также файл <code>patches/ChapanProduction.module.css.patch</code> — готов к <code>git apply</code>.</span>
+      </div>
+      <div class="diff-block">
+        <div class="diff-header">
+          <span class="diff-file">ChapanProduction.module.css — все изменения</span>
+        </div>
+        <div class="diff-lines">
+          <div class="diff-hunk">@@ .tableHeader @@</div>
+          <div class="diff-ctx">  background: linear-gradient(90deg, ...);</div>
+          <div class="diff-del">- border-top: 1px solid color-mix(in srgb, white 18%, transparent);</div>
+          <div class="diff-ctx">  border-bottom: 1px solid ...;</div>
+          <div class="diff-del">- box-shadow: inset 0 1px 0 color-mix(in srgb, white 16%, transparent);</div>
+          <div class="diff-ctx">  color: var(--text-on-accent, #fff);</div>
+          <br/>
+          <div class="diff-hunk">@@ .cardList @@</div>
+          <div class="diff-del">- gap: 12px;</div>
+          <div class="diff-add">+ gap: 4px;</div>
+          <br/>
+          <div class="diff-hunk">@@ .card @@</div>
+          <div class="diff-del">- border-radius: 22px;</div>
+          <div class="diff-add">+ border-radius: 10px;</div>
+          <br/>
+          <div class="diff-hunk">@@ .doneBtn @@</div>
+          <div class="diff-del">- border-radius: 999px;</div>
+          <div class="diff-add">+ border-radius: 10px;</div>
+          <br/>
+          <div class="diff-hunk">@@ new class @@</div>
+          <div class="diff-add">+ .tableScrollWrap {</div>
+          <div class="diff-add">+   overflow-x: auto;</div>
+          <div class="diff-add">+   -webkit-overflow-scrolling: touch;</div>
+          <div class="diff-add">+ }</div>
+          <br/>
+          <div class="diff-hunk">@@ @media (max-width: 1080px) @@</div>
+          <div class="diff-ctx">  .cardList {</div>
+          <div class="diff-del">-   overflow-x: auto;</div>
+          <div class="diff-del">-   padding-bottom: 18px;</div>
+          <div class="diff-ctx">  }</div>
+          <div class="diff-ctx">  .tableHeader,</div>
+          <div class="diff-ctx">  .card {</div>
+          <div class="diff-ctx">    min-width: 1030px;</div>
+          <div class="diff-ctx">  }</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TSX PATCH -->
+    <section class="section" id="tsx-patch">
+      <h2 class="section-title">
+        <span class="section-num" style="background:var(--amber-s);color:var(--amber)">TSX</span>
+        Патч — ChapanProduction.tsx
+      </h2>
+      <p style="font-size:13px;color:var(--text-2);margin-bottom:16px;">
+        Единственное структурное изменение в JSX — обернуть tableHeader и cardList
+        в новый div с классом <code>tableScrollWrap</code>:
+      </p>
+      <div class="diff-block">
+        <div class="diff-header">
+          <span class="diff-file">ChapanProduction.tsx — JSX return</span>
+        </div>
+        <div class="diff-lines">
+          <div class="diff-hunk">@@ return ( &lt;div className={styles.root}&gt; @@</div>
+          <div class="diff-ctx">  {/* alerts */}</div>
+          <div class="diff-ctx">  {/* reject modal */}</div>
+          <div class="diff-ctx">  &lt;header className={styles.pageHeader}&gt;...&lt;/header&gt;</div>
+          <div class="diff-ctx">  {selectedIds.size &gt; 0 &amp;&amp; &lt;div className={styles.selectionBar}&gt;...&lt;/div&gt;}</div>
+          <br/>
+          <div class="diff-add">+ &lt;div className={styles.tableScrollWrap}&gt;</div>
+          <div class="diff-ctx">    &lt;div className={styles.tableHeader}&gt;</div>
+          <div class="diff-ctx">      {/* 12 column headers */}</div>
+          <div class="diff-ctx">    &lt;/div&gt;</div>
+          <div class="diff-ctx">    &lt;div className={styles.cardList}&gt;</div>
+          <div class="diff-ctx">      {/* task cards */}</div>
+          <div class="diff-ctx">    &lt;/div&gt;</div>
+          <div class="diff-add">+ &lt;/div&gt;</div>
+        </div>
+      </div>
+
+      <div class="callout callout-warn" style="margin-top:14px">
+        <span class="callout-icon">⚠️</span>
+        <span>
+          <strong>Важно:</strong> <code>position: sticky</code> на <code>.tableHeader</code>
+          не работает внутри <code>overflow-x: auto</code> контейнера (браузерное ограничение CSS).
+          Поэтому <code>position: sticky</code> у <code>.tableHeader</code> нужно убрать или
+          оставить только как вертикальный sticky через JS-синхронизацию скролла если это
+          критично для UX.
+        </span>
+      </div>
+    </section>
+
+    <!-- CHECKLIST -->
+    <section class="section" id="checklist">
+      <h2 class="section-title">
+        <span class="section-num">✓</span>
+        Чеклист для разработчика
+      </h2>
+
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>Изменить <code>.card { border-radius: 22px → 10px }</code> в <code>ChapanProduction.module.css</code></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>Изменить <code>.doneBtn { border-radius: 999px → 10px }</code></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>Изменить <code>.cardList { gap: 12px → 4px }</code></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>Добавить класс <code>.tableScrollWrap { overflow-x: auto }</code></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>В <code>ChapanProduction.tsx</code> обернуть tableHeader + cardList в <code>&lt;div className={styles.tableScrollWrap}&gt;</code></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>Убрать <code>border-top</code> и <code>box-shadow: inset</code> из <code>.tableHeader</code></span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>Убрать <code>overflow-x: auto</code> из <code>.cardList</code> (он теперь в <code>.tableScrollWrap</code>)</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>Проверить визуально на 1080px и 768px — хедер и строки должны скроллиться вместе</span>
+        </label>
+        <label style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:10px;border:1px solid var(--border);background:var(--surface);font-size:13px;cursor:pointer;">
+          <input type="checkbox" style="margin-top:2px;accent-color:var(--green);width:16px;height:16px;flex-shrink:0;" />
+          <span>Проверить строку с <code>notes</code> (комментарий) — кнопка «Готово» должна растягиваться на обе строки</span>
+        </label>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <span>ЦЕХ-Grid · Handoff · April 2026</span>
+      <a href="../ChapanProduction Fixed.html" target="_blank" style="color:var(--accent);text-decoration:none;font-weight:600;">Открыть прототип ↗</a>
+    </footer>
+
+  </main>
+</div>
+
+</body>
+</html>

@@ -379,24 +379,26 @@ export default function ChapanProductionPage() {
         </div>
       )}
 
-      {/* ── Table Header ────────────────────────────────────────────────── */}
-      <div className={styles.tableHeader}>
-        <div className={styles.tableHeaderCol}>✓</div>
-        <div className={styles.tableHeaderCol}>!</div>
-        <div className={styles.tableHeaderCol}>№</div>
-        <div className={styles.tableHeaderCol}>Товар</div>
-        <div className={styles.tableHeaderCol}>Пол</div>
-        <div className={styles.tableHeaderCol}>Длина</div>
-        <div className={styles.tableHeaderCol}>Цвет</div>
-        <div className={styles.tableHeaderCol}>Кол.во</div>
-        <div className={styles.tableHeaderCol}>Разм.</div>
-        <div className={styles.tableHeaderCol}>Принят</div>
-        <div className={styles.tableHeaderCol}>Срок</div>
-        <div className={styles.tableHeaderCol}>Действие</div>
-      </div>
+      {/* ── Shared horizontal scroll wrapper ──────────────────────────── */}
+      <div className={styles.tableScrollWrap}>
+        {/* ── Table Header ────────────────────────────────────────────────── */}
+        <div className={styles.tableHeader}>
+          <div className={styles.tableHeaderCol}>✓</div>
+          <div className={styles.tableHeaderCol}>!</div>
+          <div className={styles.tableHeaderCol}>№</div>
+          <div className={styles.tableHeaderCol}>Товар</div>
+          <div className={styles.tableHeaderCol}>Пол</div>
+          <div className={styles.tableHeaderCol}>Длина</div>
+          <div className={styles.tableHeaderCol}>Цвет</div>
+          <div className={styles.tableHeaderCol}>Кол.во</div>
+          <div className={styles.tableHeaderCol}>Разм.</div>
+          <div className={styles.tableHeaderCol}>Принят</div>
+          <div className={styles.tableHeaderCol}>Срок</div>
+          <div className={styles.tableHeaderCol}>Действие</div>
+        </div>
 
-      {/* ── Card List ──────────────────────────────────────────────────── */}
-      <div className={styles.cardList}>
+        {/* ── Card List ──────────────────────────────────────────────────── */}
+        <div className={styles.cardList}>
         {isLoading && (
           <div className={styles.emptyState}>
             <div className={styles.emptyText}>Загрузка...</div>
@@ -425,6 +427,7 @@ export default function ChapanProductionPage() {
               : {})}
           />
         ))}
+        </div>
       </div>
     </div>
   );
