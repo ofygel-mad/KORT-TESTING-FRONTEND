@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Download, Eye, PencilLine, Save, X } from 'lucide-react';
 import { useInvoice, useSaveInvoiceDocument } from '../../../../entities/order/queries';
 import { apiClient } from '../../../../shared/api/client';
@@ -147,10 +148,6 @@ export default function ChapanInvoicePreviewModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dirty, onClose, open, saveDocument.isPending]);
 
-  if (!open) {
-    return null;
-  }
-
   async function handleSave() {
     if (!draft) return false;
 
@@ -234,7 +231,7 @@ export default function ChapanInvoicePreviewModal({
     });
   }
 
-  return (
+  const content = !open ? null : (
     <div className={styles.overlay} onClick={() => void attemptClose()}>
       <div className={styles.modal} onClick={(event) => event.stopPropagation()}>
         <div className={styles.header}>
@@ -465,4 +462,6 @@ export default function ChapanInvoicePreviewModal({
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

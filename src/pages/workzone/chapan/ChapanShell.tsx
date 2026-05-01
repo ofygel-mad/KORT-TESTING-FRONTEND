@@ -43,7 +43,7 @@ export default function ChapanShell() {
   const invoicesDrawerFilter = useChapanUiStore((s) => s.invoicesDrawerFilter);
   const setInvoicesDrawerOpen = useChapanUiStore((s) => s.setInvoicesDrawerOpen);
 
-  const isSubPage = /\/workzone\/chapan\/.+\/.+/.test(location.pathname);
+  const isSubPage = /\/workzone\/chapan\/.+\/.+/.test(location.pathname) || location.search.length > 0;
 
   // ── Swipe-back (iOS-style left-edge gesture) ─────────────────────────────
   const dragXRef   = useRef(0);

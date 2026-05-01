@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X, Package, User, Phone, Clock, AlertTriangle, Send, RotateCcw, CheckSquare, FileText, Star,
 } from 'lucide-react';
@@ -45,8 +46,6 @@ export default function ChapanOrderDetailModal({ orderId, open, onClose }: Props
     shippingNote: '',
   });
 
-  if (!open) return null;
-
   const orderNumber = order?.orderNumber ?? orderId ?? '';
   const clientName = order?.clientName ?? '';
   const clientPhone = order?.clientPhone ?? '';
@@ -61,7 +60,7 @@ export default function ChapanOrderDetailModal({ orderId, open, onClose }: Props
   const invoiceOrders = order?.invoiceOrders ?? [];
   const requiresInvoice = order?.requiresInvoice ?? false;
 
-  return (
+  const content = !open ? null : (
     <div className={modalStyles.overlay} onClick={onClose}>
       <div className={modalStyles.modal} onClick={(e) => e.stopPropagation()}>
         <div className={modalStyles.header}>
@@ -589,4 +588,6 @@ export default function ChapanOrderDetailModal({ orderId, open, onClose }: Props
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

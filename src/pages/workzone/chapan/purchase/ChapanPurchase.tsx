@@ -1,36 +1,97 @@
-import { useState } from 'react';
-import { Download, Plus, ShoppingCart, Trash2 } from 'lucide-react';
-import { AlertCircle } from 'lucide-react';
-import { useManualInvoices, useDeleteManualInvoice } from '../../../../entities/purchase/queries';
+import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { AlertCircle, Archive, Download, Plus, RotateCcw, ShoppingCart, Trash2 } from 'lucide-react';
+import {
+  useArchiveManualInvoice,
+  useDeleteManualInvoice,
+  useManualInvoices,
+  useRestoreManualInvoice,
+} from '../../../../entities/purchase/queries';
 import { purchaseApi } from '../../../../entities/purchase/api';
+import type { ManualInvoice } from '../../../../entities/purchase/types';
 import { getFilenameFromContentDisposition, triggerBrowserDownload } from '../../../../shared/lib/browserDownload';
 import { useCurrency } from '../../../../shared/hooks/useCurrency';
 import { formatMoney } from '../../../../shared/utils/format';
 import ManualInvoiceForm from './ManualInvoiceForm';
+import PurchaseInvoicePreviewModal from './PurchaseInvoicePreviewModal';
 import styles from './ChapanPurchase.module.css';
 
 type Tab = 'workshop' | 'market';
+type Scope = 'active' | 'archived';
 
 const TAB_LABELS: Record<Tab, string> = {
-  workshop: 'Цех',
-  market: 'Базар',
+  workshop: '\u0426\u0435\u0445',
+  market: '\u0411\u0430\u0437\u0430\u0440',
 };
 
+const SCOPE_LABELS: Record<Scope, string> = {
+  active: '\u0410\u043a\u0442\u0438\u0432\u043d\u044b\u0435',
+  archived: '\u0410\u0440\u0445\u0438\u0432',
+};
+
+function calculateInvoiceTotal(invoice: ManualInvoice) {
+  return invoice.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+}
+
+function formatInvoiceDate(value: string) {
+  return new Date(value).toLocaleDateString('ru-RU', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 export default function ChapanPurchasePage() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [tab, setTab] = useState<Tab>('workshop');
   const [formOpen, setFormOpen] = useState(false);
+  const [previewId, setPreviewId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const currency = useCurrency();
 
-  const { data: workshopData, isLoading: wLoading, isError: wError } = useManualInvoices('workshop');
-  const { data: marketData, isLoading: mLoading, isError: mError } = useManualInvoices('market');
+  const scope = (searchParams.get('view') === 'archived' ? 'archived' : 'active') as Scope;
+  const setScope = (newScope: Scope) => {
+    if (newScope === 'active') {
+      searchParams.delete('view');
+    } else {
+      searchParams.set('view', 'archived');
+    }
+    setSearchParams(searchParams);
+  };
+
+  const activeWorkshop = useManualInvoices('workshop', false);
+  const activeMarket = useManualInvoices('market', false);
+  const archivedWorkshop = useManualInvoices('workshop', true);
+  const archivedMarket = useManualInvoices('market', true);
+
+  const archiveInvoice = useArchiveManualInvoice();
+  const restoreInvoice = useRestoreManualInvoice();
   const deleteInvoice = useDeleteManualInvoice();
 
-  const workshopList = workshopData?.results ?? [];
-  const marketList = marketData?.results ?? [];
-  const current = tab === 'workshop' ? workshopList : marketList;
-  const isLoading = wLoading || mLoading;
-  const isError = wError || mError;
+  const activeLists = useMemo(
+    () => ({
+      workshop: activeWorkshop.data?.results ?? [],
+      market: activeMarket.data?.results ?? [],
+    }),
+    [activeMarket.data?.results, activeWorkshop.data?.results],
+  );
+  const archivedLists = useMemo(
+    () => ({
+      workshop: archivedWorkshop.data?.results ?? [],
+      market: archivedMarket.data?.results ?? [],
+    }),
+    [archivedMarket.data?.results, archivedWorkshop.data?.results],
+  );
+
+  const currentLists = scope === 'active' ? activeLists : archivedLists;
+  const current = currentLists[tab];
+  const isLoading = scope === 'active'
+    ? activeWorkshop.isLoading || activeMarket.isLoading
+    : archivedWorkshop.isLoading || archivedMarket.isLoading;
+  const isError = scope === 'active'
+    ? activeWorkshop.isError || activeMarket.isError
+    : archivedWorkshop.isError || archivedMarket.isError;
+  const archivedCount = archivedLists.workshop.length + archivedLists.market.length;
 
   async function handleDownload(id: string, invoiceNum: string) {
     if (downloadingId) return;
@@ -53,95 +114,200 @@ export default function ChapanPurchasePage() {
 
   return (
     <div className={`${styles.root} kort-page-enter`}>
-      <div className={styles.header}>
-        <div className={styles.headerTitle}>
-          <ShoppingCart size={18} />
-          <span>Закуп</span>
+      <div aria-hidden={previewId !== null}>
+        <div className={styles.header}>
+          <div>
+            <div className={styles.headerTitle}>
+              <ShoppingCart size={18} />
+              <span>{'\u0417\u0430\u043a\u0443\u043f'}</span>
+            </div>
+            <div className={styles.headerSubtitle}>
+              {scope === 'active'
+                ? '\u041e\u0442\u043a\u0440\u043e\u0439\u0442\u0435 \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u0443\u044e, \u0447\u0442\u043e\u0431\u044b \u043f\u043e\u0441\u043c\u043e\u0442\u0440\u0435\u0442\u044c \u0441\u043e\u0441\u0442\u0430\u0432, \u043f\u043e\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0441\u0442\u0440\u043e\u043a\u0438 \u0438\u043b\u0438 \u043e\u0442\u043f\u0440\u0430\u0432\u0438\u0442\u044c \u0432 \u0430\u0440\u0445\u0438\u0432.'
+                : '\u0410\u0440\u0445\u0438\u0432 \u0434\u0435\u0440\u0436\u0438\u0442 \u0437\u0430\u0432\u0435\u0440\u0448\u0451\u043d\u043d\u044b\u0435 \u0438 \u0443\u0431\u0440\u0430\u043d\u043d\u044b\u0435 \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u044b\u0435 \u0431\u0435\u0437 \u0437\u0430\u0441\u043e\u0440\u0435\u043d\u0438\u044f \u043e\u0441\u043d\u043e\u0432\u043d\u043e\u0433\u043e \u0441\u043f\u0438\u0441\u043a\u0430.'}
+            </div>
+          </div>
+
+          <div className={styles.headerActions}>
+            <button
+              type="button"
+              className={`${styles.scopeBtn} ${scope === 'archived' ? styles.scopeBtnActive : ''}`}
+              onClick={() => setScope(scope === 'active' ? 'archived' : 'active')}
+            >
+              <Archive size={14} />
+              {scope === 'active' ? '\u041e\u0442\u043a\u0440\u044b\u0442\u044c \u0430\u0440\u0445\u0438\u0432' : '\u041a \u0430\u043a\u0442\u0438\u0432\u043d\u044b\u043c'}
+              <span className={styles.scopeBadge}>{archivedCount}</span>
+            </button>
+            {scope === 'active' && (
+              <button type="button" className={styles.createBtn} onClick={() => setFormOpen(true)}>
+                <Plus size={14} />
+                {'\u041d\u043e\u0432\u0430\u044f \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u0430\u044f'}
+              </button>
+            )}
+          </div>
         </div>
-        <button type="button" className={styles.createBtn} onClick={() => setFormOpen(true)}>
-          <Plus size={14} />
-          Новая накладная
-        </button>
-      </div>
 
-      <div className={styles.tabs}>
-        {(['workshop', 'market'] as Tab[]).map((t) => (
-          <button
-            key={t}
-            type="button"
-            className={`${styles.tab} ${tab === t ? styles.tabActive : ''}`}
-            onClick={() => setTab(t)}
-          >
-            {TAB_LABELS[t]}
-            <span className={styles.tabBadge}>
-              {t === 'workshop' ? workshopList.length : marketList.length}
-            </span>
-          </button>
-        ))}
-      </div>
+        <div className={styles.toolbar}>
+          <div className={styles.tabs}>
+            {(['workshop', 'market'] as Tab[]).map((item) => (
+              <button
+                key={item}
+                type="button"
+                className={`${styles.tab} ${tab === item ? styles.tabActive : ''}`}
+                onClick={() => setTab(item)}
+              >
+                {TAB_LABELS[item]}
+                <span className={styles.tabBadge}>{currentLists[item].length}</span>
+              </button>
+            ))}
+          </div>
 
-      {isError && (
-        <div className="kort-inline-error">
-          <AlertCircle size={16} />
-          Не удалось загрузить накладные.
+          <div className={styles.scopeMeta}>
+            <span className={styles.scopeMetaLabel}>{SCOPE_LABELS[scope]}</span>
+            <strong>{current.length}</strong>
+          </div>
         </div>
-      )}
 
-      {isLoading && <div className={styles.loadingBar} />}
+        {isError && (
+          <div className="kort-inline-error">
+            <AlertCircle size={16} />
+            {'\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u044b\u0435.'}
+          </div>
+        )}
 
-      {!isLoading && current.length === 0 && (
-        <div className={styles.empty}>
-          Накладных в разделе «{TAB_LABELS[tab]}» пока нет
-        </div>
-      )}
+        {isLoading && <div className={styles.loadingBar} />}
 
-      {current.length > 0 && (
-        <div className={styles.list}>
-          {current.map((inv) => {
-            const total = inv.items.reduce((s, it) => s + it.quantity * it.unitPrice, 0);
-            const date = new Date(inv.createdAt).toLocaleDateString('ru-RU', {
-              day: '2-digit', month: 'short', year: 'numeric',
-            });
-            return (
-              <div key={inv.id} className={styles.card}>
-                <div className={styles.cardInfo}>
-                  <div className={styles.cardNum}>{inv.invoiceNum}</div>
-                  <div className={styles.cardTitle}>{inv.title}</div>
-                  <div className={styles.cardMeta}>
-                    {date} · {inv.createdByName} · {inv.items.length} поз.
+        {!isLoading && current.length === 0 && (
+          <div className={styles.empty}>
+            <div className={styles.emptyTitle}>
+              {scope === 'active'
+                ? '\u0412 \u0440\u0430\u0437\u0434\u0435\u043b\u0435 \u043f\u043e\u043a\u0430 \u043d\u0435\u0442 \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u044b\u0445'
+                : '\u0410\u0440\u0445\u0438\u0432 \u043f\u043e\u043a\u0430 \u043f\u0443\u0441\u0442'}
+            </div>
+            <div className={styles.emptyText}>
+              {scope === 'active'
+                ? `\u0414\u043b\u044f \u0432\u043a\u043b\u0430\u0434\u043a\u0438 \u00ab${TAB_LABELS[tab]}\u00bb \u043c\u043e\u0436\u043d\u043e \u0441\u0440\u0430\u0437\u0443 \u0441\u043e\u0437\u0434\u0430\u0442\u044c \u043f\u0435\u0440\u0432\u0443\u044e \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u0443\u044e.`
+                : '\u0410\u0440\u0445\u0438\u0432\u0438\u0440\u043e\u0432\u0430\u043d\u043d\u044b\u0435 \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u044b\u0435 \u043f\u043e\u044f\u0432\u044f\u0442\u0441\u044f \u0437\u0434\u0435\u0441\u044c.'}
+            </div>
+          </div>
+        )}
+
+        {current.length > 0 && (
+          <div className={styles.list}>
+            {current.map((invoice) => {
+              const total = calculateInvoiceTotal(invoice);
+              const itemPreview = invoice.items
+                .slice(0, 3)
+                .map((item) => item.productName)
+                .join(', ');
+              return (
+                <article
+                  key={invoice.id}
+                  className={`${styles.card} ${scope === 'archived' ? styles.cardArchived : ''}`}
+                  aria-label={`${invoice.invoiceNum} ${invoice.title}`}
+                  onClick={() => setPreviewId(invoice.id)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter' || event.key === ' ') {
+                      event.preventDefault();
+                      setPreviewId(invoice.id);
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                >
+                  <div className={styles.cardInfo}>
+                    <div className={styles.cardTopLine}>
+                      <div className={styles.cardNum}>{invoice.invoiceNum}</div>
+                      {invoice.archivedAt && (
+                        <span className={styles.cardStatus}>{'\u0412 \u0430\u0440\u0445\u0438\u0432\u0435'}</span>
+                      )}
+                    </div>
+                    <div className={styles.cardTitle}>{invoice.title}</div>
+                    <div className={styles.cardMeta}>
+                      {formatInvoiceDate(invoice.createdAt)} {'\u00b7'} {invoice.createdByName} {'\u00b7'} {invoice.items.length}{' '}
+                      {'\u043f\u043e\u0437.'}
+                    </div>
+                    <div className={styles.cardPreview}>
+                      {itemPreview || '\u2014'}
+                      {invoice.items.length > 3 ? ` +${invoice.items.length - 3}` : ''}
+                    </div>
                   </div>
-                </div>
-                <div className={styles.cardActions}>
-                  <div className={styles.cardTotal}>{formatMoney(total, currency)}</div>
-                  <button
-                    type="button"
-                    className={styles.iconBtn}
-                    title="Скачать XLSX"
-                    aria-label="Скачать XLSX"
-                    disabled={downloadingId === inv.id}
-                    onClick={() => void handleDownload(inv.id, inv.invoiceNum)}
-                  >
-                    <Download size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                    title="Удалить"
-                    aria-label="Удалить накладную"
-                    onClick={() => deleteInvoice.mutate(inv.id)}
-                  >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      )}
 
-      {formOpen && (
-        <ManualInvoiceForm type={tab} onClose={() => setFormOpen(false)} />
-      )}
+                  <div className={styles.cardActions}>
+                    <div className={styles.cardTotal}>{formatMoney(total, currency)}</div>
+                    <button
+                      type="button"
+                      className={styles.iconBtn}
+                      title={'\u0421\u043a\u0430\u0447\u0430\u0442\u044c XLSX'}
+                      aria-label={'\u0421\u043a\u0430\u0447\u0430\u0442\u044c XLSX'}
+                      disabled={downloadingId === invoice.id}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleDownload(invoice.id, invoice.invoiceNum);
+                      }}
+                    >
+                      <Download size={14} />
+                    </button>
+                    {scope === 'active' ? (
+                      <button
+                        type="button"
+                        className={styles.iconBtn}
+                        title={'\u0410\u0440\u0445\u0438\u0432\u0438\u0440\u043e\u0432\u0430\u0442\u044c'}
+                        aria-label={'\u0410\u0440\u0445\u0438\u0432\u0438\u0440\u043e\u0432\u0430\u0442\u044c \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u0443\u044e'}
+                        disabled={archiveInvoice.isPending}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          archiveInvoice.mutate(invoice.id);
+                        }}
+                      >
+                        <Archive size={14} />
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className={styles.iconBtn}
+                          title={'\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c'}
+                          aria-label={'\u0412\u043e\u0441\u0441\u0442\u0430\u043d\u043e\u0432\u0438\u0442\u044c \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u0443\u044e'}
+                          disabled={restoreInvoice.isPending}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            restoreInvoice.mutate(invoice.id);
+                          }}
+                        >
+                          <RotateCcw size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
+                          title={'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u043d\u0430\u0432\u0441\u0435\u0433\u0434\u0430'}
+                          aria-label={'\u0423\u0434\u0430\u043b\u0438\u0442\u044c \u043d\u0430\u043a\u043b\u0430\u0434\u043d\u0443\u044e \u043d\u0430\u0432\u0441\u0435\u0433\u0434\u0430'}
+                          disabled={deleteInvoice.isPending}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            deleteInvoice.mutate(invoice.id);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {formOpen && <ManualInvoiceForm type={tab} onClose={() => setFormOpen(false)} />}
+
+      <PurchaseInvoicePreviewModal
+        invoiceId={previewId}
+        open={previewId !== null}
+        onClose={() => setPreviewId(null)}
+        onRemoved={() => setPreviewId(null)}
+      />
     </div>
   );
 }

@@ -4,14 +4,18 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import ChapanPurchasePage from './ChapanPurchase';
 
 const useManualInvoicesMock = vi.fn();
+const archiveMutateMock = vi.fn();
+const restoreMutateMock = vi.fn();
 const deleteMutateMock = vi.fn();
 const downloadMock = vi.fn();
 const triggerBrowserDownloadMock = vi.fn();
 const getFilenameFromContentDispositionMock = vi.fn(() => 'zakup_MN-0001.xlsx');
 
 vi.mock('../../../../entities/purchase/queries', () => ({
-  useManualInvoices: (type?: string) => useManualInvoicesMock(type),
-  useDeleteManualInvoice: () => ({ mutate: deleteMutateMock }),
+  useManualInvoices: (type?: string, archived?: boolean) => useManualInvoicesMock(type, archived),
+  useArchiveManualInvoice: () => ({ mutate: archiveMutateMock, isPending: false }),
+  useRestoreManualInvoice: () => ({ mutate: restoreMutateMock, isPending: false }),
+  useDeleteManualInvoice: () => ({ mutate: deleteMutateMock, isPending: false }),
 }));
 
 vi.mock('../../../../entities/purchase/api', () => ({
@@ -29,18 +33,24 @@ vi.mock('./ManualInvoiceForm', () => ({
   default: () => null,
 }));
 
+vi.mock('./PurchaseInvoicePreviewModal', () => ({
+  default: () => null,
+}));
+
 describe('ChapanPurchasePage', () => {
   beforeEach(() => {
     useManualInvoicesMock.mockReset();
+    archiveMutateMock.mockReset();
+    restoreMutateMock.mockReset();
     deleteMutateMock.mockReset();
     downloadMock.mockReset();
     triggerBrowserDownloadMock.mockReset();
     getFilenameFromContentDispositionMock.mockClear();
 
-    useManualInvoicesMock.mockImplementation((type?: string) => ({
+    useManualInvoicesMock.mockImplementation((type?: string, archived?: boolean) => ({
       data: {
-        count: type === 'workshop' ? 1 : 0,
-        results: type === 'workshop'
+        count: !archived && type === 'workshop' ? 1 : 0,
+        results: !archived && type === 'workshop'
           ? [{
               id: 'invoice-1',
               orgId: 'org-1',
@@ -51,6 +61,8 @@ describe('ChapanPurchasePage', () => {
               createdById: 'user-1',
               createdByName: 'Owner',
               createdAt: '2026-04-29T10:00:00.000Z',
+              updatedAt: '2026-04-29T10:00:00.000Z',
+              archivedAt: null,
               items: [
                 {
                   id: 'item-1',

@@ -21,6 +21,8 @@ export interface ManualInvoice {
   createdById: string;
   createdByName: string;
   createdAt: string;
+  updatedAt: string;
+  archivedAt?: string | null;
   items: ManualInvoiceItem[];
 }
 
@@ -29,6 +31,20 @@ export interface CreateManualInvoiceDto {
   title: string;
   notes?: string;
   items: Array<{
+    productName: string;
+    gender?: string;
+    length?: string;
+    color?: string;
+    size?: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
+}
+
+export interface UpdateManualInvoiceDto {
+  title?: string;
+  notes?: string;
+  items?: Array<{
     productName: string;
     gender?: string;
     length?: string;

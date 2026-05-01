@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
 import { useItemFormula, useSetBeginningBalance } from '../../../../entities/warehouse/queries';
 import type { WarehouseItem } from '../../../../entities/warehouse/types';
@@ -36,7 +37,7 @@ export function SetBeginningBalanceModal({ item, onClose }: Props) {
     );
   }
 
-  return (
+  const content = (
     <div className={styles.drawerOverlay} onClick={onClose}>
       <div className={styles.drawer} style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
         <div className={styles.drawerHeader}>
@@ -177,4 +178,6 @@ export function SetBeginningBalanceModal({ item, onClose }: Props) {
       </div>
     </div>
   );
+
+  return createPortal(content, document.body);
 }

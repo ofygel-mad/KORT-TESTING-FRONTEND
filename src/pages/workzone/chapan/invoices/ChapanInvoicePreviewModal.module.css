@@ -435,6 +435,8 @@
   font-weight: 800;
   padding: 13px 10px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: left;
+  vertical-align: middle;
 }
 
 .tableRow {
@@ -448,6 +450,8 @@
   color: #243145;
   border-top: 1px solid rgba(227, 231, 227, 1);
   background: rgba(255, 255, 255, 0.96);
+  text-align: left;
+  vertical-align: middle;
 }
 
 .table tbody tr:nth-child(even) td {

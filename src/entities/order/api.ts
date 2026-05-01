@@ -48,10 +48,8 @@ export const ordersApi = {
   update: (id: string, dto: UpdateOrderDto) =>
     api.patch<ChapanOrder>(`/chapan/orders/${id}`, dto),
 
-  restore: (id: string, status?: string) =>
-    status === 'cancelled'
-      ? api.patch<{ ok: boolean }>(`/chapan/orders/${id}/status`, { status: 'new' })
-      : api.post<{ ok: boolean }>(`/chapan/orders/${id}/restore`, {}),
+  restore: (id: string, _status?: string) =>
+    api.post<{ ok: boolean }>(`/chapan/orders/${id}/restore`, {}),
 
   archive: (id: string) =>
     api.post<{ ok: boolean }>(`/chapan/orders/${id}/archive`, {}),
