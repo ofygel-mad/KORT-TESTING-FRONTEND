@@ -8,6 +8,7 @@ import { useVariantAvailability } from '../../../../entities/warehouse/queries';
 import type { VariantAvailabilityMap, VariantAvailabilityResult } from '../../../../entities/warehouse/types';
 import { useAuthStore } from '../../../../shared/stores/auth';
 import { useEmployeePermissions } from '../../../../shared/hooks/useEmployeePermissions';
+import { useRole } from '../../../../shared/hooks/useRole';
 import { buildItemLine } from '../../../../shared/utils/itemLine';
 import { useChapanUiStore } from '../../../../features/workzone/chapan/store';
 import { useUnpaidAlerts } from '../../../../entities/alert/queries';
@@ -155,6 +156,8 @@ function buildGroups(orders: ChapanOrder[]): DisplayGroup[] {
 export default function ChapanOrdersPage() {
   const navigate = useNavigate();
   const userId = useAuthStore((state) => state.user?.id);
+  const employeePermissions = useAuthStore((state) => state.user?.employee_permissions ?? []);
+  const { isOwner, isAdmin } = useRole();
   const { selectedOrderId, setSelectedOrderId, orderFilters, setOrderFilters, resetOrderFilters } = useChapanUiStore();
 
   const { search, statusFilter, payFilter, managerFilter, calendarDate } = orderFilters;
@@ -187,6 +190,20 @@ export default function ChapanOrdersPage() {
   const [calendarMonth, setCalendarMonth] = useState<Date>(new Date(today.getFullYear(), today.getMonth(), 1));
 
   const { isAbsolute } = useEmployeePermissions();
+  const canViewAllOrders = isOwner
+    || isAdmin
+    || isAbsolute
+    || employeePermissions.includes('production')
+    || employeePermissions.includes('warehouse_manager')
+    || employeePermissions.includes('chapan_full_access')
+    || employeePermissions.includes('chapan_access_production')
+    || employeePermissions.includes('chapan_access_ready')
+    || employeePermissions.includes('chapan_access_archive')
+    || employeePermissions.includes('chapan_access_warehouse_nav')
+    || employeePermissions.includes('chapan_manage_production')
+    || employeePermissions.includes('chapan_confirm_invoice')
+    || employeePermissions.includes('chapan_manage_settings');
+  const effectiveManagerId = canViewAllOrders ? (managerFilter || undefined) : userId;
   const handleSeedOrders = async () => {
     setIsSeedingOrders(true);
     try {
@@ -312,7 +329,7 @@ const setViewMode = (mode: ViewMode) => {
       search: deferred || undefined,
       status: statusFilter || undefined,
       paymentStatus: payFilter || undefined,
-      managerId: managerFilter || undefined,
+      managerId: effectiveManagerId,
       archived: false,
       limit: 200,
       createdFrom: calendarDateFrom,
@@ -338,6 +355,7 @@ const setViewMode = (mode: ViewMode) => {
     limit: 500,
     createdFrom: monthFrom,
     createdTo: monthTo,
+    managerId: effectiveManagerId,
   });
 
   const daysWithOrders = useMemo(() => {
@@ -556,7 +574,7 @@ const setViewMode = (mode: ViewMode) => {
               </select>
             </label>
           </div>
-          {orgManagers && orgManagers.length > 1 && (
+          {canViewAllOrders && orgManagers && orgManagers.length > 1 && (
             <div className={styles.filterGroup}>
               <label className={styles.filterLabel}>Менеджер
                 <select className={styles.filterSelect} value={managerFilter} onChange={e => setManagerFilter(e.target.value)}>

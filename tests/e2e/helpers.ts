@@ -74,16 +74,15 @@ export async function preparePage(page: Page) {
 }
 
 export async function clearSession(page: Page) {
-  await page.addInitScript(() => {
+  await page.context().clearCookies();
+  await page.goto('/auth/login', { waitUntil: 'domcontentloaded' });
+  await page.evaluate(() => {
     window.localStorage.clear();
     window.localStorage.setItem('kort.workspace:intro-v1', '1');
     window.sessionStorage.clear();
     window.sessionStorage.setItem('kort.workspace:intro-v1', '1');
   });
-
-  await page.context().clearCookies();
-  await page.goto('about:blank');
-  await page.goto('/auth/login', { waitUntil: 'networkidle' });
+  await page.reload({ waitUntil: 'load' });
 
   if (!page.url().includes('/auth/login')) {
     await ensureLoggedOut(page);
