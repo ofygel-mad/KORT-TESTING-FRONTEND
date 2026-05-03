@@ -6,6 +6,7 @@ import { useChapanPermissions } from '../../../shared/hooks/useChapanPermissions
 import { ThemeSwitcher } from '../../../shared/ui/ThemeSwitcher';
 import { useChapanUiStore } from '../../../features/workzone/chapan/store';
 import ChapanInvoicesDrawer from './invoices/ChapanInvoicesDrawer';
+import ChapanMonitorWidget from '../../../features/chapan-monitor/ChapanMonitorWidget';
 import styles from './ChapanShell.module.css';
 import { useEmployeePermissions } from '../../../shared/hooks/useEmployeePermissions';
 
@@ -218,6 +219,8 @@ export default function ChapanShell() {
       )}
 
       <ChapanInvoicesDrawer open={invoicesDrawerOpen} onClose={() => setInvoicesDrawerOpen(false)} initialFilter={invoicesDrawerFilter as 'all' | 'pending_confirmation' | 'confirmed' | 'rejected' | 'archived'} />
+
+      {isAdmin && <ChapanMonitorWidget />}
     </div>
   );
 }

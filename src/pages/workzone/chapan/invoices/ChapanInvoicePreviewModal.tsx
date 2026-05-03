@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Download, Eye, PencilLine, Save, X } from 'lucide-react';
+import { Clock, Download, Eye, PencilLine, Save, X } from 'lucide-react';
 import { useInvoice, useSaveInvoiceDocument } from '../../../../entities/order/queries';
 import { apiClient } from '../../../../shared/api/client';
 import type {
@@ -9,7 +9,63 @@ import type {
   InvoiceDocumentSourceOrder,
 } from '../../../../entities/order/types';
 import { useAuthStore } from '../../../../shared/stores/auth';
+import { useChapanPermissions } from '../../../../shared/hooks/useChapanPermissions';
 import styles from './ChapanInvoicePreviewModal.module.css';
+
+const FIELD_LABELS: Record<string, string> = {
+  quantity: 'Количество',
+  unitPrice: 'Цена',
+  warehouseUnitPrice: 'Внутр. цена',
+};
+
+const DT_FORMATTER = new Intl.DateTimeFormat('ru-KZ', {
+  day: '2-digit', month: 'short', year: 'numeric',
+  hour: '2-digit', minute: '2-digit',
+});
+
+interface EditHistoryEntry {
+  editedAt: string;
+  editedByName: string;
+  changes: Array<{ rowLabel: string; field: string; oldValue: string; newValue: string }>;
+}
+
+function getHistoryKey(invoiceId: string) { return `chapan_invoice_edits_${invoiceId}`; }
+
+function loadLocalHistory(invoiceId: string): EditHistoryEntry[] {
+  try { return JSON.parse(localStorage.getItem(getHistoryKey(invoiceId)) ?? '[]') as EditHistoryEntry[]; }
+  catch { return []; }
+}
+
+function appendLocalHistory(invoiceId: string, entry: EditHistoryEntry) {
+  try {
+    const existing = loadLocalHistory(invoiceId);
+    localStorage.setItem(getHistoryKey(invoiceId), JSON.stringify([...existing, entry].slice(-50)));
+  } catch { /* storage unavailable */ }
+}
+
+function computeChanges(
+  oldDoc: InvoiceDocumentPayload,
+  newDoc: InvoiceDocumentPayload,
+): EditHistoryEntry['changes'] {
+  const result: EditHistoryEntry['changes'] = [];
+  for (const newRow of newDoc.rows) {
+    const oldRow = oldDoc.rows.find((r) => r.id === newRow.id);
+    if (!oldRow) continue;
+    for (const field of ['quantity', 'unitPrice', 'warehouseUnitPrice'] as const) {
+      const oldVal = String(oldRow[field] ?? '');
+      const newVal = String(newRow[field] ?? '');
+      if (oldVal !== newVal) {
+        result.push({
+          rowLabel: [newRow.productName, newRow.size, newRow.color].filter(Boolean).join(' / '),
+          field,
+          oldValue: oldVal,
+          newValue: newVal,
+        });
+      }
+    }
+  }
+  return result;
+}
 
 const TABLE_KEYS = [
   'itemNumber',
@@ -89,12 +145,16 @@ export default function ChapanInvoicePreviewModal({
   const { data: invoice, isLoading: invoiceLoading } = useInvoice(invoiceId ?? '');
   const saveDocument = useSaveInvoiceDocument();
 
+  const { canEditInvoicePrices } = useChapanPermissions();
+
   const [draft, setDraft] = useState<InvoiceDocumentPayload | null>(null);
   const [savedSnapshot, setSavedSnapshot] = useState('');
   const [editing, setEditing] = useState(false);
   const [confirmCloseOpen, setConfirmCloseOpen] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [activeRowId, setActiveRowId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
+  const [historyEntries, setHistoryEntries] = useState<EditHistoryEntry[]>([]);
 
   const sourceDocument = invoiceMode ? (invoice?.documentPayload ?? null) : (draftDocument ?? null);
   const effectiveLoading = invoiceMode ? invoiceLoading : loading;
@@ -148,12 +208,36 @@ export default function ChapanInvoicePreviewModal({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dirty, onClose, open, saveDocument.isPending]);
 
+  useEffect(() => {
+    if (!open || !invoiceId) return;
+    setHistoryEntries(loadLocalHistory(invoiceId));
+    setShowHistory(false);
+  }, [open, invoiceId]);
+
   async function handleSave() {
     if (!draft) return false;
 
     if (invoiceMode && invoice) {
+      const prevSnapshot = savedSnapshot;
       const saved = await saveDocument.mutateAsync({ id: invoice.id, documentPayload: draft });
       const next = cloneDocument(saved.documentPayload ?? draft);
+
+      if (prevSnapshot) {
+        const prevDoc = JSON.parse(prevSnapshot) as InvoiceDocumentPayload;
+        const changes = computeChanges(prevDoc, draft);
+        if (changes.length > 0) {
+          const entry: EditHistoryEntry = {
+            editedAt: new Date().toISOString(),
+            editedByName: useAuthStore.getState().user?.full_name ?? 'Неизвестный',
+            changes,
+          };
+          const updated = [...historyEntries, entry];
+          setHistoryEntries(updated);
+          appendLocalHistory(invoice.id, entry);
+          void apiClient.post(`/chapan/invoices/${invoice.id}/edit-history`, entry).catch(() => {});
+        }
+      }
+
       setDraft(next);
       setSavedSnapshot(serializeDocument(next));
       setEditing(false);
@@ -246,6 +330,16 @@ export default function ChapanInvoicePreviewModal({
           </div>
 
           <div className={styles.headerActions}>
+            {invoiceMode && historyEntries.length > 0 && (
+              <button
+                type="button"
+                className={`${styles.secondaryBtn} ${showHistory ? styles.secondaryBtnActive ?? '' : ''}`}
+                onClick={() => setShowHistory((v) => !v)}
+              >
+                <Clock size={14} />
+                История ({historyEntries.length})
+              </button>
+            )}
             {invoiceMode && (
               <button
                 type="button"
@@ -258,10 +352,12 @@ export default function ChapanInvoicePreviewModal({
               </button>
             )}
             {!editing ? (
-              <button type="button" className={styles.secondaryBtn} onClick={() => setEditing(true)} disabled={!draft}>
-                <PencilLine size={14} />
-                Редактировать
-              </button>
+              canEditInvoicePrices && (
+                <button type="button" className={styles.secondaryBtn} onClick={() => setEditing(true)} disabled={!draft}>
+                  <PencilLine size={14} />
+                  Редактировать
+                </button>
+              )
             ) : (
               <>
                 <button type="button" className={styles.ghostBtn} onClick={resetDraft}>
@@ -286,6 +382,33 @@ export default function ChapanInvoicePreviewModal({
         </div>
 
         <div className={styles.body}>
+          {showHistory && historyEntries.length > 0 && (
+            <div className={styles.historyPanel}>
+              <div className={styles.historyTitle}>История изменений цен</div>
+              {[...historyEntries].reverse().map((entry, i) => (
+                <div key={i} className={styles.historyEntry}>
+                  <div className={styles.historyEntryMeta}>
+                    <Clock size={11} />
+                    <span>{DT_FORMATTER.format(new Date(entry.editedAt))}</span>
+                    <span className={styles.historyEditorName}>{entry.editedByName}</span>
+                  </div>
+                  <ul className={styles.historyChanges}>
+                    {entry.changes.map((c, j) => (
+                      <li key={j}>
+                        <span className={styles.historyRowLabel}>{c.rowLabel}</span>
+                        {' · '}
+                        <span>{FIELD_LABELS[c.field] ?? c.field}</span>
+                        {': '}
+                        <span className={styles.historyOld}>{c.oldValue}</span>
+                        {' → '}
+                        <span className={styles.historyNew}>{c.newValue}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
           {effectiveLoading && <div className={styles.state}>Подготавливаем накладную...</div>}
 
           {!effectiveLoading && !draft && (
@@ -351,7 +474,7 @@ export default function ChapanInvoicePreviewModal({
                             >
                               {TABLE_KEYS.map((key) => (
                                 <td key={key}>
-                                  {editing && (key === 'unitPrice' || key === 'quantity') ? (
+                                  {editing && canEditInvoicePrices && (key === 'unitPrice' || key === 'quantity') ? (
                                     <input
                                       type="number"
                                       step="any"
@@ -387,7 +510,7 @@ export default function ChapanInvoicePreviewModal({
                               ))}
                               {showWarehousePrice && (
                                 <td>
-                                  {editing ? (
+                                  {editing && canEditInvoicePrices ? (
                                     <input
                                       type="number"
                                       step="any"

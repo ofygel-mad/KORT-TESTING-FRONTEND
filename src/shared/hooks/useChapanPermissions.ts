@@ -36,9 +36,13 @@ export function useChapanPermissions() {
   const isWarehouseOperator =
     isAbsolute || isChapanAdmin || has('chapan_warehouse_operator') || canAccessWarehouse;
   const canConfirmInvoiceReceipt = isWarehouseOperator;
-  const canShipOrders = isWarehouseOperator;
+  const canShipOrders = isWarehouseOperator || has('chapan_shipping');
   const canRejectInvoice = isWarehouseOperator;
-  const canAccessShipping = isWarehouseOperator;
+  const canAccessShipping = isWarehouseOperator || has('chapan_shipping');
+  // Shipping managers (chapan_shipping) can send orders even when payment is pending
+  const canShipWithoutPayment = canAccessShipping;
+  // Only order managers can edit invoice prices; warehouse operators are read-only
+  const canEditInvoicePrices = (canAccessOrders || isChapanAdmin) && !isWarehouseOperator;
   const canAccessAnalytics = isAdmin || isChapanAdmin;
   const canAccessPurchase = isAdmin || isChapanAdmin;
   const canAccessClients = isAdmin || isChapanAdmin;
@@ -69,6 +73,8 @@ export function useChapanPermissions() {
     canShipOrders,
     canRejectInvoice,
     canAccessShipping,
+    canShipWithoutPayment,
+    canEditInvoicePrices,
     canAccessAnalytics,
     canAccessPurchase,
     canAccessClients,

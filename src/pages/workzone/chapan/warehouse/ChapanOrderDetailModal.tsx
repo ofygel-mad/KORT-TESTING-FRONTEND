@@ -7,6 +7,7 @@ import {
   useOrder, useShipOrder, useCloseOrder, useReturnToReady,
 } from '../../../../entities/order/queries';
 import type { ChapanOrder } from '../../../../entities/order/types';
+import { useChapanPermissions } from '../../../../shared/hooks/useChapanPermissions';
 import modalStyles from '../invoices/ChapanInvoicePreviewModal.module.css';
 
 const URGENCY_LABEL: Record<string, string> = { normal: '', urgent: 'Срочно' };
@@ -34,6 +35,7 @@ export default function ChapanOrderDetailModal({ orderId, open, onClose }: Props
   const shipOrder = useShipOrder();
   const closeOrder = useCloseOrder();
   const returnToReady = useReturnToReady();
+  const { canShipWithoutPayment } = useChapanPermissions();
 
   const [closeUnpaidWarning, setCloseUnpaidWarning] = useState(false);
   const [showShipForm, setShowShipForm] = useState(false);
@@ -390,24 +392,31 @@ export default function ChapanOrderDetailModal({ orderId, open, onClose }: Props
                     justifyContent: 'center',
                     gap: 6,
                   }}
-                  onClick={() => {
-                    if (paymentStatus !== 'paid') setCloseUnpaidWarning(true);
-                    else { closeOrder.mutate(order.id); onClose(); }
-                  }}
+                  onClick={() => setCloseUnpaidWarning(true)}
                   disabled={closeOrder.isPending}
                 >
                   <CheckSquare size={14} />
-                  {closeOrder.isPending ? 'Закрытие...' : 'Завершить сделку'}
+                  {closeOrder.isPending ? 'Завершение...' : 'Завершить заказ'}
                 </button>
                 {closeUnpaidWarning && (
                   <div style={{
                     width: '100%', padding: '10px 12px', borderRadius: 8,
-                    border: '1px solid var(--fill-negative)', background: 'rgba(239,68,68,0.08)',
+                    border: `1px solid ${paymentStatus !== 'paid' ? 'var(--fill-negative)' : 'var(--fill-positive)'}`,
+                    background: paymentStatus !== 'paid' ? 'rgba(239,68,68,0.08)' : 'rgba(38,174,102,0.08)',
                     display: 'flex', flexDirection: 'column', gap: 8,
                   }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13 }}>
-                      <AlertTriangle size={15} style={{ color: 'var(--fill-negative)', flexShrink: 0 }} />
-                      <strong style={{ color: 'var(--fill-negative)' }}>Остаток: {fmtMoney(totalAmount - paidAmount)}</strong>
+                      <AlertTriangle size={15} style={{ color: paymentStatus !== 'paid' ? 'var(--fill-negative)' : 'var(--fill-positive)', flexShrink: 0 }} />
+                      {paymentStatus !== 'paid'
+                        ? <strong style={{ color: 'var(--fill-negative)' }}>Заказ не оплачен — остаток: {fmtMoney(totalAmount - paidAmount)}</strong>
+                        : <strong style={{ color: '#1A6B3C' }}>Подтвердите завершение заказа #{orderNumber}</strong>
+                      }
+                    </div>
+                    <div style={{ fontSize: 12, color: 'var(--text-secondary)', paddingLeft: 23 }}>
+                      {paymentStatus !== 'paid'
+                        ? 'После завершения заказ перейдёт в архив.'
+                        : 'Заказ будет перемещён в раздел «Завершённые». Это действие необратимо.'
+                      }
                     </div>
                     <div style={{ display: 'flex', gap: 8 }}>
                       <button
@@ -428,14 +437,27 @@ export default function ChapanOrderDetailModal({ orderId, open, onClose }: Props
                         }}
                         onClick={() => { closeOrder.mutate(order.id); onClose(); }}
                       >
-                        Закрыть всё равно
+                        Да, завершить
                       </button>
                     </div>
                   </div>
                 )}
               </div>
-            ) : paymentStatus === 'paid' ? (
-              <div style={{ display: 'flex', gap: 10, width: '100%', flexWrap: 'wrap', alignItems: 'stretch' }}>
+            ) : paymentStatus === 'paid' || canShipWithoutPayment ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
+                {canShipWithoutPayment && paymentStatus !== 'paid' && (
+                  <div style={{
+                    padding: '10px 12px', borderRadius: 8,
+                    border: '1px solid var(--fill-warning)',
+                    background: 'rgba(245,158,11,0.08)',
+                    display: 'flex', alignItems: 'center', gap: 8, fontSize: 13,
+                  }}>
+                    <AlertTriangle size={15} style={{ color: 'var(--fill-warning)', flexShrink: 0 }} />
+                    <span style={{ color: 'var(--fill-warning)', fontWeight: 600 }}>
+                      Заказ не оплачен — остаток: {fmtMoney(totalAmount - paidAmount)}. Отправка производится вручную.
+                    </span>
+                  </div>
+                )}
                 {showShipForm ? (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 10, width: '100%' }}>
                     <div style={{ fontSize: 11, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', color: 'var(--text-tertiary)' }}>

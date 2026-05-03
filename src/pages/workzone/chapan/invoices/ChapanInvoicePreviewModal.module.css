@@ -734,6 +734,71 @@
   }
 }
 
+/* ── Edit History Panel ──────────────────────────────────────────────────── */
+
+.historyPanel {
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-surface-inset);
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.historyTitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+
+.historyEntry {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.historyEntryMeta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.historyEditorName {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.historyChanges {
+  margin: 0;
+  padding: 0 0 0 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.historyRowLabel {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.historyOld {
+  color: var(--fill-negative);
+  text-decoration: line-through;
+}
+
+.historyNew {
+  color: var(--fill-positive);
+  font-weight: 600;
+}
+
 /* Full-screen on phone — no wasted padding */
 @media (max-width: 480px) {
   .overlay {

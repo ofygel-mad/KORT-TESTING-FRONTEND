@@ -1,7 +1,7 @@
 import { useDeferredValue, useEffect, useRef, useState, type CSSProperties, type ElementType } from 'react';
 import { AlertTriangle, Bell, Check, CheckCheck, CheckCircle2, CheckSquare, Clock, Download, Eye, FileText, LayoutGrid, Layers, List, Plus, RotateCcw, Search, Star, Warehouse, X, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useArchiveOrder, useChangeOrderStatus, useCreateInvoice, useOrders, usePreviewInvoiceDocument, useInvoices } from '../../../../entities/order/queries';
+import { useArchiveOrder, useChangeOrderStatus, useConfirmSeamstress, useCreateInvoice, useOrders, usePreviewInvoiceDocument, useInvoices } from '../../../../entities/order/queries';
 import type { ChapanOrder, InvoiceDocumentPayload, OrderStatus, Priority, Urgency } from '../../../../entities/order/types';
 import { useAuthStore } from '@/shared/stores/auth';
 import { buildItemLine } from '../../../../shared/utils/itemLine';
@@ -260,6 +260,7 @@ export default function ChapanReadyPage() {
   const changeStatus = useChangeOrderStatus();
   const archiveOrder = useArchiveOrder();
   const createInvoice = useCreateInvoice();
+  const confirmSeamstress = useConfirmSeamstress();
   const previewInvoiceDocument = usePreviewInvoiceDocument();
 
   const isLoading = readyLoading || partialLoading;
@@ -306,10 +307,11 @@ export default function ChapanReadyPage() {
     const draftDocument = getDraftDocumentForOrders(targetOrders);
 
     if (requiresInvoice) {
-      await createInvoice.mutateAsync({
+      const invoice = await createInvoice.mutateAsync({
         orderIds: targetOrders.map((order) => order.id),
         documentPayload: draftDocument,
       });
+      await confirmSeamstress.mutateAsync(invoice.id);
       openInvoicesDrawer('pending_confirmation');
     } else {
       await advanceOrders(targetOrders);
@@ -474,7 +476,7 @@ export default function ChapanReadyPage() {
             onClick={() => openInvoicesDrawer('pending_confirmation')}
           >
             <FileText size={13} />
-            <span>Накладная Ожидает приёмки</span>
+            <span>Ожидает</span>
             {pendingCount > 0 && <span className={styles.pendingBadge}>{pendingCount}</span>}
           </button>
         </div>
@@ -507,28 +509,40 @@ export default function ChapanReadyPage() {
 
       {!isLoading && !isError && orders.length > 0 && (
         viewMode === 'grid' ? (
-          <div className={styles.grid}>
-            {displayGroups.map((group, index) => (
-              group.kind === 'single' ? (
-                <ReadyCard
-                  key={group.order.id}
-                  order={group.order}
-                  onAdvance={() => handleAdvance(group.order)}
-                  selectMode={selectMode}
-                  isSelected={selectedIds.has(group.order.id)}
-                  onToggleSelect={() => toggleSelect(group.order.id)}
-                />
-              ) : (
-                <ReadyBatchCard
-                  key={`batch-${index}`}
-                  orders={group.orders}
-                  onAdvance={() => handleAdvanceMany(group.orders)}
-                  selectMode={selectMode}
-                  selectedIds={selectedIds}
-                  onToggleSelectMany={() => toggleSelectMany(group.orders.map((o) => o.id))}
-                />
-              )
-            ))}
+          <div className={styles.tableScrollWrap}>
+            <div className={styles.tableHeader}>
+              <div className={styles.tableHeaderCol} />
+              <div className={styles.tableHeaderCol}>Заказ</div>
+              <div className={styles.tableHeaderCol}>Клиент</div>
+              <div className={styles.tableHeaderCol}>Изделия</div>
+              <div className={styles.tableHeaderCol}>Оплата</div>
+              <div className={styles.tableHeaderCol}>Сумма</div>
+              <div className={styles.tableHeaderCol}>Дедлайн</div>
+              <div className={styles.tableHeaderCol} />
+            </div>
+            <div className={styles.grid}>
+              {displayGroups.map((group, index) => (
+                group.kind === 'single' ? (
+                  <ReadyCard
+                    key={group.order.id}
+                    order={group.order}
+                    onAdvance={() => handleAdvance(group.order)}
+                    selectMode={selectMode}
+                    isSelected={selectedIds.has(group.order.id)}
+                    onToggleSelect={() => toggleSelect(group.order.id)}
+                  />
+                ) : (
+                  <ReadyBatchCard
+                    key={`batch-${index}`}
+                    orders={group.orders}
+                    onAdvance={() => handleAdvanceMany(group.orders)}
+                    selectMode={selectMode}
+                    selectedIds={selectedIds}
+                    onToggleSelectMany={() => toggleSelectMany(group.orders.map((o) => o.id))}
+                  />
+                )
+              ))}
+            </div>
           </div>
         ) : (
           <div className={styles.list}>
@@ -765,11 +779,10 @@ function ReadyCard({
   const isPendingRouting = hasPendingRouting(order);
   const pendingCount = pendingRoutingCount(order);
   const rejectedInvoice = getRejectedInvoice(order);
+  const hasPositionList = order.items.length > 1 && (order.productionTasks?.length ?? 0) > 0;
 
   const handleSelectToggle = () => {
-    if (selectMode && onToggleSelect) {
-      onToggleSelect();
-    }
+    if (selectMode && onToggleSelect) onToggleSelect();
   };
 
   return (
@@ -778,48 +791,97 @@ function ReadyCard({
       style={{ '--status-color': STATUS_COLOR[order.status] } as CSSProperties}
       onClick={handleSelectToggle}
     >
-      {isSelected && <span className={styles.selectCheckmark}><Check size={14} /></span>}
+      {/* Col 1: select indicator */}
+      <div className={`${styles.readyCell} ${styles.cellSelect}`}>
+        {isSelected && <span className={styles.selectCheckmark}><Check size={13} /></span>}
+      </div>
 
-      <div className={styles.cardHead}>
+      {/* Col 2: order number + status */}
+      <div className={`${styles.readyCell} ${styles.cellOrderNum}`}>
+        <span className={styles.orderNum}>#{order.orderNumber}</span>
         <span className={styles.statusBadge}>{STATUS_LABEL[order.status]}</span>
-        {isPendingRouting && (
-          <span className={styles.pendingRoutingBadge}><AlertTriangle size={10} /> {pendingCount} без маршрута</span>
-        )}
-        {isPendingWorkshop && (
-          <span className={styles.workshopBadge}><Clock size={10} /> Ждём цех</span>
-        )}
-        {(order.urgency ?? order.priority) === 'urgent' && (
-          <span className={styles.priorityBadge}><AlertTriangle size={9} /> {URGENCY_LABEL}</span>
-        )}
-        {(order.isDemandingClient ?? (order.priority === 'vip')) && (
-          <span className={styles.priorityBadge}><Star size={9} /> {DEMANDING_LABEL}</span>
+      </div>
+
+      {/* Col 3: client info + alert badges */}
+      <div className={`${styles.readyCell} ${styles.cellClient}`}>
+        <span className={styles.clientName}>{order.clientName}</span>
+        {order.clientPhone && <span className={styles.phone}>{order.clientPhone}</span>}
+        {(isPendingRouting || isPendingWorkshop || (order.urgency ?? order.priority) === 'urgent' || (order.isDemandingClient ?? order.priority === 'vip')) && (
+          <div className={styles.badgeRow}>
+            {isPendingRouting && <span className={styles.pendingRoutingBadge}><AlertTriangle size={9} /> {pendingCount} без маршрута</span>}
+            {isPendingWorkshop && <span className={styles.workshopBadge}><Clock size={9} /> Ждём цех</span>}
+            {(order.urgency ?? order.priority) === 'urgent' && <span className={styles.priorityBadge}><AlertTriangle size={9} /> {URGENCY_LABEL}</span>}
+            {(order.isDemandingClient ?? (order.priority === 'vip')) && <span className={styles.priorityBadge}><Star size={9} /> {DEMANDING_LABEL}</span>}
+          </div>
         )}
       </div>
 
+      {/* Col 4: first item summary */}
+      <div className={`${styles.readyCell} ${styles.cellItems}`}>
+        {firstItem && (
+          <>
+            <span className={styles.itemName}>{buildItemLine(firstItem)}</span>
+            <span className={styles.itemMeta}>{firstItem.size}{firstItem.quantity > 1 && ` × ${firstItem.quantity}`}</span>
+          </>
+        )}
+        {moreItems > 0 && <span className={styles.itemMore}>+ ещё {moreItems}</span>}
+      </div>
+
+      {/* Col 5: payment status */}
+      <div className={`${styles.readyCell} ${styles.cellPayment}`}>
+        <span className={styles.payBadge} style={{ color: PAY_COLOR[order.paymentStatus] }}>
+          {PAY_LABEL[order.paymentStatus]}
+        </span>
+      </div>
+
+      {/* Col 6: total amount */}
+      <div className={`${styles.readyCell} ${styles.cellAmount}`}>
+        <span className={styles.amount}>{formatMoney(order.totalAmount)}</span>
+      </div>
+
+      {/* Col 7: deadline */}
+      <div className={`${styles.readyCell} ${styles.cellDeadline}`}>
+        <span className={styles.deadline} style={{ color: isOverdue(order.dueDate) ? '#D94F4F' : undefined }}>
+          {formatDate(order.dueDate)}
+        </span>
+      </div>
+
+      {/* Col 8: action */}
+      <div className={`${styles.readyCell} ${styles.cellAction}`} onClick={(e) => e.stopPropagation()}>
+        {!selectMode && (
+          rejectedInvoice ? (
+            <button
+              className={styles.primaryAction}
+              onClick={onAdvance}
+              disabled={isPendingWorkshop || isPendingRouting}
+              style={{ background: '#D94F4F', borderColor: 'rgba(217,79,79,.4)', color: '#fff' }}
+            >
+              <RotateCcw size={13} /> Переправить
+            </button>
+          ) : (
+            <button className={styles.primaryAction} onClick={onAdvance} disabled={isPendingWorkshop || isPendingRouting}>
+              {isPendingRouting ? 'Назначьте маршрут' : isPendingWorkshop ? 'Ждём цех' : nextStageLabel}
+            </button>
+          )
+        )}
+      </div>
+
+      {/* Secondary row: rejected invoice detail */}
       {rejectedInvoice && (
-        <div className={styles.rejectedInvoiceBanner}>
-          <XCircle size={14} />
+        <div className={styles.rejectedBannerRow}>
+          <XCircle size={13} />
           <span>Склад отклонил накладную {rejectedInvoice.invoiceNumber}</span>
           {rejectedInvoice.rejectionReason && (
-            <span className={styles.rejectedReason}>Причина: {rejectedInvoice.rejectionReason}</span>
+            <span className={styles.rejectedReason}>— {rejectedInvoice.rejectionReason}</span>
           )}
         </div>
       )}
 
-      {firstItem && (
-        <div className={styles.itemBlock}>
-          <span className={styles.itemName}>{buildItemLine(firstItem)}</span>
-          <span className={styles.itemMeta}>
-            {firstItem.size}{firstItem.quantity > 1 && ` × ${firstItem.quantity}`}
-          </span>
-          {moreItems > 0 && <span className={styles.itemMore}>+ еще {moreItems}</span>}
-        </div>
-      )}
-
-      {order.items.length > 1 && order.productionTasks && order.productionTasks.length > 0 && (() => {
+      {/* Secondary row: per-item production status */}
+      {hasPositionList && (() => {
         const taskByItemId = getItemTaskMap(order);
         return (
-          <div className={styles.positionList}>
+          <div className={styles.positionListRow}>
             {order.items.map((item) => {
               const task = taskByItemId.get(item.id);
               const mode = item.fulfillmentMode;
@@ -842,40 +904,6 @@ function ReadyCard({
           </div>
         );
       })()}
-
-      <div className={styles.clientName}>{order.clientName}</div>
-      <div className={styles.phone}>{order.clientPhone}</div>
-
-      <div className={styles.cardFoot}>
-        <span className={styles.amount}>{formatMoney(order.totalAmount)}</span>
-        <span className={styles.payBadge} style={{ color: PAY_COLOR[order.paymentStatus] }}>
-          {PAY_LABEL[order.paymentStatus]}
-        </span>
-        <span className={styles.deadline} style={{ color: isOverdue(order.dueDate) ? '#D94F4F' : undefined }}>
-          {formatDate(order.dueDate)}
-        </span>
-      </div>
-
-      {!selectMode && (
-        <div className={styles.actions} onClick={(event) => event.stopPropagation()}>
-          {rejectedInvoice ? (
-            <button
-              className={styles.primaryAction}
-              onClick={onAdvance}
-              disabled={isPendingWorkshop || isPendingRouting}
-              style={{ background: '#D94F4F' }}
-              title={`Переправить накладную #${rejectedInvoice.invoiceNumber}`}
-            >
-              <RotateCcw size={14} style={{ marginRight: 6 }} />
-              Переправить накладную
-            </button>
-          ) : (
-            <button className={styles.primaryAction} onClick={onAdvance} disabled={isPendingWorkshop || isPendingRouting}>
-              {isPendingRouting ? 'Назначьте маршрут' : isPendingWorkshop ? 'Ждём цех' : nextStageLabel}
-            </button>
-          )}
-        </div>
-      )}
     </div>
   );
 }

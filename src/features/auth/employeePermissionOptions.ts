@@ -46,6 +46,16 @@ export const EMPLOYEE_PERMISSION_OPTIONS: Array<{
     description: 'Подтверждение отгрузок и приёмки по накладным.',
   },
   {
+    key: 'chapan_warehouse_operator',
+    label: 'ЗавСклад / Оператор склада',
+    description: 'Приём накладных, подтверждение отгрузок и операции на складе.',
+  },
+  {
+    key: 'chapan_shipping',
+    label: 'Менеджер отправки',
+    description: 'Отправка заказов клиентам, контроль оплаты перед отправкой.',
+  },
+  {
     key: 'chapan_manage_settings',
     label: 'Настройки модуля',
     description: 'Изменение настроек рабочего модуля и его параметров.',
