@@ -31,7 +31,7 @@ export function ChangeCredentialsPanel() {
       clearPin();
       clearAuth();
       toast.success('Данные для входа обновлены. Войдите заново.');
-      navigate('/auth/login', { replace: true });
+      navigate('/', { replace: true });
     },
     onError: (response: any) => {
       setError(response?.message ?? 'Не удалось обновить данные для входа.');

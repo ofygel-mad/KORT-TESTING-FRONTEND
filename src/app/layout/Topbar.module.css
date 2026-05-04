@@ -547,3 +547,58 @@
     font-size: 13px;
   }
 }
+
+/* ── Plan badge ── */
+.planBadge {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border-radius: 20px;
+  border: 1px solid;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  transition:
+    opacity var(--motion-fast) var(--motion-ease),
+    transform var(--motion-fast) var(--motion-ease);
+}
+
+.planBadge:hover {
+  opacity: 0.82;
+  transform: var(--feedback-raise-hover);
+}
+
+.planBadge:active {
+  transform: var(--feedback-soft-press);
+}
+
+.planBadge[data-plan="basic"] {
+  color: #5C8DFF;
+  background: color-mix(in srgb, #5C8DFF 12%, transparent);
+  border-color: color-mix(in srgb, #5C8DFF 30%, transparent);
+}
+
+.planBadge[data-plan="advanced"] {
+  color: #D97706;
+  background: color-mix(in srgb, #D97706 12%, transparent);
+  border-color: color-mix(in srgb, #D97706 30%, transparent);
+}
+
+.planBadge[data-plan="industrial"] {
+  color: #7C3AED;
+  background: color-mix(in srgb, #7C3AED 12%, transparent);
+  border-color: color-mix(in srgb, #7C3AED 30%, transparent);
+}
+
+.planBadgeStatic {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.planBadgeStatic:hover {
+  opacity: 0.72;
+  transform: none;
+}

@@ -13,6 +13,8 @@ import { popoverVariants, t } from '../../shared/motion/presets';
 import { useCommandPalette } from '../../shared/stores/commandPalette';
 import { useAuthStore } from '../../shared/stores/auth';
 import { useProfileStore, ONLINE_STATUSES, getComputedOnlineStatus } from '../../shared/stores/profile';
+import { usePlan, PLAN_LABELS, PLAN_COLORS } from '../../shared/hooks/usePlan';
+import { PlanUpgradeModal } from '../../features/plan';
 import { useSharedBus } from '../../features/shared-bus';
 import type { GlobalNotifEvent } from '../../features/shared-bus';
 import styles from './Topbar.module.css';
@@ -233,6 +235,8 @@ export function Topbar({ chromeTone = 'dark' }: { chromeTone?: 'canvas' | 'dark'
   const isDashboard = location.pathname === '/';
   const showBack = location.pathname !== '/' && location.pathname !== '/onboarding';
   const backTarget = resolveBackTarget(location.pathname);
+  const plan = usePlan();
+  const [showPlanModal, setShowPlanModal] = useState(false);
   const { onlineStatus, lastActivityAt } = useProfileStore();
   const [profileHover, setProfileHover] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
@@ -259,6 +263,7 @@ export function Topbar({ chromeTone = 'dark' }: { chromeTone?: 'canvas' | 'dark'
   }
 
   return (
+  <>
     <header className={styles.topbar} data-chrome={chromeTone}>
       <div className={styles.left}>
         {showBack && (
@@ -299,6 +304,18 @@ export function Topbar({ chromeTone = 'dark' }: { chromeTone?: 'canvas' | 'dark'
         <button className={styles.langBtn} onClick={() => setLocale(locale === 'ru' ? 'kk' : 'ru')}>
           {locale === 'ru' ? 'KK' : 'RU'}
         </button>
+
+        {hasCompanyAccess && (
+          <button
+            type="button"
+            className={[styles.planBadge, plan === 'industrial' ? styles.planBadgeStatic : ''].join(' ')}
+            data-plan={plan}
+            onClick={plan !== 'industrial' ? () => setShowPlanModal(true) : undefined}
+            aria-label={plan === 'industrial' ? `Текущий план: ${PLAN_LABELS[plan]}` : `Сменить план (${PLAN_LABELS[plan]})`}
+          >
+            {PLAN_LABELS[plan]}
+          </button>
+        )}
 
         <div
           ref={profileRef}
@@ -351,6 +368,11 @@ export function Topbar({ chromeTone = 'dark' }: { chromeTone?: 'canvas' | 'dark'
         </div>
       </div>
     </header>
+
+    {showPlanModal && (
+      <PlanUpgradeModal onClose={() => setShowPlanModal(false)} />
+    )}
+  </>
   );
 }
 

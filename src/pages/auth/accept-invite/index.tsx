@@ -16,7 +16,7 @@ export default function AcceptInvitePage() {
         title="Система приглашений изменена"
         subtitle="Сотрудники теперь добавляются администратором напрямую. Войдите через номер телефона или обратитесь к руководителю."
         actionLabel="Открыть вход"
-        action={() => navigate('/auth/login', { replace: true })}
+        action={() => navigate('/', { replace: true })}
       />
     </AuthRouteLayout>
   );

@@ -57,7 +57,7 @@ export function Sidebar({ chromeTone = 'dark' }: { chromeTone?: 'canvas' | 'dark
 
   function handleLogout() {
     clearAuth();
-    navigate('/auth/login', { replace: true });
+    navigate('/', { replace: true });
   }
 
   return (

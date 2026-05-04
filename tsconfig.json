@@ -17,7 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "paths": { "@/*": ["./src/*"] }
   },
-  "include": ["src"],
+  "include": ["src", "PROJECT/src"],
   "exclude": [
     "node_modules",
     "dist",

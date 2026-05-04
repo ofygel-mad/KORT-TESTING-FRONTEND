@@ -110,8 +110,35 @@ export function runTimeout(callback: () => void, delay: number) {
   return win.setTimeout(callback, delay);
 }
 
-export function reloadWindow() {
-  getWindow()?.location.reload();
+interface ReloadWindowOptions {
+  bustCache?: boolean;
+}
+
+const CHUNK_RELOAD_QUERY_PARAM = '__kort_reload';
+
+function buildReloadUrl(location: Location) {
+  const url = new URL(location.href);
+  url.searchParams.set(CHUNK_RELOAD_QUERY_PARAM, `${Date.now()}`);
+  return url.toString();
+}
+
+function getChunkReloadLocation(location: Location) {
+  const url = new URL(location.href);
+  url.searchParams.delete(CHUNK_RELOAD_QUERY_PARAM);
+  const query = url.searchParams.toString();
+  return `${url.pathname}${query ? `?${query}` : ''}`;
+}
+
+export function reloadWindow(options: ReloadWindowOptions = {}) {
+  const win = getWindow();
+  if (!win) return;
+
+  if (options.bustCache) {
+    win.location.replace(buildReloadUrl(win.location));
+    return;
+  }
+
+  win.location.reload();
 }
 
 function readErrorMessage(error: unknown): string {
@@ -151,7 +178,7 @@ export function reloadForChunkErrorOnce() {
   if (!win) return false;
 
   const key = `kort:chunk-reload:${getBuildFingerprint()}`;
-  const currentLocation = `${win.location.pathname}${win.location.search}`;
+  const currentLocation = getChunkReloadLocation(win.location);
   const previousAttempt = readStorage(key, 'session');
 
   if (previousAttempt === currentLocation) {
@@ -159,7 +186,7 @@ export function reloadForChunkErrorOnce() {
   }
 
   writeStorage(key, currentLocation, 'session');
-  reloadWindow();
+  reloadWindow({ bustCache: true });
   return true;
 }
 

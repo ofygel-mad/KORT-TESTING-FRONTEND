@@ -4,6 +4,7 @@ import { CheckCircle, KeyRound } from 'lucide-react';
 import { api } from '../../../shared/api/client';
 import { readApiErrorMessage } from '../../../shared/api/errors';
 import { AuthRouteLayout } from '../../../features/auth/AuthRouteLayout';
+
 import styles from '../../../features/auth/AuthModal.module.css';
 
 function PasswordField({
@@ -65,7 +66,7 @@ export default function ResetPasswordPage() {
           <button
             type="button"
             className={styles.linkButton}
-            onClick={() => navigate('/auth/login')}
+            onClick={() => navigate('/')}
           >
             На страницу входа
           </button>
@@ -163,7 +164,7 @@ export default function ResetPasswordPage() {
                     type="button"
                     className={styles.primaryButton}
                     style={{ marginTop: 24 }}
-                    onClick={() => navigate('/auth/login')}
+                    onClick={() => navigate('/')}
                   >
                     <KeyRound size={16} />
                     Войти

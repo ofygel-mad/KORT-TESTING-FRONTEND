@@ -12,6 +12,7 @@ import { ensureDevAuthBypass } from './shared/config/devAccess';
 import './shared/design/globals.css';
 import { getNavigator, getWindow, isBrowser } from './shared/lib/browser';
 import { isChunkLoadError, reloadForChunkErrorOnce } from './shared/lib/browser';
+import { readStorage, reloadWindow, writeStorage } from './shared/lib/browser';
 import { useAuthStore } from './shared/stores/auth';
 import { PageLoader } from './shared/ui/PageLoader';
 
@@ -159,12 +160,66 @@ function App() {
   );
 }
 
-ensureDevAuthBypass();
-
-ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
-
 const nav = getNavigator();
 const win = getWindow();
+
+async function clearServiceWorkersAndCaches() {
+  if (!nav || !('serviceWorker' in nav) || !win) {
+    return false;
+  }
+
+  const registrations = await nav.serviceWorker.getRegistrations();
+  if (registrations.length === 0) {
+    return false;
+  }
+
+  await Promise.all(registrations.map((registration) => registration.unregister()));
+
+  if ('caches' in win) {
+    const cacheKeys = await win.caches.keys();
+    await Promise.all(cacheKeys.map((cacheKey) => win.caches.delete(cacheKey)));
+  }
+
+  return true;
+}
+
+async function cleanupDevServiceWorker() {
+  if (!isBrowser || !import.meta.env.DEV || !nav || !('serviceWorker' in nav) || !win) {
+    return false;
+  }
+
+  try {
+    const hadController = Boolean(nav.serviceWorker.controller);
+    const cleaned = await clearServiceWorkersAndCaches();
+    if (!cleaned || !hadController) {
+      return false;
+    }
+
+    const key = 'kort:dev-sw-reset';
+    if (readStorage(key, 'session') === 'done') {
+      return false;
+    }
+
+    writeStorage(key, 'done', 'session');
+    reloadWindow();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function bootstrap() {
+  ensureDevAuthBypass();
+
+  if (await cleanupDevServiceWorker()) {
+    return;
+  }
+
+  ReactDOM.createRoot(document.getElementById('root')!).render(<App />);
+}
+
+void bootstrap();
+
 if (isBrowser && win) {
   const handleChunkLoadFailure = (error: unknown) => {
     if (!isChunkLoadError(error)) return false;
@@ -187,19 +242,9 @@ if (isBrowser && win) {
 if (isBrowser && nav && 'serviceWorker' in nav && import.meta.env.PROD && win) {
   const clearLegacyServiceWorkers = async () => {
     try {
-      const registrations = await nav.serviceWorker.getRegistrations();
-      await Promise.all(registrations.map((registration) => registration.unregister()));
+      await clearServiceWorkersAndCaches();
     } catch {
       // ignore service worker cleanup failures
-    }
-
-    if ('caches' in win) {
-      try {
-        const cacheKeys = await win.caches.keys();
-        await Promise.all(cacheKeys.map((cacheKey) => win.caches.delete(cacheKey)));
-      } catch {
-        // ignore cache cleanup failures
-      }
     }
   };
 

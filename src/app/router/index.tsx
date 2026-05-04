@@ -9,6 +9,7 @@ import { usePlan, planIncludes, PLAN_LABELS, type OrgMode } from '../../shared/h
 import { useRole } from '../../shared/hooks/useRole';
 import { useEmployeePermissions } from '../../shared/hooks/useEmployeePermissions';
 import { useChapanPermissions } from '../../shared/hooks/useChapanPermissions';
+
 import { Settings } from 'lucide-react';
 
 function makePage(imp: () => Promise<{ default: ComponentType }>) {
@@ -51,12 +52,13 @@ const DocumentsPage  = makePage(() => import('../../pages/documents'));
 const SettingsPage   = makePage(() => import('../../pages/settings'));
 const OnboardingPage = makePage(() => import('../../pages/onboarding'));
 
+// Landing page (public)
+const LandingPage = makePage(() => import('../../pages/landing'));
+
 // Dev panel — no auth, service password only
 const DevPanelPage = makePage(() => import('../../pages/dev'));
 
 // Auth pages
-const LoginPage         = makePage(() => import('../../pages/auth/login'));
-const RegisterPage      = makePage(() => import('../../pages/auth/register'));
 const AcceptInvitePage  = makePage(() => import('../../pages/auth/accept-invite'));
 const ResetPasswordPage = makePage(() => import('../../pages/auth/reset-password'));
 
@@ -79,11 +81,18 @@ const ChapanPurchasePage    = makePage(() => import('../../pages/workzone/chapan
 const ChapanClientsPage     = makePage(() => import('../../pages/workzone/chapan/clients/ChapanClients'));
 const ChapanClientDetailPage = makePage(() => import('../../pages/workzone/chapan/clients/ChapanClientDetail'));
 
+function RootIndex() {
+  const user = useAuthStore((s) => s.user);
+  if (user) return <CanvasPage />;
+  return <LandingPage />;
+}
+
 function RequireAuth({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
-  if (!user) return <Navigate to="/auth/login" replace />;
+  if (!user) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
+
 
 function RequireOrg({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
@@ -285,7 +294,7 @@ export const appRouter = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <RequireAuth><CanvasPage /></RequireAuth>,
+        element: <RootIndex />,
       },
       {
         path: 'crm/leads',
@@ -453,8 +462,8 @@ export const appRouter = createBrowserRouter([
   },
 
   // ── Auth ───────────────────────────────────────────────
-  { path: '/auth/login',         element: <LoginPage /> },
-  { path: '/auth/register',      element: <RegisterPage /> },
+  { path: '/auth/login',         element: <Navigate to="/" replace /> },
+  { path: '/auth/register',      element: <Navigate to="/" replace /> },
   { path: '/auth/accept-invite', element: <AcceptInvitePage /> },
   { path: '/reset-password',     element: <ResetPasswordPage /> },
 

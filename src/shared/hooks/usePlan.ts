@@ -10,6 +10,12 @@ export const PLAN_LABELS: Record<OrgMode, string> = {
   industrial: 'Промышленный',
 };
 
+export const PLAN_COLORS: Record<OrgMode, string> = {
+  basic: '#5C8DFF',
+  advanced: '#D97706',
+  industrial: '#7C3AED',
+};
+
 export function usePlan(): OrgMode {
   const org = useAuthStore((s) => s.org);
   return (org?.mode as OrgMode) ?? 'basic';

@@ -878,7 +878,7 @@ function OwnerCredentialsCard() {
       });
       toast.success('Email изменён. Войдите заново с новым адресом.');
       clearAuth();
-      navigate('/auth/login', { replace: true });
+      navigate('/', { replace: true });
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(msg ?? 'Не удалось изменить email.');
@@ -908,7 +908,7 @@ function OwnerCredentialsCard() {
       });
       toast.success('Пароль изменён. Войдите заново.');
       clearAuth();
-      navigate('/auth/login', { replace: true });
+      navigate('/', { replace: true });
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
       toast.error(msg ?? 'Не удалось изменить пароль.');

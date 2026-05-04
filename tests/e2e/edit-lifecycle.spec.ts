@@ -1,5 +1,5 @@
 import { expect, test, type APIRequestContext, type Page } from '@playwright/test';
-import { loginAs, navigateWithinApp } from './helpers';
+import { preparePage } from './helpers';
 
 const API_BASE_URL = process.env.E2E_API_BASE_URL || `http://${process.env.E2E_HOST || '127.0.0.1'}:${process.env.E2E_BACKEND_PORT || '8002'}/api/v1`;
 const E2E_EMAIL = 'admin@kort.local';
@@ -46,7 +46,7 @@ async function createDeal(request: APIRequestContext, title: string) {
 
 async function openDealFromBoard(page: Page, title: string) {
   for (let attempt = 1; attempt <= 3; attempt += 1) {
-    await navigateWithinApp(page, '/crm/deals');
+    await page.goto('/crm/deals', { waitUntil: 'domcontentloaded' });
 
     const loadError = page.getByText('Не удалось загрузить сделки');
     if (await loadError.isVisible().catch(() => false)) {
@@ -66,7 +66,7 @@ async function openDealFromBoard(page: Page, title: string) {
 test('deal stage update from drawer persists in backend', async ({ page, request }) => {
   const deal = await createDeal(request, `Deal stage update ${Date.now()}`);
 
-  await loginAs(page, E2E_EMAIL);
+  await preparePage(page);
   await openDealFromBoard(page, deal.title);
   await page.getByRole('button', { name: 'КП' }).click();
 
@@ -83,7 +83,7 @@ test('deal comment added in drawer appears in activity feed', async ({ page, req
   const deal = await createDeal(request, `Deal comment ${Date.now()}`);
   const comment = `Comment ${Date.now()}`;
 
-  await loginAs(page, E2E_EMAIL);
+  await preparePage(page);
   await openDealFromBoard(page, deal.title);
   await page.getByPlaceholder('Добавить комментарий...').fill(comment);
   await page.getByRole('button', { name: '→' }).click();

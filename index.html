@@ -56,6 +56,37 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <script type="module">
+      void (async () => {
+        const host = window.location.hostname;
+        const isLocalDevHost = host === 'localhost' || host === '127.0.0.1' || host === '[::1]';
+
+        if (isLocalDevHost && 'serviceWorker' in navigator) {
+          try {
+            const registrations = await navigator.serviceWorker.getRegistrations();
+            if (registrations.length > 0) {
+              const hadController = Boolean(navigator.serviceWorker.controller);
+              await Promise.all(registrations.map((registration) => registration.unregister()));
+
+              if ('caches' in window) {
+                const cacheKeys = await window.caches.keys();
+                await Promise.all(cacheKeys.map((cacheKey) => window.caches.delete(cacheKey)));
+              }
+
+              const resetKey = 'kort:dev-sw-reset';
+              if (hadController && window.sessionStorage.getItem(resetKey) !== 'done') {
+                window.sessionStorage.setItem(resetKey, 'done');
+                window.location.reload();
+                return;
+              }
+            }
+          } catch {
+            // Ignore dev service worker cleanup failures and continue booting.
+          }
+        }
+
+        await import('/src/main.tsx');
+      })();
+    </script>
   </body>
 </html>

@@ -55,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
               size="sm"
               onClick={() => {
                 this.setState({ hasError: false, error: undefined });
-                reloadWindow();
+                reloadWindow({ bustCache: true });
               }}
             >
               Обновить страницу

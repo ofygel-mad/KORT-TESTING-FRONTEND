@@ -1,0 +1,264 @@
+<div class="landing-root" data-landing-root>
+
+    <header class="site-header" data-site-header>
+      <a class="site-brand" href="#top" aria-label="KORT">
+        <img class="site-brand__logo" src="{{LOGO_SRC}}" alt="KORT" />
+      </a>
+
+      <nav class="site-nav">
+        <a href="#modules"><span class="ru">Возможности</span><span class="kz" style="display:none">Мүмкіндіктер</span></a>
+        <a href="#how"><span class="ru">Как работает</span><span class="kz" style="display:none">Қалай жұмыс істейді</span></a>
+        <a href="#integrations"><span class="ru">Интеграции</span><span class="kz" style="display:none">Интеграциялар</span></a>
+        <a href="#pricing"><span class="ru">Тарифы</span><span class="kz" style="display:none">Тарифтер</span></a>
+      </nav>
+
+      <div class="header-right">
+        <div class="lang-switcher">
+          <button class="lang-btn active" data-lang="ru">RU</button>
+          <button class="lang-btn" data-lang="kz">KZ</button>
+        </div>
+        <a class="login-btn" href="#" data-kort-action="login" aria-label="Войти">
+          <span class="login-btn__icon">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="8" r="4"/>
+              <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+            </svg>
+          </span>
+          <span class="login-btn__label ru">Войти</span>
+          <span class="login-btn__label kz" style="display:none">Кіру</span>
+        </a>
+      </div>
+    </header>
+
+    <section class="hero-section" id="top" data-hero-section>
+      <div class="hero-content" data-hero-copy>
+        <p class="hero-sub" id="hero-sub-text">
+          <span class="ru"></span>
+          <span class="kz" style="display:none">Өндіріс, қойма, қаржы және команданы басқарудың бірыңғай платформасы. Жылдам енгізу. Бәрі бір жүйеде.</span>
+        </p>
+        <div class="hero-cta-row">
+          <a href="#" data-kort-action="login" class="btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+              <polyline points="10 17 15 12 10 7"/>
+              <line x1="15" y1="12" x2="3" y2="12"/>
+            </svg>
+            <span class="ru">Войти в систему</span>
+            <span class="kz" style="display:none">Жүйеге кіру</span>
+          </a>
+          <a href="#modules" class="btn-secondary">
+            <span class="ru">Узнать больше</span>
+            <span class="kz" style="display:none">Толығырақ</span>
+          </a>
+        </div>
+      </div>
+      <div class="hero-scroll-line" aria-hidden="true"></div>
+    </section>
+
+    <section id="modules" class="modules-band">
+      <div class="section-wrap" style="padding-bottom:0">
+        <div class="section-head">
+          <div class="section-label"><span class="ru">Возможности</span><span class="kz" style="display:none">Мүмкіндіктер</span></div>
+          <h2 class="section-title"><span class="ru">Всё для вашего бизнеса<br>в одной системе</span><span class="kz" style="display:none">Бизнесіңіздің барлығы<br>бір жүйеде</span></h2>
+          <p class="section-body"><span class="ru">От первого лида до отгрузки — KORT покрывает все ключевые операции без лишних инструментов и Excel-таблиц.</span><span class="kz" style="display:none">Алғашқы лидтен жөнелтуге дейін — KORT барлық негізгі операцияларды қамтиды.</span></p>
+        </div>
+      </div>
+      <div style="max-width:var(--page-max);margin:0 auto">
+        <div class="modules-grid">
+          <div class="module-card" data-reveal>
+            <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+            <div class="module-tag">CRM</div>
+            <div class="module-title"><span class="ru">Клиенты и продажи</span><span class="kz" style="display:none">Клиенттер мен сатылымдар</span></div>
+            <div class="module-desc"><span class="ru">Лиды, сделки и клиентская база в едином пространстве. Полная воронка от заявки до закрытия.</span><span class="kz" style="display:none">Лидтер, мәмілелер және клиенттер базасы бір кеңістікте.</span></div>
+          </div>
+          <div class="module-card" data-reveal>
+            <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg></div>
+            <div class="module-tag"><span class="ru">Склад</span><span class="kz" style="display:none">Қойма</span></div>
+            <div class="module-title"><span class="ru">Склад и остатки</span><span class="kz" style="display:none">Қойма және қалдықтар</span></div>
+            <div class="module-desc"><span class="ru">Остатки, резервы и движение товара в реальном времени. Никакой ручной сверки.</span><span class="kz" style="display:none">Нақты уақытта қалдықтар, резервтер және тауар қозғалысы.</span></div>
+          </div>
+          <div class="module-card" data-reveal>
+            <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg></div>
+            <div class="module-tag"><span class="ru">Производство</span><span class="kz" style="display:none">Өндіріс</span></div>
+            <div class="module-title"><span class="ru">Производственный цикл</span><span class="kz" style="display:none">Өндірістік цикл</span></div>
+            <div class="module-desc"><span class="ru">Смены, линии и цеха. Контроль загрузки участков и узких мест в одном интерфейсе.</span><span class="kz" style="display:none">Ауысымдар, желілер және цехтар. Бөлімдердің жүктелуін бақылау.</span></div>
+          </div>
+          <div class="module-card" data-reveal>
+            <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+            <div class="module-tag"><span class="ru">Финансы</span><span class="kz" style="display:none">Қаржы</span></div>
+            <div class="module-title"><span class="ru">Финансы и платежи</span><span class="kz" style="display:none">Қаржы және төлемдер</span></div>
+            <div class="module-desc"><span class="ru">Счета, платежи, маржа и финансовая аналитика. Полная прозрачность без ручной бухгалтерии.</span><span class="kz" style="display:none">Шот-фактуралар, төлемдер, маржа және қаржылық аналитика.</span></div>
+          </div>
+          <div class="module-card" data-reveal>
+            <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+            <div class="module-tag"><span class="ru">Команда</span><span class="kz" style="display:none">Команда</span></div>
+            <div class="module-title"><span class="ru">Сотрудники и доступ</span><span class="kz" style="display:none">Қызметкерлер және қол жеткізу</span></div>
+            <div class="module-desc"><span class="ru">Управление командой, ролями и правами. Гибкая настройка для каждого сотрудника.</span><span class="kz" style="display:none">Команданы, рөлдерді және құқықтарды басқару.</span></div>
+          </div>
+          <div class="module-card" data-reveal>
+            <div class="module-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></div>
+            <div class="module-tag"><span class="ru">Аналитика</span><span class="kz" style="display:none">Аналитика</span></div>
+            <div class="module-title"><span class="ru">Отчёты и BI</span><span class="kz" style="display:none">Есептер және BI</span></div>
+            <div class="module-desc"><span class="ru">Сквозные отчёты по марже, загрузке и эффективности. Дашборды в реальном времени.</span><span class="kz" style="display:none">Маржа, жүктеме және тиімділік бойынша жан-жақты есептер.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how">
+      <div class="section-wrap">
+        <div class="how-grid">
+          <div>
+            <div class="section-label"><span class="ru">Как это работает</span><span class="kz" style="display:none">Қалай жұмыс істейді</span></div>
+            <h2 class="section-title"><span class="ru">Запуск<br>за один день</span><span class="kz" style="display:none">Бір күнде<br>іске қосу</span></h2>
+            <p class="section-body"><span class="ru">Никакого многомесячного внедрения. KORT разворачивается быстро и сразу приносит пользу бизнесу.</span><span class="kz" style="display:none">Айлық енгізу жоқ. KORT жылдам орналастырылады.</span></p>
+          </div>
+          <div class="steps-list">
+            <div class="step-item" data-reveal><div class="step-num"><span>01</span></div><div><div class="step-title"><span class="ru">Регистрация организации</span><span class="kz" style="display:none">Ұйымды тіркеу</span></div><div class="step-desc"><span class="ru">Создайте аккаунт, добавьте компанию и выберите нужные модули. Никакой бумажной документации.</span><span class="kz" style="display:none">Аккаунт жасаңыз, компания атын қосыңыз және модульдерді таңдаңыз.</span></div></div></div>
+            <div class="step-item" data-reveal><div class="step-num"><span>02</span></div><div><div class="step-title"><span class="ru">Настройка под ваш бизнес</span><span class="kz" style="display:none">Бизнесіңізге баптау</span></div><div class="step-desc"><span class="ru">Добавьте сотрудников, настройте роли и права. Подключите интеграции — Kaspi, WhatsApp, BI.</span><span class="kz" style="display:none">Қызметкерлерді қосыңыз, рөлдер мен құқықтарды баптаңыз.</span></div></div></div>
+            <div class="step-item" data-reveal><div class="step-num"><span>03</span></div><div><div class="step-title"><span class="ru">Работа в единой среде</span><span class="kz" style="display:none">Бірыңғай ортада жұмыс</span></div><div class="step-desc"><span class="ru">Вся команда в одном пространстве. Склад, производство и продажи обновляются в реальном времени.</span><span class="kz" style="display:none">Бүкіл команда бір кеңістікте жұмыс істейді.</span></div></div></div>
+            <div class="step-item" data-reveal><div class="step-num"><span>04</span></div><div><div class="step-title"><span class="ru">Аналитика и рост</span><span class="kz" style="display:none">Аналитика және өсу</span></div><div class="step-desc"><span class="ru">Отслеживайте KPI, маржу и эффективность. Принимайте решения на основе данных.</span><span class="kz" style="display:none">KPI, маржа және тиімділікті бақылаңыз.</span></div></div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="sec-line"></div>
+
+    <section id="integrations" class="integrations-band">
+      <div class="section-wrap" style="padding-bottom:0">
+        <div class="section-label"><span class="ru">Интеграции</span><span class="kz" style="display:none">Интеграциялар</span></div>
+        <h2 class="section-title"><span class="ru">Подключается к тому,<br>чем вы уже пользуетесь</span><span class="kz" style="display:none">Бұрыннан пайдаланатын<br>нәрселерге қосылады</span></h2>
+      </div>
+      <div style="max-width:var(--page-max);margin:0 auto;padding-bottom:var(--sp-112)">
+        <div class="int-grid" style="margin-left:clamp(1.5rem,4vw,4rem);margin-right:clamp(1.5rem,4vw,4rem)">
+          <div class="int-card" data-reveal>
+            <div class="int-logo int-logo--kaspi"><img class="int-logo__img int-logo__img--kaspi" src="{{KASPI_LOGO_SRC}}" alt="Kaspi" /></div>
+            <div class="int-name">Kaspi</div>
+            <div class="int-desc"><span class="ru">Счета, оплаты и финансовые статусы без ручной перекидки данных. Полная синхронизация платёжного контура.</span><span class="kz" style="display:none">Шот-фактуралар, төлемдер және қаржылық мәртебелер автоматты синхронизациямен.</span></div>
+          </div>
+          <div class="int-card" data-reveal>
+            <div class="int-logo int-logo--whatsapp"><img class="int-logo__img int-logo__img--whatsapp" src="{{WHATSAPP_LOGO_SRC}}" alt="WhatsApp" /></div>
+            <div class="int-name">WhatsApp Business</div>
+            <div class="int-desc"><span class="ru">Коммуникация с клиентами и менеджерами прямо из KORT. Уведомления и статусы в одном окне.</span><span class="kz" style="display:none">KORT-тан тікелей клиенттер мен менеджерлермен байланыс.</span></div>
+          </div>
+          <div class="int-card" data-reveal>
+            <div class="int-logo int-logo--powerbi"><img class="int-logo__img int-logo__img--powerbi" src="{{POWERBI_LOGO_SRC}}" alt="Power BI" /></div>
+            <div class="int-name"><span class="ru">BI-аналитика</span><span class="kz" style="display:none">BI-аналитика</span></div>
+            <div class="int-desc"><span class="ru">Экспорт данных в BI-системы для расширенной аналитики. Дашборды и сводные отчёты по всем модулям.</span><span class="kz" style="display:none">Кеңейтілген аналитика үшін BI жүйелеріне деректерді экспорттау.</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="pricing">
+      <div class="section-wrap">
+        <div class="section-head" style="text-align:center;display:flex;flex-direction:column;align-items:center">
+          <div class="section-label"><span class="ru">Тарифы</span><span class="kz" style="display:none">Тарифтер</span></div>
+          <h2 class="section-title"><span class="ru">Выберите свой план</span><span class="kz" style="display:none">Жоспарыңызды таңдаңыз</span></h2>
+          <p class="section-body"><span class="ru">Начните с базового и масштабируйтесь по мере роста. Все планы включают основной интерфейс и поддержку.</span><span class="kz" style="display:none">Базалықтан бастаңыз және өсу кезінде кеңейтіңіз.</span></p>
+        </div>
+        <div class="pricing-grid">
+          <div class="plan-card" data-reveal>
+            <div class="plan-tier">Basic</div>
+            <div class="plan-name"><span class="ru">Базовый</span><span class="kz" style="display:none">Базалық</span></div>
+            <div class="plan-desc"><span class="ru">Для малого бизнеса на старте. CRM, склад и базовая аналитика.</span><span class="kz" style="display:none">Шағын бизнес үшін. CRM, қойма және базалық аналитика.</span></div>
+            <ul class="plan-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">CRM: лиды и клиенты</span><span class="kz" style="display:none">CRM: лидтер мен клиенттер</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Управление складом</span><span class="kz" style="display:none">Қойманы басқару</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Базовые отчёты</span><span class="kz" style="display:none">Базалық есептер</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">До 5 сотрудников</span><span class="kz" style="display:none">5 қызметкерге дейін</span></li>
+            </ul>
+            <a href="#" data-kort-action="register" class="btn-plan-ghost"><span class="ru">Начать бесплатно</span><span class="kz" style="display:none">Тегін бастау</span></a>
+          </div>
+          <div class="plan-card plan-card--featured" data-reveal>
+            <div class="plan-featured-tag"><span class="ru">Популярный</span><span class="kz" style="display:none">Танымал</span></div>
+            <div class="plan-tier">Advanced</div>
+            <div class="plan-name"><span class="ru">Расширенный</span><span class="kz" style="display:none">Кеңейтілген</span></div>
+            <div class="plan-desc"><span class="ru">Для растущего бизнеса. Производство, финансы и расширенная аналитика.</span><span class="kz" style="display:none">Өсіп келе жатқан бизнес үшін. Өндіріс, қаржы және кеңейтілген аналитика.</span></div>
+            <ul class="plan-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Всё из Basic</span><span class="kz" style="display:none">Basic-тің барлығы</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Производство и смены</span><span class="kz" style="display:none">Өндіріс және ауысымдар</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Финансовый модуль</span><span class="kz" style="display:none">Қаржы модулі</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Сделки и задачи</span><span class="kz" style="display:none">Мәмілелер мен тапсырмалар</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">До 25 сотрудников</span><span class="kz" style="display:none">25 қызметкерге дейін</span></li>
+            </ul>
+            <a href="#" data-kort-action="register" class="btn-plan-primary"><span class="ru">Подключить</span><span class="kz" style="display:none">Қосу</span></a>
+          </div>
+          <div class="plan-card" data-reveal>
+            <div class="plan-tier">Industrial</div>
+            <div class="plan-name"><span class="ru">Промышленный</span><span class="kz" style="display:none">Өнеркәсіптік</span></div>
+            <div class="plan-desc"><span class="ru">Для производственных предприятий. Полный функционал, рабочие зоны и расширенные интеграции.</span><span class="kz" style="display:none">Өндірістік кәсіпорындар үшін. Толық функционал және кеңейтілген интеграциялар.</span></div>
+            <ul class="plan-features">
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Всё из Advanced</span><span class="kz" style="display:none">Advanced-тің барлығы</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Промышленные рабочие зоны</span><span class="kz" style="display:none">Өнеркәсіптік жұмыс аймақтары</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Kaspi + WhatsApp + BI</span><span class="kz" style="display:none">Kaspi + WhatsApp + BI</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Неограниченно сотрудников</span><span class="kz" style="display:none">Шексіз қызметкерлер</span></li>
+              <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Приоритетная поддержка</span><span class="kz" style="display:none">Басым қолдау</span></li>
+            </ul>
+            <a href="#" data-kort-action="register" class="btn-plan-ghost"><span class="ru">Связаться с нами</span><span class="kz" style="display:none">Бізбен байланысу</span></a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div class="footer-inner">
+        <div class="footer-top">
+          <div>
+            <img class="footer-logo" src="{{LOGO_SRC}}" alt="KORT" />
+            <p class="footer-tagline"><span class="ru">Универсальная система автоматизации бизнес-процессов для малого и среднего бизнеса.</span><span class="kz" style="display:none">Шағын және орта бизнес үшін бизнес-процестерді автоматтандырудың әмбебап жүйесі.</span></p>
+          </div>
+          <div>
+            <div class="footer-col-title"><span class="ru">Продукт</span><span class="kz" style="display:none">Өнім</span></div>
+            <ul class="footer-links">
+              <li><a href="#modules"><span class="ru">Возможности</span><span class="kz" style="display:none">Мүмкіндіктер</span></a></li>
+              <li><a href="#integrations"><span class="ru">Интеграции</span><span class="kz" style="display:none">Интеграциялар</span></a></li>
+              <li><a href="#pricing"><span class="ru">Тарифы</span><span class="kz" style="display:none">Тарифтер</span></a></li>
+            </ul>
+          </div>
+          <div>
+            <div class="footer-col-title"><span class="ru">Войти</span><span class="kz" style="display:none">Кіру</span></div>
+            <ul class="footer-links">
+              <li><a href="#" data-kort-action="login"><span class="ru">Войти в систему</span><span class="kz" style="display:none">Жүйеге кіру</span></a></li>
+              <li><a href="#" data-kort-action="register"><span class="ru">Регистрация</span><span class="kz" style="display:none">Тіркелу</span></a></li>
+            </ul>
+          </div>
+          <div>
+            <div class="footer-col-title"><span class="ru">Контакты</span><span class="kz" style="display:none">Байланыс</span></div>
+            <ul class="footer-links">
+              <li><a href="mailto:info@kort.kz">info@kort.kz</a></li>
+              <li><a href="tel:+77001234567">+7 700 123-45-67</a></li>
+              <li><a href="#"><span class="ru">Алматы, Казахстан</span><span class="kz" style="display:none">Алматы, Қазақстан</span></a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <div class="footer-copy">© 2026 KORT.</div>
+          <div class="footer-copy">ТОО «AB Electronic System»</div>
+        </div>
+      </div>
+    </footer>
+
+  </div>
+
+  <div class="intro-overlay" data-intro>
+    <div class="intro-photo-canvas" data-photo-canvas>
+      <img class="intro-photo" data-photo src="{{PHOTO_SRC}}" alt="KORT" />
+      <div class="intro-photo-screen" data-photo-screen>
+        <video
+          class="intro-photo-screen__video"
+          data-intro-video
+          src="{{INTRO_VIDEO_SRC}}"
+          muted playsinline autoplay loop preload="auto"
+        ></video>
+      </div>
+    </div>
+    <div class="intro-overlay__veil" data-intro-veil></div>
+    <div class="intro-brand" data-intro-brand>
+      <img class="intro-brand__logo" src="{{LOGO_SRC}}" alt="KORT" />
+    </div>
+    <div class="intro-hint" data-intro-hint>
+      <div class="intro-hint__caret"></div>
+    </div>
+  </div>

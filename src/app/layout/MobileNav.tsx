@@ -57,7 +57,7 @@ export function MobileNav() {
   function handleLogout() {
     setMoreOpen(false);
     clearAuth();
-    navigate('/auth/login', { replace: true });
+    navigate('/', { replace: true });
   }
 
   function closeDrawer() {

@@ -1,0 +1,1577 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KORT — Система автоматизации бизнеса</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* ═══════════════════════════════════════════════════════
+       MERCURY DESIGN SYSTEM — variables
+    ═══════════════════════════════════════════════════════ */
+    :root {
+      /* Colors */
+      --color-mercury-blue:    #5266eb;
+      --color-ghost-blue:      #cdddff;
+      --color-deep-space:      #171721;
+      --color-midnight-slate:  #1e1e2a;
+      --color-graphite:        #272735;
+      --color-lead:            #70707d;
+      --color-starlight:       #ededf3;
+      --color-silver:          #c3c3cc;
+      --color-pure-white:      #ffffff;
+
+      /* Surfaces */
+      --surface-abyss:       #171721;
+      --surface-surface:     #1e1e2a;
+      --surface-interactive: #272735;
+
+      /* Typography — substitute Manrope for arcadia/arcadiaDisplay */
+      --font-display: 'Manrope', ui-sans-serif, system-ui, sans-serif;
+      --font-body:    'Manrope', ui-sans-serif, system-ui, sans-serif;
+
+      /* Weights */
+      --w-light:   300;
+      --w-regular: 400;
+      --w-420:     420;
+      --w-480:     500;
+      --w-530:     600;
+
+      /* Type scale */
+      --text-caption:    12px;
+      --text-body-sm:    14px;
+      --text-body:       16px;
+      --text-subheading: 18px;
+      --text-heading-sm: 21px;
+      --text-heading:    32px;
+      --text-heading-lg: 49px;
+      --text-display:    65px;
+
+      /* Spacing */
+      --sp-4:   4px;
+      --sp-8:   8px;
+      --sp-12:  12px;
+      --sp-16:  16px;
+      --sp-20:  20px;
+      --sp-24:  24px;
+      --sp-32:  32px;
+      --sp-40:  40px;
+      --sp-56:  56px;
+      --sp-72:  72px;
+      --sp-80:  80px;
+      --sp-112: 112px;
+      --sp-128: 128px;
+
+      /* Radii */
+      --radius-cards:      0px;
+      --radius-containers: 4px;
+      --radius-inputs:     32px;
+      --radius-btn:        32px;
+      --radius-btn-lg:     40px;
+
+      /* Layout */
+      --page-max: 1200px;
+      --topbar-h: 64px;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       RESET
+    ═══════════════════════════════════════════════════════ */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+    body {
+      font-family: var(--font-body);
+      font-size: var(--text-body);
+      font-weight: var(--w-regular);
+      line-height: 1.5;
+      background: var(--surface-abyss);
+      color: var(--color-starlight);
+      overflow-x: hidden;
+    }
+    body.intro-locked { overflow: hidden; }
+    img, video { display: block; max-width: 100%; }
+    a { color: inherit; text-decoration: none; }
+    button { cursor: pointer; font-family: var(--font-body); }
+
+    /* ═══════════════════════════════════════════════════════
+       INTRO OVERLAY
+    ═══════════════════════════════════════════════════════ */
+    .intro-overlay {
+      position: fixed; inset: 0;
+      z-index: 9999;
+      overflow: hidden;
+      background: #000;
+    }
+    .intro-photo-canvas {
+      position: absolute;
+      will-change: transform, opacity;
+    }
+    .intro-photo, .intro-photo-screen { position: absolute; inset: 0; }
+    .intro-photo { width: 100%; height: 100%; object-fit: cover; }
+    .intro-photo-screen {
+      left: var(--screen-left); top: var(--screen-top);
+      width: var(--screen-width); height: var(--screen-height);
+      right: auto; bottom: auto;
+      overflow: hidden;
+      background: #08121a;
+      border-radius: 0.25rem;
+      cursor: pointer;
+    }
+    .intro-photo-screen__video {
+      width: 100%; height: 100%;
+      object-fit: cover; object-position: center;
+      transform: scale(1.01);
+    }
+    .intro-overlay__veil {
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at center, transparent 0%, rgba(4,8,13,.28) 45%, rgba(4,8,13,.84) 100%);
+      pointer-events: none;
+    }
+    .intro-brand {
+      position: absolute;
+      top: -6rem; left: -5.2rem;
+      z-index: 3;
+    }
+    .intro-brand__logo {
+      display: block;
+      height: clamp(16.2rem, 28.8vw, 23.4rem);
+      width: auto;
+      filter: brightness(1.2);
+    }
+    .intro-hint {
+      position: absolute;
+      bottom: 2.5rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column; align-items: center; gap: 0.5rem;
+      color: rgba(237,237,243,0.42);
+      font-size: 0.7rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase;
+      pointer-events: none;
+      animation: hintFade 2.2s ease-in-out infinite;
+    }
+    .intro-hint__caret {
+      width: 18px; height: 18px;
+      border-right: 1.5px solid rgba(237,237,243,0.35);
+      border-bottom: 1.5px solid rgba(237,237,243,0.35);
+      transform: rotate(45deg);
+      animation: caretBounce 1.6s ease-in-out infinite;
+    }
+    @keyframes hintFade  { 0%,100%{opacity:.5} 50%{opacity:1} }
+    @keyframes caretBounce { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(5px)} }
+
+    /* ═══════════════════════════════════════════════════════
+       LANDING ROOT
+    ═══════════════════════════════════════════════════════ */
+    .landing-root {
+      position: relative;
+      min-height: 100vh;
+      background: var(--surface-abyss);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       HEADER
+    ═══════════════════════════════════════════════════════ */
+    .site-header {
+      position: fixed; top: 0; left: 0; width: 100%; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between; gap: var(--sp-24);
+      height: var(--topbar-h);
+      padding: 0 clamp(1.5rem, 3vw, 3rem);
+      background: rgba(23,23,33,.76);
+      border-bottom: 1px solid rgba(112,112,125,.18);
+      backdrop-filter: blur(24px) saturate(130%);
+      -webkit-backdrop-filter: blur(24px) saturate(130%);
+      transition: background 200ms ease, border-color 200ms ease;
+    }
+    .site-header.scrolled {
+      background: rgba(23,23,33,.96);
+      border-bottom-color: rgba(112,112,125,.26);
+    }
+
+    /* Brand */
+    .site-brand {
+      display: flex; align-items: center; flex-shrink: 0;
+    }
+    .site-brand__logo {
+      height: 120px; width: auto;
+      filter: brightness(1.2);
+      /* PNG has large transparent padding around the mark — pull it in */
+      margin: -28px -20px;
+    }
+
+    /* Nav */
+    .site-nav {
+      display: flex; align-items: center; gap: var(--sp-4);
+    }
+    .site-nav a {
+      color: var(--color-silver);
+      font-size: var(--text-body-sm);
+      font-weight: var(--w-480);
+      letter-spacing: 0.01em;
+      padding: 0.38rem 0.8rem;
+      border-radius: var(--radius-btn);
+      transition: color 140ms ease, background 140ms ease;
+    }
+    .site-nav a:hover {
+      color: var(--color-starlight);
+      background: rgba(237,237,243,.07);
+    }
+
+    /* Header right */
+    .header-right {
+      display: flex; align-items: center; gap: var(--sp-12); flex-shrink: 0;
+    }
+
+    /* Lang switcher */
+    .lang-switcher {
+      display: flex; align-items: center; gap: 2px;
+      background: rgba(39,39,53,.8);
+      border: 1px solid rgba(112,112,125,.28);
+      border-radius: var(--radius-btn-lg);
+      padding: 3px;
+    }
+    .lang-btn {
+      border: none; background: transparent;
+      color: var(--color-lead);
+      font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em;
+      padding: 0.28rem 0.6rem;
+      border-radius: var(--radius-btn);
+      transition: all 140ms ease;
+    }
+    .lang-btn.active {
+      background: rgba(205,221,255,.16);
+      color: var(--color-ghost-blue);
+    }
+    .lang-btn:hover:not(.active) { color: var(--color-silver); }
+
+    /* Login pill button — Ghost Blue style */
+    .login-btn {
+      position: relative;
+      display: inline-flex; align-items: center; justify-content: center;
+      height: 36px; min-width: 36px; padding: 0 var(--sp-12);
+      border-radius: var(--radius-btn-lg);
+      border: none;
+      background: rgba(205,221,255,.14);
+      color: var(--color-starlight);
+      font-size: var(--text-body-sm);
+      font-weight: var(--w-480);
+      letter-spacing: 0.01em;
+      overflow: hidden;
+      white-space: nowrap;
+      transition: background 150ms ease, color 150ms ease, padding 200ms ease, min-width 200ms ease;
+    }
+    .login-btn:hover {
+      background: rgba(205,221,255,.22);
+    }
+
+    .login-btn__icon {
+      display: flex; align-items: center; justify-content: center;
+      transition: opacity 180ms ease, transform 180ms ease;
+      position: absolute;
+    }
+    .login-btn__label {
+      opacity: 0;
+      max-width: 0;
+      overflow: hidden;
+      transition: opacity 180ms ease, max-width 200ms ease;
+    }
+    .login-btn:hover .login-btn__icon {
+      opacity: 0;
+      transform: scale(0.6);
+    }
+    .login-btn:hover .login-btn__label {
+      opacity: 1;
+      max-width: 80px;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════════════════ */
+    .hero-section {
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: calc(var(--topbar-h) + var(--sp-80)) clamp(1.5rem, 4vw, 4rem) var(--sp-80);
+      position: relative; overflow: hidden;
+      background: var(--surface-abyss);
+    }
+
+    /* subtle radial glow */
+    .hero-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 0%, rgba(82,102,235,.1) 0%, transparent 60%);
+      pointer-events: none;
+    }
+
+    /* very faint grid */
+    .hero-section::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(112,112,125,.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(112,112,125,.05) 1px, transparent 1px);
+      background-size: 72px 72px;
+      mask-image: radial-gradient(ellipse 75% 65% at 50% 35%, black 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative; z-index: 2;
+      text-align: center;
+      max-width: 820px;
+      display: flex; flex-direction: column; align-items: center; gap: var(--sp-32);
+    }
+
+    /* eyebrow badge */
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.35rem 1rem;
+      border-radius: var(--radius-btn);
+      background: rgba(82,102,235,.12);
+      border: 1px solid rgba(82,102,235,.24);
+      color: rgba(205,221,255,.8);
+      font-size: var(--text-caption);
+      font-weight: var(--w-530);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+    .hero-badge__dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--color-mercury-blue);
+      animation: dotPulse 2s ease-in-out infinite;
+    }
+    @keyframes dotPulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.5)} }
+
+    .hero-sub {
+      font-family: var(--font-display);
+      font-size: clamp(1.6rem, 3.2vw, 2.6rem);
+      font-weight: var(--w-light);
+      line-height: 1.28;
+      letter-spacing: 0.01em;
+      color: var(--color-starlight);
+      max-width: 680px;
+      text-wrap: balance;
+      text-align: center;
+    }
+
+    /* animated word highlight */
+    .hero-sub .word-highlight {
+      position: relative;
+      display: inline-block;
+      color: var(--color-starlight);
+    }
+
+    .hero-sub .word-highlight::after {
+      content: '';
+      position: absolute;
+      left: 0; bottom: -2px;
+      width: 100%; height: 1px;
+      background: var(--color-mercury-blue);
+      transform: scaleX(0);
+      transform-origin: left center;
+      animation: underlineReveal 0.6s var(--ease-out, cubic-bezier(0,0,.2,1)) forwards;
+    }
+
+    .hero-sub .word-highlight:nth-child(1)::after { animation-delay: 1.2s; }
+    .hero-sub .word-highlight:nth-child(2)::after { animation-delay: 1.5s; }
+    .hero-sub .word-highlight:nth-child(3)::after { animation-delay: 1.8s; }
+
+    @keyframes underlineReveal {
+      to { transform: scaleX(1); }
+    }
+
+    /* word-by-word fade-up — triggered when .hero-sub gets .animate class */
+    .hero-sub .word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(10px);
+    }
+
+    .hero-sub.animate .word {
+      animation: wordFadeUp 0.5s cubic-bezier(0,0,.2,1) forwards;
+    }
+
+    .hero-sub.animate .word-highlight::after {
+      animation: underlineReveal 0.6s cubic-bezier(0,0,.2,1) forwards;
+    }
+
+    @keyframes wordFadeUp {
+      to { opacity: 1; transform: none; }
+    }
+
+    .hero-cta-row {
+      display: flex; align-items: center; gap: var(--sp-12); flex-wrap: wrap; justify-content: center;
+    }
+
+    /* CTA buttons */
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: var(--sp-16) var(--sp-24);
+      background: var(--color-mercury-blue);
+      color: var(--color-pure-white);
+      border: none; border-radius: var(--radius-btn);
+      font-size: var(--text-body);
+      font-weight: var(--w-480);
+      letter-spacing: 0.01em;
+      transition: opacity 140ms ease, transform 140ms ease;
+    }
+    .btn-primary:hover { opacity: .88; transform: translateY(-1px); }
+    .btn-primary:active { transform: scale(.985); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 0.45rem;
+      padding: var(--sp-16) var(--sp-24);
+      background: rgba(205,221,255,.12);
+      color: var(--color-starlight);
+      border: none; border-radius: var(--radius-btn);
+      font-size: var(--text-body);
+      font-weight: var(--w-420);
+      letter-spacing: 0.01em;
+      transition: background 140ms ease;
+    }
+    .btn-secondary:hover { background: rgba(205,221,255,.2); }
+
+    /* scroll hint */
+    .hero-scroll-line {
+      position: absolute; bottom: var(--sp-40); left: 50%;
+      transform: translateX(-50%);
+      width: 1px; height: 48px;
+      background: linear-gradient(to bottom, rgba(82,102,235,.5), transparent);
+      animation: scrollFade 2.5s ease-in-out infinite;
+    }
+    @keyframes scrollFade { 0%,100%{opacity:.3} 50%{opacity:.9} }
+
+    /* ═══════════════════════════════════════════════════════
+       SECTION SHARED
+    ═══════════════════════════════════════════════════════ */
+    .section-wrap {
+      max-width: var(--page-max);
+      margin: 0 auto;
+      padding: var(--sp-112) clamp(1.5rem, 4vw, 4rem);
+    }
+
+    .section-label {
+      display: inline-flex; align-items: center; gap: 0.55rem;
+      color: var(--color-lead);
+      font-size: var(--text-caption);
+      font-weight: var(--w-530);
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      margin-bottom: var(--sp-24);
+    }
+    .section-label::before {
+      content: '';
+      width: 16px; height: 1px;
+      background: var(--color-lead);
+      border-radius: 99px;
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(var(--text-heading), 4vw, var(--text-heading-lg));
+      font-weight: var(--w-light);
+      line-height: 1.12;
+      letter-spacing: 0.01em;
+      color: var(--color-starlight);
+      margin-bottom: var(--sp-20);
+      text-wrap: balance;
+    }
+
+    .section-body {
+      font-size: var(--text-body);
+      line-height: 1.65;
+      color: var(--color-silver);
+      max-width: 500px;
+      text-wrap: pretty;
+    }
+
+    .section-head { margin-bottom: var(--sp-56); }
+
+    /* section divider */
+    .sec-line {
+      width: 100%; height: 1px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(112,112,125,.22) 20%,
+        rgba(112,112,125,.28) 50%,
+        rgba(112,112,125,.22) 80%,
+        transparent 100%);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       MODULES — feature list style (Mercury interactive links)
+    ═══════════════════════════════════════════════════════ */
+    .modules-band {
+      background: var(--surface-surface);
+      border-top: 1px solid rgba(112,112,125,.18);
+      border-bottom: 1px solid rgba(112,112,125,.18);
+    }
+
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(112,112,125,.18);
+    }
+
+    .module-card {
+      background: var(--surface-surface);
+      padding: var(--sp-40) var(--sp-32);
+      display: flex; flex-direction: column; gap: var(--sp-16);
+      border: none;
+      transition: background 180ms ease;
+      cursor: default;
+    }
+    .module-card:hover { background: var(--surface-interactive); }
+
+    .module-icon {
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(112,112,125,.3);
+      border-radius: var(--radius-containers);
+      color: var(--color-lead);
+      flex-shrink: 0;
+      transition: border-color 180ms ease, color 180ms ease;
+    }
+    .module-card:hover .module-icon {
+      border-color: rgba(82,102,235,.4);
+      color: rgba(205,221,255,.8);
+    }
+    .module-icon svg { width: 18px; height: 18px; stroke-width: 1.5; }
+
+    .module-tag {
+      font-size: var(--text-caption);
+      font-weight: var(--w-530);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-lead);
+    }
+
+    .module-title {
+      font-family: var(--font-display);
+      font-size: var(--text-heading-sm);
+      font-weight: var(--w-480);
+      line-height: 1.2;
+      letter-spacing: 0.01em;
+      color: var(--color-starlight);
+      border-bottom: 1px solid rgba(112,112,125,.24);
+      padding-bottom: var(--sp-16);
+    }
+
+    .module-desc {
+      font-size: var(--text-body-sm);
+      line-height: 1.6;
+      color: var(--color-silver);
+      letter-spacing: 0.005em;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       HOW IT WORKS
+    ═══════════════════════════════════════════════════════ */
+    .how-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-80);
+      align-items: start;
+    }
+
+    .steps-list {
+      display: flex; flex-direction: column; gap: 0;
+    }
+
+    .step-item {
+      display: grid;
+      grid-template-columns: 48px 1fr;
+      gap: var(--sp-24);
+      padding: var(--sp-32) 0;
+      border-bottom: 1px solid rgba(112,112,125,.2);
+    }
+    .step-item:last-child { border-bottom: none; }
+    .step-item:first-child { padding-top: 0; }
+
+    .step-num {
+      display: flex; align-items: flex-start; padding-top: 0.1rem;
+    }
+    .step-num span {
+      font-size: var(--text-caption);
+      font-weight: var(--w-530);
+      letter-spacing: 0.1em;
+      color: var(--color-lead);
+      width: 32px; height: 32px;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid rgba(112,112,125,.28);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-family: var(--font-display);
+      font-size: var(--text-heading-sm);
+      font-weight: var(--w-480);
+      line-height: 1.3;
+      letter-spacing: 0.01em;
+      color: var(--color-starlight);
+      margin-bottom: var(--sp-8);
+    }
+    .step-desc {
+      font-size: var(--text-body-sm);
+      line-height: 1.65;
+      color: var(--color-silver);
+      letter-spacing: 0.005em;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       INTEGRATIONS
+    ═══════════════════════════════════════════════════════ */
+    .integrations-band {
+      background: var(--surface-surface);
+      border-top: 1px solid rgba(112,112,125,.18);
+      border-bottom: 1px solid rgba(112,112,125,.18);
+    }
+
+    .int-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(112,112,125,.18);
+      margin-top: var(--sp-56);
+    }
+
+    .int-card {
+      background: var(--surface-surface);
+      padding: var(--sp-40) var(--sp-32);
+      display: flex; flex-direction: column; gap: var(--sp-20);
+      transition: background 180ms ease;
+    }
+    .int-card:hover { background: var(--surface-interactive); }
+
+    .int-logo {
+      width: 44px; height: 44px;
+      border-radius: var(--radius-containers);
+      border: 1px solid rgba(112,112,125,.28);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem; font-weight: 700; letter-spacing: -0.02em;
+      color: var(--color-starlight);
+      background: var(--surface-abyss);
+    }
+
+    .int-name {
+      font-family: var(--font-display);
+      font-size: var(--text-heading-sm);
+      font-weight: var(--w-480);
+      letter-spacing: 0.01em;
+      color: var(--color-starlight);
+    }
+    .int-desc {
+      font-size: var(--text-body-sm);
+      line-height: 1.6;
+      color: var(--color-silver);
+      letter-spacing: 0.005em;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       PRICING
+    ═══════════════════════════════════════════════════════ */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1px;
+      background: rgba(112,112,125,.18);
+      border: 1px solid rgba(112,112,125,.18);
+      border-radius: var(--radius-containers);
+      overflow: hidden;
+      margin-top: var(--sp-56);
+    }
+
+    .plan-card {
+      background: var(--surface-surface);
+      padding: var(--sp-40) var(--sp-32);
+      display: flex; flex-direction: column; gap: var(--sp-24);
+      position: relative;
+      transition: background 180ms ease;
+    }
+    .plan-card:hover { background: var(--surface-interactive); }
+
+    .plan-card--featured { background: var(--surface-interactive); }
+    .plan-card--featured::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--color-mercury-blue);
+    }
+
+    .plan-tier {
+      font-size: var(--text-caption);
+      font-weight: var(--w-530);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-lead);
+    }
+
+    .plan-featured-tag {
+      display: inline-flex;
+      padding: 0.22rem 0.65rem;
+      border-radius: var(--radius-btn);
+      background: rgba(82,102,235,.14);
+      border: 1px solid rgba(82,102,235,.24);
+      color: rgba(205,221,255,.8);
+      font-size: 0.65rem;
+      font-weight: var(--w-530);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      width: fit-content;
+      margin-bottom: calc(-1 * var(--sp-12));
+    }
+
+    .plan-name {
+      font-family: var(--font-display);
+      font-size: var(--text-heading);
+      font-weight: var(--w-light);
+      letter-spacing: -0.01em;
+      line-height: 1.1;
+      color: var(--color-starlight);
+    }
+
+    .plan-desc {
+      font-size: var(--text-body-sm);
+      line-height: 1.6;
+      color: var(--color-silver);
+      letter-spacing: 0.005em;
+      padding-bottom: var(--sp-24);
+      border-bottom: 1px solid rgba(112,112,125,.2);
+    }
+
+    .plan-features {
+      list-style: none;
+      display: flex; flex-direction: column; gap: var(--sp-12);
+      flex: 1;
+    }
+    .plan-features li {
+      display: flex; align-items: flex-start; gap: var(--sp-12);
+      font-size: var(--text-body-sm);
+      line-height: 1.5;
+      color: var(--color-silver);
+      letter-spacing: 0.005em;
+    }
+    .plan-features li svg {
+      width: 14px; height: 14px;
+      color: var(--color-lead);
+      flex-shrink: 0;
+      margin-top: 2px;
+      stroke-width: 2.5;
+    }
+
+    .btn-plan-primary {
+      display: block; width: 100%;
+      padding: var(--sp-16) var(--sp-24);
+      text-align: center;
+      background: var(--color-mercury-blue);
+      color: var(--color-pure-white);
+      border: none; border-radius: var(--radius-btn);
+      font-size: var(--text-body-sm);
+      font-weight: var(--w-480);
+      letter-spacing: 0.01em;
+      transition: opacity 140ms ease, transform 140ms ease;
+      margin-top: auto;
+    }
+    .btn-plan-primary:hover { opacity: .88; transform: translateY(-1px); }
+
+    .btn-plan-ghost {
+      display: block; width: 100%;
+      padding: var(--sp-16) var(--sp-24);
+      text-align: center;
+      background: transparent;
+      color: var(--color-silver);
+      border: 1px solid rgba(112,112,125,.36);
+      border-radius: var(--radius-btn);
+      font-size: var(--text-body-sm);
+      font-weight: var(--w-480);
+      letter-spacing: 0.01em;
+      transition: border-color 140ms ease, color 140ms ease, background 140ms ease;
+      margin-top: auto;
+    }
+    .btn-plan-ghost:hover {
+      border-color: rgba(112,112,125,.6);
+      color: var(--color-starlight);
+      background: rgba(237,237,243,.05);
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════════════ */
+    footer {
+      background: var(--surface-surface);
+      border-top: 1px solid rgba(112,112,125,.18);
+    }
+
+    .footer-inner {
+      max-width: var(--page-max);
+      margin: 0 auto;
+      padding: var(--sp-80) clamp(1.5rem, 4vw, 4rem) var(--sp-40);
+    }
+
+    .footer-top {
+      display: grid;
+      grid-template-columns: 1.6fr repeat(3, 1fr);
+      gap: var(--sp-56);
+      padding-bottom: var(--sp-56);
+      border-bottom: 1px solid rgba(112,112,125,.18);
+    }
+
+    .footer-logo {
+      height: 30px; width: auto;
+      filter: brightness(1.1);
+      margin-bottom: var(--sp-16);
+    }
+
+    .footer-tagline {
+      font-size: var(--text-body-sm);
+      line-height: 1.65;
+      color: var(--color-lead);
+      max-width: 240px;
+      letter-spacing: 0.005em;
+    }
+
+    .footer-col-title {
+      font-size: var(--text-caption);
+      font-weight: var(--w-530);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-lead);
+      margin-bottom: var(--sp-20);
+    }
+
+    .footer-links {
+      list-style: none;
+      display: flex; flex-direction: column; gap: var(--sp-12);
+    }
+    .footer-links a {
+      font-size: var(--text-body-sm);
+      color: var(--color-silver);
+      letter-spacing: 0.005em;
+      transition: color 140ms ease;
+    }
+    .footer-links a:hover { color: var(--color-starlight); }
+
+    .footer-bottom {
+      display: flex; align-items: center; justify-content: space-between;
+      gap: var(--sp-16); flex-wrap: wrap;
+      padding-top: var(--sp-32);
+    }
+
+    .footer-copy {
+      font-size: var(--text-caption);
+      color: var(--color-lead);
+      letter-spacing: 0.01em;
+    }
+
+    /* ═══════════════════════════════════════════════════════
+       SCROLL REVEAL
+    ═══════════════════════════════════════════════════════ */
+    [data-reveal] {
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity .55s ease, transform .55s ease;
+    }
+    [data-reveal].visible { opacity: 1; transform: none; }
+    [data-reveal]:nth-child(2) { transition-delay: .07s; }
+    [data-reveal]:nth-child(3) { transition-delay: .14s; }
+    [data-reveal]:nth-child(4) { transition-delay: .21s; }
+    [data-reveal]:nth-child(5) { transition-delay: .28s; }
+    [data-reveal]:nth-child(6) { transition-delay: .35s; }
+
+    /* ═══════════════════════════════════════════════════════
+       RESPONSIVE
+    ═══════════════════════════════════════════════════════ */
+    @media (max-width: 960px) {
+      .modules-grid { grid-template-columns: 1fr 1fr; }
+      .int-grid      { grid-template-columns: 1fr 1fr; }
+      .pricing-grid  { grid-template-columns: 1fr; }
+      .how-grid      { grid-template-columns: 1fr; gap: var(--sp-56); }
+      .footer-top    { grid-template-columns: 1fr 1fr; gap: var(--sp-40); }
+      .site-nav      { display: none; }
+    }
+    @media (max-width: 600px) {
+      .modules-grid { grid-template-columns: 1fr; }
+      .int-grid      { grid-template-columns: 1fr; }
+      .footer-top    { grid-template-columns: 1fr; }
+      .hero-cta-row  { flex-direction: column; align-items: stretch; }
+      .btn-primary, .btn-secondary { justify-content: center; }
+    }
+  </style>
+</head>
+<body class="intro-locked">
+
+<!-- ═══════════════════════════════════════════════════════
+     LANDING
+═══════════════════════════════════════════════════════ -->
+<div class="landing-root" data-landing-root>
+
+  <!-- HEADER -->
+  <header class="site-header" data-site-header>
+    <a class="site-brand" href="#top" aria-label="KORT">
+      <img class="site-brand__logo" src="public/KORT_logo.png" alt="KORT" />
+    </a>
+
+    <nav class="site-nav">
+      <a href="#modules"><span class="ru">Возможности</span><span class="kz" style="display:none">Мүмкіндіктер</span></a>
+      <a href="#how"><span class="ru">Как работает</span><span class="kz" style="display:none">Қалай жұмыс істейді</span></a>
+      <a href="#integrations"><span class="ru">Интеграции</span><span class="kz" style="display:none">Интеграциялар</span></a>
+      <a href="#pricing"><span class="ru">Тарифы</span><span class="kz" style="display:none">Тарифтер</span></a>
+    </nav>
+
+    <div class="header-right">
+      <div class="lang-switcher">
+        <button class="lang-btn active" data-lang="ru">RU</button>
+        <button class="lang-btn" data-lang="kz">KZ</button>
+      </div>
+
+      <a class="login-btn" href="/auth/login" aria-label="Войти">
+        <span class="login-btn__icon">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+          </svg>
+        </span>
+        <span class="login-btn__label ru">Войти</span>
+        <span class="login-btn__label kz" style="display:none">Кіру</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero-section" id="top" data-hero-section>
+    <div class="hero-content" data-hero-copy>
+      <p class="hero-sub" id="hero-sub-text">
+        <span class="ru"></span>
+        <span class="kz" style="display:none">Өндіріс, қойма, қаржы және команданы басқарудың бірыңғай платформасы. Жылдам енгізу. Бәрі бір жүйеде.</span>
+      </p>
+
+      <div class="hero-cta-row">
+        <a href="/auth/login" class="btn-primary">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
+            <polyline points="10 17 15 12 10 7"/>
+            <line x1="15" y1="12" x2="3" y2="12"/>
+          </svg>
+          <span class="ru">Войти в систему</span>
+          <span class="kz" style="display:none">Жүйеге кіру</span>
+        </a>
+        <a href="#modules" class="btn-secondary">
+          <span class="ru">Узнать больше</span>
+          <span class="kz" style="display:none">Толығырақ</span>
+        </a>
+      </div>
+    </div>
+    <div class="hero-scroll-line" aria-hidden="true"></div>
+  </section>
+
+  <!-- MODULES -->
+  <section id="modules" class="modules-band">
+    <div class="section-wrap" style="padding-bottom: 0;">
+      <div class="section-head">
+        <div class="section-label">
+          <span class="ru">Возможности</span>
+          <span class="kz" style="display:none">Мүмкіндіктер</span>
+        </div>
+        <h2 class="section-title">
+          <span class="ru">Всё для вашего бизнеса<br>в одной системе</span>
+          <span class="kz" style="display:none">Бизнесіңіздің барлығы<br>бір жүйеде</span>
+        </h2>
+        <p class="section-body">
+          <span class="ru">От первого лида до отгрузки — KORT покрывает все ключевые операции без лишних инструментов и Excel-таблиц.</span>
+          <span class="kz" style="display:none">Алғашқы лидтен жөнелтуге дейін — KORT барлық негізгі операцияларды қамтиды.</span>
+        </p>
+      </div>
+    </div>
+
+    <div style="max-width: var(--page-max); margin: 0 auto;">
+      <div class="modules-grid">
+
+        <div class="module-card" data-reveal>
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          </div>
+          <div class="module-tag">CRM</div>
+          <div class="module-title">
+            <span class="ru">Клиенты и продажи</span>
+            <span class="kz" style="display:none">Клиенттер мен сатылымдар</span>
+          </div>
+          <div class="module-desc">
+            <span class="ru">Лиды, сделки и клиентская база в едином пространстве. Полная воронка от заявки до закрытия.</span>
+            <span class="kz" style="display:none">Лидтер, мәмілелер және клиенттер базасы бір кеңістікте.</span>
+          </div>
+        </div>
+
+        <div class="module-card" data-reveal>
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
+          </div>
+          <div class="module-tag"><span class="ru">Склад</span><span class="kz" style="display:none">Қойма</span></div>
+          <div class="module-title">
+            <span class="ru">Склад и остатки</span>
+            <span class="kz" style="display:none">Қойма және қалдықтар</span>
+          </div>
+          <div class="module-desc">
+            <span class="ru">Остатки, резервы и движение товара в реальном времени. Никакой ручной сверки.</span>
+            <span class="kz" style="display:none">Нақты уақытта қалдықтар, резервтер және тауар қозғалысы.</span>
+          </div>
+        </div>
+
+        <div class="module-card" data-reveal>
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          </div>
+          <div class="module-tag"><span class="ru">Производство</span><span class="kz" style="display:none">Өндіріс</span></div>
+          <div class="module-title">
+            <span class="ru">Производственный цикл</span>
+            <span class="kz" style="display:none">Өндірістік цикл</span>
+          </div>
+          <div class="module-desc">
+            <span class="ru">Смены, линии и цеха. Контроль загрузки участков и узких мест в одном интерфейсе.</span>
+            <span class="kz" style="display:none">Ауысымдар, желілер және цехтар. Бөлімдердің жүктелуін бақылау.</span>
+          </div>
+        </div>
+
+        <div class="module-card" data-reveal>
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          </div>
+          <div class="module-tag"><span class="ru">Финансы</span><span class="kz" style="display:none">Қаржы</span></div>
+          <div class="module-title">
+            <span class="ru">Финансы и платежи</span>
+            <span class="kz" style="display:none">Қаржы және төлемдер</span>
+          </div>
+          <div class="module-desc">
+            <span class="ru">Счета, платежи, маржа и финансовая аналитика. Полная прозрачность без ручной бухгалтерии.</span>
+            <span class="kz" style="display:none">Шот-фактуралар, төлемдер, маржа және қаржылық аналитика.</span>
+          </div>
+        </div>
+
+        <div class="module-card" data-reveal>
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="module-tag"><span class="ru">Команда</span><span class="kz" style="display:none">Команда</span></div>
+          <div class="module-title">
+            <span class="ru">Сотрудники и доступ</span>
+            <span class="kz" style="display:none">Қызметкерлер және қол жеткізу</span>
+          </div>
+          <div class="module-desc">
+            <span class="ru">Управление командой, ролями и правами. Гибкая настройка для каждого сотрудника.</span>
+            <span class="kz" style="display:none">Команданы, рөлдерді және құқықтарды басқару.</span>
+          </div>
+        </div>
+
+        <div class="module-card" data-reveal>
+          <div class="module-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <div class="module-tag"><span class="ru">Аналитика</span><span class="kz" style="display:none">Аналитика</span></div>
+          <div class="module-title">
+            <span class="ru">Отчёты и BI</span>
+            <span class="kz" style="display:none">Есептер және BI</span>
+          </div>
+          <div class="module-desc">
+            <span class="ru">Сквозные отчёты по марже, загрузке и эффективности. Дашборды в реальном времени.</span>
+            <span class="kz" style="display:none">Маржа, жүктеме және тиімділік бойынша жан-жақты есептер.</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="section-wrap">
+      <div class="how-grid">
+        <div>
+          <div class="section-label">
+            <span class="ru">Как это работает</span>
+            <span class="kz" style="display:none">Қалай жұмыс істейді</span>
+          </div>
+          <h2 class="section-title">
+            <span class="ru">Запуск<br>за один день</span>
+            <span class="kz" style="display:none">Бір күнде<br>іске қосу</span>
+          </h2>
+          <p class="section-body">
+            <span class="ru">Никакого многомесячного внедрения. KORT разворачивается быстро и сразу приносит пользу бизнесу.</span>
+            <span class="kz" style="display:none">Айлық енгізу жоқ. KORT жылдам орналастырылады.</span>
+          </p>
+        </div>
+
+        <div class="steps-list">
+          <div class="step-item" data-reveal>
+            <div class="step-num"><span>01</span></div>
+            <div>
+              <div class="step-title">
+                <span class="ru">Регистрация организации</span>
+                <span class="kz" style="display:none">Ұйымды тіркеу</span>
+              </div>
+              <div class="step-desc">
+                <span class="ru">Создайте аккаунт, добавьте компанию и выберите нужные модули. Никакой бумажной документации.</span>
+                <span class="kz" style="display:none">Аккаунт жасаңыз, компания атын қосыңыз және модульдерді таңдаңыз.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item" data-reveal>
+            <div class="step-num"><span>02</span></div>
+            <div>
+              <div class="step-title">
+                <span class="ru">Настройка под ваш бизнес</span>
+                <span class="kz" style="display:none">Бизнесіңізге баптау</span>
+              </div>
+              <div class="step-desc">
+                <span class="ru">Добавьте сотрудников, настройте роли и права. Подключите интеграции — Kaspi, WhatsApp, BI.</span>
+                <span class="kz" style="display:none">Қызметкерлерді қосыңыз, рөлдер мен құқықтарды баптаңыз.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item" data-reveal>
+            <div class="step-num"><span>03</span></div>
+            <div>
+              <div class="step-title">
+                <span class="ru">Работа в единой среде</span>
+                <span class="kz" style="display:none">Бірыңғай ортада жұмыс</span>
+              </div>
+              <div class="step-desc">
+                <span class="ru">Вся команда в одном пространстве. Склад, производство и продажи обновляются в реальном времени.</span>
+                <span class="kz" style="display:none">Бүкіл команда бір кеңістікте жұмыс істейді.</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-item" data-reveal>
+            <div class="step-num"><span>04</span></div>
+            <div>
+              <div class="step-title">
+                <span class="ru">Аналитика и рост</span>
+                <span class="kz" style="display:none">Аналитика және өсу</span>
+              </div>
+              <div class="step-desc">
+                <span class="ru">Отслеживайте KPI, маржу и эффективность. Принимайте решения на основе данных.</span>
+                <span class="kz" style="display:none">KPI, маржа және тиімділікті бақылаңыз. Деректер негізінде шешім қабылдаңыз.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="sec-line"></div>
+
+  <!-- INTEGRATIONS -->
+  <section id="integrations" class="integrations-band">
+    <div class="section-wrap" style="padding-bottom: 0;">
+      <div class="section-label">
+        <span class="ru">Интеграции</span>
+        <span class="kz" style="display:none">Интеграциялар</span>
+      </div>
+      <h2 class="section-title">
+        <span class="ru">Подключается к тому,<br>чем вы уже пользуетесь</span>
+        <span class="kz" style="display:none">Бұрыннан пайдаланатын<br>нәрселерге қосылады</span>
+      </h2>
+    </div>
+
+    <div style="max-width: var(--page-max); margin: 0 auto; padding-bottom: var(--sp-112);">
+      <div class="int-grid" style="margin-left: clamp(1.5rem, 4vw, 4rem); margin-right: clamp(1.5rem, 4vw, 4rem);">
+        <div class="int-card" data-reveal>
+          <div class="int-logo" style="background: rgba(246,166,35,.1); border-color: rgba(246,166,35,.2); color: #F6A623;">K</div>
+          <div class="int-name">Kaspi</div>
+          <div class="int-desc">
+            <span class="ru">Счета, оплаты и финансовые статусы без ручной перекидки данных. Полная синхронизация платёжного контура.</span>
+            <span class="kz" style="display:none">Шот-фактуралар, төлемдер және қаржылық мәртебелер автоматты синхронизациямен.</span>
+          </div>
+        </div>
+
+        <div class="int-card" data-reveal>
+          <div class="int-logo" style="background: rgba(37,211,102,.08); border-color: rgba(37,211,102,.2); color: #25D366;">W</div>
+          <div class="int-name">WhatsApp Business</div>
+          <div class="int-desc">
+            <span class="ru">Коммуникация с клиентами и менеджерами прямо из KORT. Уведомления и статусы в одном окне.</span>
+            <span class="kz" style="display:none">KORT-тан тікелей клиенттер мен менеджерлермен байланыс.</span>
+          </div>
+        </div>
+
+        <div class="int-card" data-reveal>
+          <div class="int-logo" style="background: rgba(82,102,235,.1); border-color: rgba(82,102,235,.2); color: rgba(205,221,255,.8);">BI</div>
+          <div class="int-name">
+            <span class="ru">BI-аналитика</span>
+            <span class="kz" style="display:none">BI-аналитика</span>
+          </div>
+          <div class="int-desc">
+            <span class="ru">Экспорт данных в BI-системы для расширенной аналитики. Дашборды и сводные отчёты по всем модулям.</span>
+            <span class="kz" style="display:none">Кеңейтілген аналитика үшін BI жүйелеріне деректерді экспорттау.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING -->
+  <section id="pricing">
+    <div class="section-wrap">
+      <div class="section-head" style="text-align: center; display: flex; flex-direction: column; align-items: center;">
+        <div class="section-label">
+          <span class="ru">Тарифы</span>
+          <span class="kz" style="display:none">Тарифтер</span>
+        </div>
+        <h2 class="section-title">
+          <span class="ru">Выберите свой план</span>
+          <span class="kz" style="display:none">Жоспарыңызды таңдаңыз</span>
+        </h2>
+        <p class="section-body">
+          <span class="ru">Начните с базового и масштабируйтесь по мере роста. Все планы включают основной интерфейс и поддержку.</span>
+          <span class="kz" style="display:none">Базалықтан бастаңыз және өсу кезінде кеңейтіңіз.</span>
+        </p>
+      </div>
+
+      <div class="pricing-grid">
+
+        <!-- Basic -->
+        <div class="plan-card" data-reveal>
+          <div class="plan-tier">Basic</div>
+          <div class="plan-name">
+            <span class="ru">Базовый</span>
+            <span class="kz" style="display:none">Базалық</span>
+          </div>
+          <div class="plan-desc">
+            <span class="ru">Для малого бизнеса на старте. CRM, склад и базовая аналитика.</span>
+            <span class="kz" style="display:none">Шағын бизнес үшін. CRM, қойма және базалық аналитика.</span>
+          </div>
+          <ul class="plan-features">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">CRM: лиды и клиенты</span><span class="kz" style="display:none">CRM: лидтер мен клиенттер</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Управление складом</span><span class="kz" style="display:none">Қойманы басқару</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Базовые отчёты</span><span class="kz" style="display:none">Базалық есептер</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">До 5 сотрудников</span><span class="kz" style="display:none">5 қызметкерге дейін</span></li>
+          </ul>
+          <a href="/auth/register" class="btn-plan-ghost">
+            <span class="ru">Начать бесплатно</span>
+            <span class="kz" style="display:none">Тегін бастау</span>
+          </a>
+        </div>
+
+        <!-- Advanced -->
+        <div class="plan-card plan-card--featured" data-reveal>
+          <div class="plan-featured-tag">
+            <span class="ru">Популярный</span>
+            <span class="kz" style="display:none">Танымал</span>
+          </div>
+          <div class="plan-tier">Advanced</div>
+          <div class="plan-name">
+            <span class="ru">Расширенный</span>
+            <span class="kz" style="display:none">Кеңейтілген</span>
+          </div>
+          <div class="plan-desc">
+            <span class="ru">Для растущего бизнеса. Производство, финансы и расширенная аналитика.</span>
+            <span class="kz" style="display:none">Өсіп келе жатқан бизнес үшін. Өндіріс, қаржы және кеңейтілген аналитика.</span>
+          </div>
+          <ul class="plan-features">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Всё из Basic</span><span class="kz" style="display:none">Basic-тің барлығы</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Производство и смены</span><span class="kz" style="display:none">Өндіріс және ауысымдар</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Финансовый модуль</span><span class="kz" style="display:none">Қаржы модулі</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Сделки и задачи</span><span class="kz" style="display:none">Мәмілелер мен тапсырмалар</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">До 25 сотрудников</span><span class="kz" style="display:none">25 қызметкерге дейін</span></li>
+          </ul>
+          <a href="/auth/register" class="btn-plan-primary">
+            <span class="ru">Подключить</span>
+            <span class="kz" style="display:none">Қосу</span>
+          </a>
+        </div>
+
+        <!-- Industrial -->
+        <div class="plan-card" data-reveal>
+          <div class="plan-tier">Industrial</div>
+          <div class="plan-name">
+            <span class="ru">Промышленный</span>
+            <span class="kz" style="display:none">Өнеркәсіптік</span>
+          </div>
+          <div class="plan-desc">
+            <span class="ru">Для производственных предприятий. Полный функционал, рабочие зоны и расширенные интеграции.</span>
+            <span class="kz" style="display:none">Өндірістік кәсіпорындар үшін. Толық функционал және кеңейтілген интеграциялар.</span>
+          </div>
+          <ul class="plan-features">
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Всё из Advanced</span><span class="kz" style="display:none">Advanced-тің барлығы</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Промышленные рабочие зоны</span><span class="kz" style="display:none">Өнеркәсіптік жұмыс аймақтары</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Kaspi + WhatsApp + BI</span><span class="kz" style="display:none">Kaspi + WhatsApp + BI</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Неограниченно сотрудников</span><span class="kz" style="display:none">Шексіз қызметкерлер</span></li>
+            <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="20 6 9 17 4 12"/></svg><span class="ru">Приоритетная поддержка</span><span class="kz" style="display:none">Басым қолдау</span></li>
+          </ul>
+          <a href="/auth/register" class="btn-plan-ghost">
+            <span class="ru">Связаться с нами</span>
+            <span class="kz" style="display:none">Бізбен байланысу</span>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div>
+          <img class="footer-logo" src="public/KORT_logo.png" alt="KORT" />
+          <p class="footer-tagline">
+            <span class="ru">Универсальная система автоматизации бизнес-процессов для малого и среднего бизнеса.</span>
+            <span class="kz" style="display:none">Шағын және орта бизнес үшін бизнес-процестерді автоматтандырудың әмбебап жүйесі.</span>
+          </p>
+        </div>
+
+        <div>
+          <div class="footer-col-title"><span class="ru">Продукт</span><span class="kz" style="display:none">Өнім</span></div>
+          <ul class="footer-links">
+            <li><a href="#modules"><span class="ru">Возможности</span><span class="kz" style="display:none">Мүмкіндіктер</span></a></li>
+            <li><a href="#integrations"><span class="ru">Интеграции</span><span class="kz" style="display:none">Интеграциялар</span></a></li>
+            <li><a href="#pricing"><span class="ru">Тарифы</span><span class="kz" style="display:none">Тарифтер</span></a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-title"><span class="ru">Войти</span><span class="kz" style="display:none">Кіру</span></div>
+          <ul class="footer-links">
+            <li><a href="/auth/login"><span class="ru">Войти в систему</span><span class="kz" style="display:none">Жүйеге кіру</span></a></li>
+            <li><a href="/auth/register"><span class="ru">Регистрация</span><span class="kz" style="display:none">Тіркелу</span></a></li>
+          </ul>
+        </div>
+
+        <div>
+          <div class="footer-col-title"><span class="ru">Контакты</span><span class="kz" style="display:none">Байланыс</span></div>
+          <ul class="footer-links">
+            <li><a href="mailto:info@kort.kz">info@kort.kz</a></li>
+            <li><a href="tel:+77001234567">+7 700 123-45-67</a></li>
+            <li><a href="#"><span class="ru">Алматы, Казахстан</span><span class="kz" style="display:none">Алматы, Қазақстан</span></a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <div class="footer-copy">© 2026 KORT.</div>
+        <div class="footer-copy">ТОО «AB Electronic System»</div>
+      </div>
+    </div>
+  </footer>
+
+</div><!-- /landing-root -->
+
+
+<!-- ═══════════════════════════════════════════════════════
+     INTRO OVERLAY
+═══════════════════════════════════════════════════════ -->
+<div class="intro-overlay" data-intro>
+  <div class="intro-photo-canvas" data-photo-canvas>
+    <img class="intro-photo" data-photo src="public/hero-bg.jpg" alt="KORT" />
+    <div class="intro-photo-screen" data-photo-screen>
+      <video class="intro-photo-screen__video" data-intro-video
+        src="public/screen-record.mp4"
+        muted playsinline autoplay loop preload="auto">
+      </video>
+    </div>
+  </div>
+  <div class="intro-overlay__veil" data-intro-veil></div>
+  <div class="intro-brand" data-intro-brand>
+    <img class="intro-brand__logo" src="public/KORT_logo.png" alt="KORT" />
+  </div>
+  <div class="intro-hint" data-intro-hint>
+    <div class="intro-hint__caret"></div>
+  </div>
+</div>
+
+
+<script>
+/* ─── HERO SUB ANIMATION ─────────────────────── */
+(function() {
+  var ruText = 'Единая платформа для управления производством, складом, финансами и командой. Быстрое внедрение. Всё в одном контуре.';
+
+  // Keywords to underline
+  var highlights = ['производством', 'складом', 'финансами'];
+
+  function buildAnimated(text) {
+    var words = text.split(' ');
+    return words.map(function(word, i) {
+      var clean = word.replace(/[.,]/g, '');
+      var punct = word.slice(clean.length);
+      var delay = (0.05 + i * 0.045).toFixed(3);
+      var isHL  = highlights.indexOf(clean) !== -1;
+      var inner = isHL
+        ? '<span class="word-highlight">' + clean + '</span>' + punct
+        : clean + punct;
+      return '<span class="word" style="animation-delay:' + delay + 's">' + inner + '</span>';
+    }).join(' ');
+  }
+
+  var container = document.querySelector('#hero-sub-text .ru');
+  if (container) container.innerHTML = buildAnimated(ruText);
+})();
+
+/* ─── LANG ─────────────────────────────────── */
+(function() {
+  var lang = localStorage.getItem('kort-lang') || 'ru';
+
+  function apply(l) {
+    lang = l;
+    localStorage.setItem('kort-lang', l);
+    var on = l, off = l === 'ru' ? 'kz' : 'ru';
+    document.querySelectorAll('.' + on).forEach(function(e) { e.style.display = ''; });
+    document.querySelectorAll('.' + off).forEach(function(e) { e.style.display = 'none'; });
+    document.querySelectorAll('.lang-btn').forEach(function(b) {
+      b.classList.toggle('active', b.dataset.lang === l);
+    });
+    document.documentElement.lang = l === 'kz' ? 'kk' : 'ru';
+  }
+
+  document.querySelectorAll('.lang-btn').forEach(function(b) {
+    b.addEventListener('click', function() { apply(b.dataset.lang); });
+  });
+  apply(lang);
+})();
+
+/* ─── HEADER SCROLL ─────────────────────────── */
+(function() {
+  var h = document.querySelector('.site-header');
+  window.addEventListener('scroll', function() {
+    h.classList.toggle('scrolled', window.scrollY > 24);
+  }, { passive: true });
+})();
+
+/* ─── SCROLL REVEAL ─────────────────────────── */
+(function() {
+  var io = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) { e.target.classList.add('visible'); io.unobserve(e.target); }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -36px 0px' });
+  document.querySelectorAll('[data-reveal]').forEach(function(el) { io.observe(el); });
+})();
+
+/* ─── INTRO ─────────────────────────────────── */
+(function() {
+  var SCREEN = { left: 30.15, top: 31.15, width: 39.55, height: 41.9 };
+
+  var body        = document.body;
+  var intro       = document.querySelector('[data-intro]');
+  var introBrand  = document.querySelector('[data-intro-brand]');
+  var introVeil   = document.querySelector('[data-intro-veil]');
+  var introHint   = document.querySelector('[data-intro-hint]');
+  var photo       = document.querySelector('[data-photo]');
+  var photoCanvas = document.querySelector('[data-photo-canvas]');
+  var photoScreen = document.querySelector('[data-photo-screen]');
+  var introVideo  = document.querySelector('[data-intro-video]');
+  var landingRoot = document.querySelector('[data-landing-root]');
+  var siteHeader  = document.querySelector('[data-site-header]');
+  var heroCopy    = document.querySelector('[data-hero-copy]');
+  var played      = false;
+
+  function playVideo() {
+    if (introVideo) introVideo.play().catch(function() {});
+  }
+
+  function getCover() {
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var nw = photo.naturalWidth || vw, nh = photo.naturalHeight || vh;
+    var s = Math.max(vw / nw, vh / nh);
+    var w = nw * s, h = nh * s;
+    return { left: (vw - w) / 2, top: (vh - h) / 2, width: w, height: h };
+  }
+
+  function updateLayout() {
+    var b = getCover();
+    photoCanvas.style.left   = b.left + 'px';
+    photoCanvas.style.top    = b.top  + 'px';
+    photoCanvas.style.width  = b.width + 'px';
+    photoCanvas.style.height = b.height + 'px';
+  }
+
+  function applyRect() {
+    photoScreen.style.setProperty('--screen-left',   SCREEN.left   + '%');
+    photoScreen.style.setProperty('--screen-top',    SCREEN.top    + '%');
+    photoScreen.style.setProperty('--screen-width',  SCREEN.width  + '%');
+    photoScreen.style.setProperty('--screen-height', SCREEN.height + '%');
+  }
+
+  function getZoom() {
+    var b = getCover();
+    var sl = b.left + b.width  * (SCREEN.left   / 100);
+    var st = b.top  + b.height * (SCREEN.top    / 100);
+    var sw = b.width  * (SCREEN.width  / 100);
+    var sh = b.height * (SCREEN.height / 100);
+    var cx = sl + sw / 2, cy = st + sh / 2;
+    var sc = Math.max(window.innerWidth / sw, window.innerHeight / sh) * 0.80;
+    return { x: window.innerWidth / 2 - cx, y: window.innerHeight / 2 - cy,
+             scale: sc, ox: cx - b.left, oy: cy - b.top };
+  }
+
+  function revealLanding() {
+    gsap.set(landingRoot, { opacity: 0, y: 18, pointerEvents: 'none' });
+    gsap.set(siteHeader,  { opacity: 0, y: -14 });
+    gsap.set(heroCopy,    { opacity: 0, y: 28 });
+  }
+
+  function runIntro() {
+    if (played) return;
+    played = true;
+
+    var m = getZoom();
+    photoCanvas.style.transformOrigin = m.ox + 'px ' + m.oy + 'px';
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gsap.set(landingRoot, { opacity: 1, y: 0, pointerEvents: 'auto' });
+      gsap.set(siteHeader,  { opacity: 1, y: 0 });
+      gsap.set(heroCopy,    { opacity: 1, y: 0 });
+      gsap.set(intro, { autoAlpha: 0, pointerEvents: 'none' });
+      body.classList.remove('intro-locked');
+      var sub = document.querySelector('.hero-sub');
+      if (sub) sub.classList.add('animate');
+      return;
+    }
+
+    var ZOOM_END = 0.05 + 1.18;
+    var HOLD     = 1.0;
+    var FADE_IN  = ZOOM_END + HOLD;
+
+    gsap.timeline({
+      defaults: { ease: 'power3.out' },
+      onComplete: function() {
+        gsap.set(landingRoot, { pointerEvents: 'auto', clearProps: 'y' });
+        body.classList.remove('intro-locked');
+        if (introVideo) introVideo.pause();
+      }
+    })
+    .to(introBrand, { opacity: 0, y: -20, duration: 0.32, ease: 'power2.out' }, 0)
+    .to(introHint,  { opacity: 0, duration: 0.28 }, 0)
+    .to(introVeil,  { opacity: 0.7, duration: 0.82, ease: 'power2.inOut' }, 0)
+    .to(photoCanvas,{ x: m.x, y: m.y - 8, scale: m.scale, duration: 1.18, ease: 'expo.inOut' }, 0.05)
+    .to(photoScreen,{ borderRadius: '0rem', duration: 0.96, ease: 'expo.inOut' }, 0.08)
+    .to(introVeil,  { opacity: 0, duration: 0.75, ease: 'power1.inOut' }, ZOOM_END + 0.1)
+    .to(introVideo, { opacity: 0, duration: 0.9,  ease: 'power2.inOut' }, FADE_IN)
+    .to(intro,      { autoAlpha: 0, duration: 0.7, ease: 'power2.inOut' }, FADE_IN + 0.3)
+    .to(landingRoot,{ opacity: 1, y: 0, duration: 0.72, ease: 'power2.out' }, FADE_IN + 0.4)
+    .to(siteHeader, { opacity: 1, y: 0, duration: 0.4,  ease: 'power2.out' }, FADE_IN + 0.65)
+    .to(heroCopy,   { opacity: 1, y: 0, duration: 0.55, ease: 'power2.out' }, FADE_IN + 0.78)
+    .call(function() {
+      var sub = document.querySelector('.hero-sub');
+      if (sub) sub.classList.add('animate');
+    }, null, FADE_IN + 1.0);
+  }
+
+  window.addEventListener('load', function() {
+    body.classList.add('intro-locked');
+    updateLayout(); applyRect(); revealLanding(); playVideo();
+    if (!photo.complete) photo.addEventListener('load', updateLayout, { once: true });
+    photoScreen.addEventListener('click', runIntro, { once: true });
+  });
+
+  window.addEventListener('resize', function() { updateLayout(); applyRect(); });
+})();
+</script>
+
+</body>
+</html>

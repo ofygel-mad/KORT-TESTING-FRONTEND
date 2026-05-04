@@ -149,7 +149,7 @@ export default function CanvasPage() {
 
   function handleLogout() {
     clearAuth();
-    navigate('/auth/login', { replace: true });
+    navigate('/', { replace: true });
   }
 
   if (isMobile) {
