@@ -137,24 +137,43 @@ export function sanitizeDraft(data: Partial<FormData>): Partial<FormData> {
   };
 }
 
-const EMPTY_ITEM = {
-  productName: '',
-  gender: '',
-  length: '',
-  color: '',
-  size: '',
-  quantity: 1,
-  unitPrice: undefined,
-  itemDiscount: undefined,
-  workshopNotes: '',
-};
+function createEmptyItem(): FormData['items'][number] {
+  return {
+    productName: '',
+    gender: '',
+    length: '',
+    color: '',
+    size: '',
+    quantity: 1,
+    unitPrice: undefined,
+    itemDiscount: undefined,
+    workshopNotes: '',
+  } as unknown as FormData['items'][number];
+}
 
 function createEmptyFormDefaults(): Partial<FormData> {
   return {
+    clientName: '',
+    clientPhone: '',
+    clientPhoneForeign: '',
+    city: '',
+    streetAddress: '',
+    postalCode: '',
+    deliveryType: '',
+    source: '',
     urgency: 'normal',
     isDemandingClient: false,
     orderDate: todayIso(),
-    items: [{ ...EMPTY_ITEM }],
+    dueDate: '',
+    orderDiscount: undefined,
+    deliveryFee: undefined,
+    bankCommissionPercent: undefined,
+    prepayment: undefined,
+    paymentMethod: undefined,
+    paymentBreakdown: undefined,
+    expectedPaymentMethod: '',
+    items: [createEmptyItem()],
+    managerNote: '',
   } as unknown as Partial<FormData>;
 }
 
@@ -404,7 +423,7 @@ export default function ChapanNewOrderPage() {
       receiptInputRef.current.value = '';
     }
     setDraftRestored(false);
-    setBankCommissionPrefilled(false);
+    setBankCommissionPrefilled(true);
     autosaveEnabledRef.current = true;
   }
 
@@ -555,6 +574,7 @@ export default function ChapanNewOrderPage() {
                       {...field}
                       value={field.value ?? ''}
                       onChange={(event) => field.onChange(formatPersonNameInput(event.target.value))}
+                      aria-label="ФИО клиента"
                       className={`${styles.input} ${errors.clientName ? styles.inputError : ''}`}
                       placeholder="Аскаров Аскар Аскарович"
                       autoFocus
@@ -575,6 +595,7 @@ export default function ChapanNewOrderPage() {
                       inputMode="tel"
                       value={field.value ?? ''}
                       onChange={(event) => field.onChange(formatKazakhPhoneInput(event.target.value))}
+                      aria-label="Телефон KZ"
                       className={`${styles.input} ${errors.clientPhone ? styles.inputError : ''}`}
                       placeholder="+7 (701)-234-56-78"
                     />
@@ -594,6 +615,7 @@ export default function ChapanNewOrderPage() {
                       inputMode="tel"
                       value={field.value ?? ''}
                       onChange={(event) => field.onChange(event.target.value)}
+                      aria-label="Иностранный телефон"
                       className={styles.input}
                       placeholder="+44 7700 900123"
                     />
@@ -605,17 +627,17 @@ export default function ChapanNewOrderPage() {
               <div className={styles.field}>
                 <label className={styles.label}>Город</label>
                 <Controller control={control} name="city" render={({ field }) => (
-                  <SelectOrText {...field} value={field.value ?? ''} options={CITIES} placeholder="Алматы" className={styles.input} />
+                  <SelectOrText {...field} value={field.value ?? ''} options={CITIES} placeholder="Алматы" className={styles.input} aria-label="Город" />
                 )} />
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>Почтовый индекс</label>
-                <input {...register('postalCode')} className={styles.input} placeholder="050000" maxLength={10} />
+                <input {...register('postalCode')} className={styles.input} placeholder="050000" maxLength={10} aria-label="Почтовый индекс" />
               </div>
               <div className={styles.field}>
                 <label className={styles.label}>Доставка</label>
                 <Controller control={control} name="deliveryType" render={({ field }) => (
-                  <SelectOrText {...field} value={field.value ?? ''} options={deliveryOptions} placeholder="Выберите или введите" className={styles.input} />
+                  <SelectOrText {...field} value={field.value ?? ''} options={deliveryOptions} placeholder="Выберите или введите" className={styles.input} aria-label="Доставка" />
                 )} />
               </div>
             </div>
@@ -626,6 +648,7 @@ export default function ChapanNewOrderPage() {
                   {...register('streetAddress')}
                   className={styles.input}
                   placeholder="ул. Абая 10, кв. 5 / ориентир"
+                  aria-label="Адрес доставки"
                 />
               </div>
             </div>
@@ -633,7 +656,7 @@ export default function ChapanNewOrderPage() {
               <div className={styles.field}>
                 <label className={styles.label}>Источник</label>
                 <Controller control={control} name="source" render={({ field }) => (
-                  <SelectOrText {...field} value={field.value ?? ''} options={SOURCES} placeholder="Instagram, звонок..." className={styles.input} />
+                  <SelectOrText {...field} value={field.value ?? ''} options={SOURCES} placeholder="Instagram, звонок..." className={styles.input} aria-label="Источник" />
                 )} />
               </div>
             </div>
@@ -784,7 +807,7 @@ export default function ChapanNewOrderPage() {
                 <div className={styles.formError}><AlertCircle size={13} />{errors.items.message}</div>
               )}
               <div className={styles.itemsFooter}>
-                <button type="button" className={styles.addItemBtn} onClick={() => append({ productName: '', gender: '' as const, length: '', color: '', size: '', quantity: 1, unitPrice: 0, itemDiscount: 0, workshopNotes: '' })}>
+                <button type="button" className={styles.addItemBtn} onClick={() => append(createEmptyItem())}>
                   <Plus size={13} /> Добавить строку
                 </button>
                 {itemsTotal > 0 && (
@@ -845,6 +868,7 @@ export default function ChapanNewOrderPage() {
                             onBlur={f.onBlur}
                             placeholder="Назар — жуп шапан"
                             className={`${styles.input} ${errors.items?.[idx]?.productName ? styles.inputError : ''}`}
+                            ariaLabel={`Модель позиции ${idx + 1}`}
                           />
                         )} />
                         {errors.items?.[idx]?.productName && <span className={styles.fieldError}>{errors.items[idx]?.productName?.message}</span>}
@@ -855,8 +879,9 @@ export default function ChapanNewOrderPage() {
                           const catalogSizes = getCatalogOptions(_item?.productName ?? '', 'size');
                           const opts = catalogSizes.length > 0 ? catalogSizes : sizeOptions;
                           return (
-                            <SearchableSelect options={opts} value={f.value} onChange={f.onChange} onBlur={f.onBlur} placeholder="48"
+                          <SearchableSelect options={opts} value={f.value} onChange={f.onChange} onBlur={f.onBlur} placeholder="48"
                               className={`${styles.input} ${errors.items?.[idx]?.size ? styles.inputError : ''}`}
+                              ariaLabel={`Размер позиции ${idx + 1}`}
                             />
                           );
                         }} />
@@ -919,6 +944,7 @@ export default function ChapanNewOrderPage() {
                             onBlur={f.onBlur}
                             onWheel={e => e.currentTarget.blur()}
                             onFocus={e => e.target.select()}
+                            aria-label={`Кол-во позиции ${idx + 1}`}
                           />
                         )} />
                       </div>
@@ -926,6 +952,7 @@ export default function ChapanNewOrderPage() {
                         <label className={styles.label}>Цена за ед. (₸)</label>
                         <Controller control={control} name={`items.${idx}.unitPrice`} render={({ field: f }) => (
                           <input type="text" inputMode="numeric" className={styles.input} placeholder="0"
+                            aria-label={`Цена за ед. позиции ${idx + 1}`}
                             value={f.value ?? ''} onChange={e => f.onChange(parseOptionalAmount(e.target.value))}
                             onWheel={e => e.currentTarget.blur()} onFocus={e => e.target.select()} />
                         )} />
@@ -934,6 +961,7 @@ export default function ChapanNewOrderPage() {
                         <label className={styles.label}>Скидка (₸)</label>
                         <Controller control={control} name={`items.${idx}.itemDiscount`} render={({ field: f }) => (
                           <input type="text" inputMode="numeric" className={styles.input} placeholder="0"
+                            aria-label={`Скидка позиции ${idx + 1}`}
                             value={f.value ?? ''} onChange={e => f.onChange(parseOptionalAmount(e.target.value))}
                             onWheel={e => e.currentTarget.blur()} onFocus={e => e.target.select()} />
                         )} />
@@ -998,7 +1026,7 @@ export default function ChapanNewOrderPage() {
               )}
               <div className={styles.itemsFooter}>
                 <button type="button" className={styles.addItemBtn}
-                  onClick={() => append({ productName: '', gender: '' as const, length: '', color: '', size: '', quantity: 1, unitPrice: 0, itemDiscount: 0, workshopNotes: '' })}>
+                  onClick={() => append(createEmptyItem())}>
                   <Plus size={13} /> Добавить позицию
                 </button>
                 {itemsTotal > 0 && (
@@ -1097,6 +1125,7 @@ export default function ChapanNewOrderPage() {
                     type="text" inputMode="numeric"
                     className={styles.finInput}
                     placeholder="0 ₸"
+                    aria-label="Доставка"
                     value={field.value ?? ''}
                     onChange={(e) => field.onChange(parseOptionalAmount(e.target.value))}
                     onWheel={(e) => e.currentTarget.blur()}
@@ -1114,6 +1143,7 @@ export default function ChapanNewOrderPage() {
                       type="text" inputMode="numeric"
                       className={`${styles.finInput} ${styles.discountAmtInput}`}
                       placeholder="0 ₸"
+                      aria-label="Скидка на заказ"
                       value={field.value ?? ''}
                       onChange={(e) => {
                         const amt = parseOptionalAmount(e.target.value);
@@ -1131,6 +1161,7 @@ export default function ChapanNewOrderPage() {
                       type="number" min="0" max="100" step="0.1"
                       className={styles.discountPctInput}
                       placeholder="0"
+                      aria-label="Процент скидки"
                       value={discountPercent}
                       onChange={(e) => {
                         setDiscountPercent(e.target.value);
@@ -1161,6 +1192,7 @@ export default function ChapanNewOrderPage() {
                           type="number" min="0" max="100" step="0.1"
                           className={styles.discountPctInput}
                           placeholder="0"
+                          aria-label="Ставка комиссии"
                           value={rateInput}
                           autoFocus
                           onChange={(e) => setRateInput(e.target.value)}
@@ -1362,7 +1394,7 @@ export default function ChapanNewOrderPage() {
           <div className={styles.sectionBody}>
             <div className={styles.field}>
               <label className={styles.label}>Внутренняя заметка (только для команды)</label>
-              <textarea {...register('managerNote')} className={styles.textarea} placeholder="Особые пожелания, договорённости..." rows={3} />
+              <textarea {...register('managerNote')} className={styles.textarea} placeholder="Особые пожелания, договорённости..." rows={3} aria-label="Внутренняя заметка" />
             </div>
           </div>
         </section>

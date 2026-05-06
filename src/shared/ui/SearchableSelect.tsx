@@ -1,4 +1,4 @@
-import { useDeferredValue, useEffect, useState } from 'react';
+import { useDeferredValue, useEffect, useRef, useState } from 'react';
 import styles from './SearchableSelect.module.css';
 
 export type SearchableSelectOption =
@@ -33,6 +33,7 @@ export function SearchableSelect({
   const [inputText, setInputText] = useState(value);
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const suppressBlurCommitRef = useRef(false);
   const deferredInput = useDeferredValue(inputText);
 
   useEffect(() => {
@@ -68,6 +69,7 @@ export function SearchableSelect({
   }, [filtered, open, value]);
 
   function commit(nextValue: string) {
+    suppressBlurCommitRef.current = true;
     setInputText(nextValue);
     onChange(nextValue);
     setOpen(false);
@@ -121,14 +123,17 @@ export function SearchableSelect({
           }
         }}
         onBlur={() => {
-          setTimeout(() => {
-            setOpen(false);
-            setHighlightedIndex(-1);
-            if (inputText !== value) {
-              onChange(inputText);
-            }
+          setOpen(false);
+          setHighlightedIndex(-1);
+          if (suppressBlurCommitRef.current) {
+            suppressBlurCommitRef.current = false;
             onBlur?.();
-          }, 150);
+            return;
+          }
+          if (inputText !== value) {
+            onChange(inputText);
+          }
+          onBlur?.();
         }}
       />
       {open && filtered.length > 0 && (

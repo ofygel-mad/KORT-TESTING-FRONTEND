@@ -1,0 +1,1 @@
+const u=/-(\d+)$/;function i(r){return r.trim().replace(/^#/,"").replace(/\s+/g," ")}function c(r){return i(r).replace(u,"")}function m(r,n){const t=c(r),e=Number(n);return Number.isFinite(e)&&e>0?`${t}-${Math.trunc(e)}`:t}export{m as f};

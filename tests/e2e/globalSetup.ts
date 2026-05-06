@@ -1,4 +1,4 @@
-import { chromium, expect, type StorageState } from '@playwright/test';
+import { request, type StorageState } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
@@ -8,6 +8,9 @@ const authDir = path.join(__dirname, '.auth');
 const E2E_HOST = process.env.E2E_HOST || '127.0.0.1';
 const E2E_FRONTEND_PORT = process.env.E2E_FRONTEND_PORT || '4174';
 const E2E_BASE_URL = process.env.E2E_BASE_URL || `http://${E2E_HOST}:${E2E_FRONTEND_PORT}`;
+const E2E_API_ORIGIN = process.env.E2E_API_BASE_URL
+  ? process.env.E2E_API_BASE_URL.replace(/\/api\/v1\/?$/, '')
+  : `http://${E2E_HOST}:${process.env.E2E_BACKEND_PORT || '8002'}`;
 
 async function globalSetup() {
   if (!fs.existsSync(authDir)) {
@@ -15,46 +18,107 @@ async function globalSetup() {
   }
 
   async function authenticate() {
-    const browser = await chromium.launch();
-    const page = await browser.newPage();
+    const api = await request.newContext({ baseURL: E2E_API_ORIGIN });
 
     try {
-      page.on('console', (msg) => {
-        if (msg.type() === 'error') console.error('[chromium] Browser console error:', msg.text());
+      console.log('[chromium] Authenticating via API...');
+      const loginResponse = await api.post('/api/v1/auth/login', {
+        data: {
+          email: 'admin@kort.local',
+          password: 'demo1234',
+        },
       });
+      const loginText = await loginResponse.text();
+      if (!loginResponse.ok()) {
+        throw new Error(`Login failed with ${loginResponse.status()}: ${loginText}`);
+      }
 
-      console.log('[chromium] Navigating to login page...');
-      await page.goto(`${E2E_BASE_URL}/auth/login`, { waitUntil: 'domcontentloaded' }).catch(() => {});
-      await page.waitForURL(/\/auth\/login$/, { timeout: 30000 }).catch(() => {});
-      console.log('[chromium] Login page loaded');
+      const session = JSON.parse(loginText) as {
+        access: string;
+        refresh: string;
+        user: {
+          id: string;
+          full_name: string;
+          email: string;
+          phone?: string | null;
+          avatar_url?: string | null;
+          status?: string;
+          is_owner?: boolean;
+          employee_permissions?: string[];
+          account_status?: string;
+        };
+        org: {
+          id: string;
+          name: string;
+          slug: string;
+          mode: 'basic' | 'advanced' | 'industrial';
+          currency: string;
+          onboarding_completed?: boolean;
+        } | null;
+        capabilities: string[];
+        role: 'owner' | 'admin' | 'manager' | 'viewer';
+        membership: {
+          companyId: string | null;
+          companyName: string | null;
+          companySlug: string | null;
+          status: 'none' | 'pending' | 'active' | 'rejected';
+          role: 'owner' | 'admin' | 'manager' | 'viewer' | null;
+          source: 'company_registration' | 'employee_registration' | 'invite' | 'request' | 'manual' | null;
+          requestId?: string | null;
+          inviteToken?: string | null;
+          joinedAt?: string | null;
+          updatedAt?: string | null;
+        };
+      };
 
-      const email = 'admin@kort.local';
-      const password = 'demo1234';
-
-      console.log('[chromium] Filling login form...');
-      const fields = page.locator('form input:not([type="checkbox"])');
-      await expect(fields).toHaveCount(2, { timeout: 30000 });
-      await fields.nth(0).fill(email);
-      await fields.nth(1).fill(password);
-
-      console.log('[chromium] Submitting login form...');
-      await page.locator('form button[type="submit"]').click();
-
-      console.log('[chromium] Waiting for redirect from login page (30s timeout)...');
-      await page.waitForURL((url) => !url.pathname.includes('/auth/login'), { timeout: 30000 });
-      console.log('[chromium] Successfully redirected from login page');
-
-      await page.evaluate(() => {
-        window.sessionStorage.setItem('kort.workspace:intro-v1', '1');
-      });
-
-      const rawState = await page.context().storageState();
       const sanitizedState: StorageState = {
-        cookies: rawState.cookies,
-        origins: rawState.origins.map((origin) => ({
-          origin: origin.origin,
-          localStorage: origin.localStorage ?? [],
-        })),
+        cookies: [],
+        origins: [
+          {
+            origin: E2E_BASE_URL,
+            localStorage: [
+              {
+                name: 'kort-pin',
+                value: JSON.stringify({ state: { pin: null, isTrustedDevice: true }, version: 0 }),
+              },
+              {
+                name: 'kort-ui',
+                value: JSON.stringify({ state: { sidebarCollapsed: false, focusMode: false }, version: 0 }),
+              },
+              {
+                name: 'kort-auth',
+                value: JSON.stringify({
+                  state: {
+                    user: session.user,
+                    org: session.org,
+                    token: session.access,
+                    refreshToken: session.refresh,
+                    role: session.role,
+                    capabilities: session.capabilities,
+                    membership: session.membership,
+                    inviteContext: null,
+                    userOrgs: session.org ? [{
+                      id: session.org.id,
+                      name: session.org.name,
+                      slug: session.org.slug,
+                      mode: session.org.mode,
+                      currency: session.org.currency,
+                      onboarding_completed: session.org.onboarding_completed,
+                      role: session.role,
+                    }] : [],
+                    selectedOrgId: null,
+                    isUnlocked: true,
+                  },
+                  version: 0,
+                }),
+              },
+              {
+                name: 'kort.workspace:intro-v1',
+                value: '1',
+              },
+            ],
+          },
+        ],
       };
 
       for (const browserName of ['chromium', 'firefox', 'webkit'] as const) {
@@ -66,7 +130,7 @@ async function globalSetup() {
       console.error('[chromium] Global setup failed:', error);
       throw new Error('Failed to authenticate during global setup');
     } finally {
-      await browser.close();
+      await api.dispose();
     }
   }
 
