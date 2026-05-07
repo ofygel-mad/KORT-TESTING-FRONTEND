@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import {
   Upload, CheckCircle2, AlertCircle, Loader2,
   Plus, Trash2, ChevronDown, ChevronRight,
-  Pencil, Check, X, Package, Image,
+  Pencil, Check, X, Package, Image, Boxes,
 } from 'lucide-react';
 import {
   useSmartImportProducts, useSmartImportColors,
@@ -262,6 +262,8 @@ export default function ChapanCatalogPage() {
   const [newDefLabel, setNewDefLabel] = useState('');
   const [newDefType, setNewDefType] = useState<DefType>('select');
   const [search, setSearch] = useState('');
+  const [addOpen, setAddOpen] = useState(false);
+  const addInputRef = useRef<HTMLInputElement>(null);
   const productsRef = useRef<HTMLInputElement>(null);
   const colorsRef = useRef<HTMLInputElement>(null);
 
@@ -288,7 +290,29 @@ export default function ChapanCatalogPage() {
     const code = label.toLowerCase().replace(/[^a-zа-я0-9]/gi, '_').replace(/__+/g, '_');
     createDef.mutate({ code, label, inputType: newDefType });
     setNewDefLabel('');
+    setAddOpen(false);
   };
+
+  const submitNewProduct = () => {
+    const name = newProdName.trim();
+    if (!name) return;
+    createProduct.mutate(name);
+    setNewProdName('');
+    setAddOpen(false);
+  };
+
+  const openAddForm = () => {
+    setAddOpen(true);
+    setTimeout(() => addInputRef.current?.focus(), 0);
+  };
+
+  const closeAddForm = () => {
+    setAddOpen(false);
+    setNewProdName('');
+    setNewDefLabel('');
+  };
+
+  const addBtnLabel = activeTab === 'catalog' ? 'Добавить товар' : 'Добавить поле';
 
   return (
     <div className={styles.root}>
@@ -315,6 +339,15 @@ export default function ChapanCatalogPage() {
           e.target.value = '';
         }}
       />
+
+      {/* ── Page header ── */}
+      <div className={styles.header}>
+        <div className={styles.headerTitle}>
+          <Boxes size={18} />
+          <span>Каталог</span>
+        </div>
+        <div className={styles.headerSub}>Товары, поля и значения для складского каталога</div>
+      </div>
 
       {/* ── Toolbar ── */}
       <div className={styles.toolbar}>
@@ -379,6 +412,16 @@ export default function ChapanCatalogPage() {
 
         <div className={styles.toolbarSpacer} />
 
+        <button
+          type="button"
+          className={`${styles.addBtn} ${addOpen ? styles.addBtnActive : ''}`}
+          onClick={addOpen ? closeAddForm : openAddForm}
+          title={addOpen ? 'Закрыть форму' : addBtnLabel}
+        >
+          {addOpen ? <X size={13} /> : <Plus size={13} />}
+          {addBtnLabel}
+        </button>
+
         <div className={styles.searchWrap}>
           <SearchInput
             value={search}
@@ -388,64 +431,73 @@ export default function ChapanCatalogPage() {
         </div>
       </div>
 
-      {/* ── Sub-toolbar (section title + add controls) ── */}
-      <div className={styles.subToolbar}>
-        {activeTab === 'catalog' ? (
-          <>
-            <span className={styles.sectionTitle}>Каталог товаров</span>
-            <input
-              className={styles.addInput}
-              placeholder="Название нового товара..."
-              value={newProdName}
-              onChange={(e) => setNewProdName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  if (newProdName.trim()) { createProduct.mutate(newProdName.trim()); setNewProdName(''); }
-                }
-              }}
-            />
-            <button
-              type="button"
-              className={styles.addBtn}
-              onClick={() => { if (newProdName.trim()) { createProduct.mutate(newProdName.trim()); setNewProdName(''); } }}
-              disabled={!newProdName.trim() || createProduct.isPending}
-            >
-              <Plus size={13} /> Добавить товар
-            </button>
-          </>
-        ) : (
-          <>
-            <span className={styles.sectionTitle}>Поля товара</span>
-            <input
-              className={styles.addInput}
-              placeholder="Название поля (напр. Сезон)"
-              value={newDefLabel}
-              onChange={(e) => setNewDefLabel(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitNewDef(); } }}
-            />
-            <select
-              className={styles.typeSelect}
-              value={newDefType}
-              onChange={(e) => setNewDefType(e.target.value as DefType)}
-              aria-label="Тип поля"
-            >
-              <option value="select">Список (выбор)</option>
-              <option value="text">Текст</option>
-              <option value="number">Число</option>
-              <option value="boolean">Да / Нет</option>
-            </select>
-            <button
-              type="button"
-              className={styles.addBtn}
-              onClick={submitNewDef}
-              disabled={!newDefLabel.trim() || createDef.isPending}
-            >
-              <Plus size={13} /> Добавить поле
-            </button>
-          </>
-        )}
-      </div>
+      {/* ── Add form (только при открытии) ── */}
+      {addOpen && (
+        <div className={styles.addBar}>
+          {activeTab === 'catalog' ? (
+            <>
+              <input
+                ref={addInputRef}
+                className={styles.addInput}
+                placeholder="Название нового товара..."
+                value={newProdName}
+                onChange={(e) => setNewProdName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); submitNewProduct(); }
+                  if (e.key === 'Escape') { e.preventDefault(); closeAddForm(); }
+                }}
+              />
+              <button
+                type="button"
+                className={styles.addSaveBtn}
+                onClick={submitNewProduct}
+                disabled={!newProdName.trim() || createProduct.isPending}
+              >
+                <Check size={13} /> Сохранить
+              </button>
+              <button type="button" className={styles.addCancelBtn} onClick={closeAddForm}>
+                Отмена
+              </button>
+            </>
+          ) : (
+            <>
+              <input
+                ref={addInputRef}
+                className={styles.addInput}
+                placeholder="Название поля (напр. Сезон)"
+                value={newDefLabel}
+                onChange={(e) => setNewDefLabel(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') { e.preventDefault(); submitNewDef(); }
+                  if (e.key === 'Escape') { e.preventDefault(); closeAddForm(); }
+                }}
+              />
+              <select
+                className={styles.typeSelect}
+                value={newDefType}
+                onChange={(e) => setNewDefType(e.target.value as DefType)}
+                aria-label="Тип поля"
+              >
+                <option value="select">Список (выбор)</option>
+                <option value="text">Текст</option>
+                <option value="number">Число</option>
+                <option value="boolean">Да / Нет</option>
+              </select>
+              <button
+                type="button"
+                className={styles.addSaveBtn}
+                onClick={submitNewDef}
+                disabled={!newDefLabel.trim() || createDef.isPending}
+              >
+                <Check size={13} /> Сохранить
+              </button>
+              <button type="button" className={styles.addCancelBtn} onClick={closeAddForm}>
+                Отмена
+              </button>
+            </>
+          )}
+        </div>
+      )}
 
       {/* ── Content ── */}
       <div className={styles.content}>
