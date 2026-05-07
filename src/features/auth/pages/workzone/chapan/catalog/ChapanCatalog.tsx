@@ -388,90 +388,93 @@ export default function ChapanCatalogPage() {
         </div>
       </div>
 
+      {/* ── Sub-toolbar (section title + add controls) ── */}
+      <div className={styles.subToolbar}>
+        {activeTab === 'catalog' ? (
+          <>
+            <span className={styles.sectionTitle}>Каталог товаров</span>
+            <input
+              className={styles.addInput}
+              placeholder="Название нового товара..."
+              value={newProdName}
+              onChange={(e) => setNewProdName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (newProdName.trim()) { createProduct.mutate(newProdName.trim()); setNewProdName(''); }
+                }
+              }}
+            />
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={() => { if (newProdName.trim()) { createProduct.mutate(newProdName.trim()); setNewProdName(''); } }}
+              disabled={!newProdName.trim() || createProduct.isPending}
+            >
+              <Plus size={13} /> Добавить товар
+            </button>
+          </>
+        ) : (
+          <>
+            <span className={styles.sectionTitle}>Поля товара</span>
+            <input
+              className={styles.addInput}
+              placeholder="Название поля (напр. Сезон)"
+              value={newDefLabel}
+              onChange={(e) => setNewDefLabel(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitNewDef(); } }}
+            />
+            <select
+              className={styles.typeSelect}
+              value={newDefType}
+              onChange={(e) => setNewDefType(e.target.value as DefType)}
+              aria-label="Тип поля"
+            >
+              <option value="select">Список (выбор)</option>
+              <option value="text">Текст</option>
+              <option value="number">Число</option>
+              <option value="boolean">Да / Нет</option>
+            </select>
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={submitNewDef}
+              disabled={!newDefLabel.trim() || createDef.isPending}
+            >
+              <Plus size={13} /> Добавить поле
+            </button>
+          </>
+        )}
+      </div>
+
       {/* ── Content ── */}
       <div className={styles.content}>
         {activeTab === 'catalog' && (
-          <>
-            <div className={styles.sectionTitle}>Каталог товаров</div>
-            <div className={styles.addRow}>
-              <input
-                className={styles.addInput}
-                placeholder="Название нового товара..."
-                value={newProdName}
-                onChange={(e) => setNewProdName(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault();
-                    if (newProdName.trim()) { createProduct.mutate(newProdName.trim()); setNewProdName(''); }
-                  }
-                }}
-              />
-              <button
-                type="button"
-                className={styles.addBtn}
-                onClick={() => { if (newProdName.trim()) { createProduct.mutate(newProdName.trim()); setNewProdName(''); } }}
-                disabled={!newProdName.trim()}
-              >
-                <Plus size={13} /> Добавить
-              </button>
-            </div>
-            <div className={styles.list}>
-              {filteredProducts.map((p) => (
-                <ProductRow key={p.id} product={p} definitions={definitions} />
-              ))}
-              {products.length === 0 && (
-                <div className={styles.empty}>Загрузите таблицу товаров или добавьте вручную</div>
-              )}
-              {products.length > 0 && filteredProducts.length === 0 && (
-                <div className={styles.empty}>По запросу «{search}» ничего не найдено</div>
-              )}
-            </div>
-          </>
+          <div className={styles.list}>
+            {filteredProducts.map((p) => (
+              <ProductRow key={p.id} product={p} definitions={definitions} />
+            ))}
+            {products.length === 0 && (
+              <div className={styles.empty}>Загрузите таблицу товаров или добавьте вручную</div>
+            )}
+            {products.length > 0 && filteredProducts.length === 0 && (
+              <div className={styles.empty}>По запросу «{search}» ничего не найдено</div>
+            )}
+          </div>
         )}
 
         {activeTab === 'fields' && (
-          <>
-            <div className={styles.sectionTitle}>Поля товара</div>
-            <div className={styles.addRow}>
-              <input
-                className={styles.addInput}
-                placeholder="Название поля (напр. Сезон)"
-                value={newDefLabel}
-                onChange={(e) => setNewDefLabel(e.target.value)}
-                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); submitNewDef(); } }}
-              />
-              <select
-                className={styles.typeSelect}
-                value={newDefType}
-                onChange={(e) => setNewDefType(e.target.value as DefType)}
-                aria-label="Тип поля"
-              >
-                <option value="select">Список (выбор)</option>
-                <option value="text">Текст</option>
-                <option value="number">Число</option>
-                <option value="boolean">Да / Нет</option>
-              </select>
-              <button
-                type="button"
-                className={styles.addBtn}
-                onClick={submitNewDef}
-                disabled={!newDefLabel.trim() || createDef.isPending}
-              >
-                <Plus size={13} /> Добавить поле
-              </button>
-            </div>
-            <div className={styles.list}>
-              {filteredDefinitions.map((def) => (
-                <FieldDefinitionRow key={def.id} def={def} />
-              ))}
-              {definitions.length === 0 && (
-                <div className={styles.empty}>Загрузите таблицу цветов или добавьте поле вручную</div>
-              )}
-              {definitions.length > 0 && filteredDefinitions.length === 0 && (
-                <div className={styles.empty}>По запросу «{search}» ничего не найдено</div>
-              )}
-            </div>
-          </>
+          <div className={styles.list}>
+            {filteredDefinitions.map((def) => (
+              <FieldDefinitionRow key={def.id} def={def} />
+            ))}
+            {definitions.length === 0 && (
+              <div className={styles.empty}>Загрузите таблицу цветов или добавьте поле вручную</div>
+            )}
+            {definitions.length > 0 && filteredDefinitions.length === 0 && (
+              <div className={styles.empty}>По запросу «{search}» ничего не найдено</div>
+            )}
+          </div>
         )}
       </div>
 
