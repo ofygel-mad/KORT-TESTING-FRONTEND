@@ -80,13 +80,15 @@
   overflow-x: hidden;
   min-height: 0;
   -webkit-overflow-scrolling: touch;
-  overscroll-behavior-y: auto;
+  overscroll-behavior-y: none;
   touch-action: pan-y pinch-zoom;
+  background: var(--bg-canvas);
 }
 
 .routeViewport {
   min-height: 100%;
   height: 100%;
+  background: var(--bg-canvas);
 }
 
 .offlineBanner {
