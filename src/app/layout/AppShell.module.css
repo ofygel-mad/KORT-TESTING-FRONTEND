@@ -127,6 +127,13 @@
     padding-bottom: calc(var(--bottom-nav-height, 60px) + env(safe-area-inset-bottom, 0px));
   }
 
+  /* Release the fixed 100% height so route content can grow and `.main` can
+     scroll naturally. Desktop still needs `height: 100%` for absolutely-
+     positioned canvas widgets (WorkspaceCanvas). */
+  .routeViewport {
+    height: auto;
+  }
+
   .offlineBanner {
     left: 12px;
     right: 12px;

@@ -6,12 +6,13 @@
 }
 
 .mobileRoot {
+  /* Let parent `.main` (AppShell) own the scroll — nesting overflow-y here
+     used to capture touch events and clip content above the bottom nav. */
   min-height: 100%;
-  overflow-y: auto;
   padding:
     max(18px, env(safe-area-inset-top, 0px))
     16px
-    calc(var(--bottom-nav-height, 60px) + env(safe-area-inset-bottom, 0px) + 28px);
+    28px;
   display: flex;
   flex-direction: column;
   gap: 18px;
