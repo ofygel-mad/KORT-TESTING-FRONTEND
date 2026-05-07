@@ -76,12 +76,14 @@ export const WarehouseHeader: React.FC<WarehouseHeaderProps> = ({
 
   useEffect(() => {
     const POPUP_WIDTH = 260;
-    const SAFE_MARGIN = 16;
+    const SAFE_MARGIN = 8;
     const updateFlip = () => {
       const node = infoWrapRef.current;
       if (!node) return;
       const rect = node.getBoundingClientRect();
-      setPopupFlipLeft(rect.right - POPUP_WIDTH < SAFE_MARGIN);
+      const row = node.parentElement;
+      const rowLeft = row ? row.getBoundingClientRect().left : 0;
+      setPopupFlipLeft(rect.right - POPUP_WIDTH < rowLeft + SAFE_MARGIN);
     };
     updateFlip();
     window.addEventListener('resize', updateFlip);
