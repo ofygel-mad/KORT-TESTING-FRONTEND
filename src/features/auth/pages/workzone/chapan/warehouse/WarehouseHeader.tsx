@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Warehouse, Filter, ChevronDown, Eye, Settings, Plus, Download, AlertCircle, HelpCircle } from 'lucide-react';
 import { Button } from '../../../../shared/ui/Button';
 import { Badge } from '../../../../shared/ui/Badge';
@@ -58,6 +58,8 @@ export const WarehouseHeader: React.FC<WarehouseHeaderProps> = ({
 }) => {
   const filterRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<HTMLDivElement>(null);
+  const infoWrapRef = useRef<HTMLDivElement>(null);
+  const [popupFlipLeft, setPopupFlipLeft] = useState(false);
 
   const currentStatusLabel =
     STATUS_FILTER_OPTIONS.find((option) => option.value === statusFilter)?.label || 'Фильтр';
@@ -71,6 +73,28 @@ export const WarehouseHeader: React.FC<WarehouseHeaderProps> = ({
     onListModeChange(mode);
     onViewOpen(false);
   };
+
+  useEffect(() => {
+    const POPUP_WIDTH = 260;
+    const SAFE_MARGIN = 16;
+    const updateFlip = () => {
+      const node = infoWrapRef.current;
+      if (!node) return;
+      const rect = node.getBoundingClientRect();
+      setPopupFlipLeft(rect.right - POPUP_WIDTH < SAFE_MARGIN);
+    };
+    updateFlip();
+    window.addEventListener('resize', updateFlip);
+    let ro: ResizeObserver | undefined;
+    if (typeof ResizeObserver !== 'undefined' && infoWrapRef.current?.parentElement) {
+      ro = new ResizeObserver(updateFlip);
+      ro.observe(infoWrapRef.current.parentElement);
+    }
+    return () => {
+      window.removeEventListener('resize', updateFlip);
+      ro?.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -211,11 +235,11 @@ export const WarehouseHeader: React.FC<WarehouseHeaderProps> = ({
           {exporting ? 'Экспорт...' : 'Экспорт'}
         </Button>
 
-        <div className={styles.infoWrap}>
+        <div className={styles.infoWrap} ref={infoWrapRef}>
           <span className={styles.infoIcon}>
             <HelpCircle size={16} />
           </span>
-          <div className={styles.infoPopup}>
+          <div className={`${styles.infoPopup} ${popupFlipLeft ? styles.infoPopupLeft : ''}`}>
             <div className={styles.infoPopupTitle}>Экспорт остатков</div>
             <div className={styles.infoPopupText}>
               Скачивает Excel-файл со всеми позициями склада: название, артикул, цвет, размер,

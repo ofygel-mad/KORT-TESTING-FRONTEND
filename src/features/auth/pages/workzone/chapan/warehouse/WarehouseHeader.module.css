@@ -6,7 +6,6 @@
 }
 
 .row {
-  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -133,8 +132,14 @@
 }
 
 .infoWrap {
+  position: relative;
   display: flex;
   align-items: center;
+}
+
+.infoPopupLeft {
+  left: 0;
+  right: auto;
 }
 
 .infoIcon {
