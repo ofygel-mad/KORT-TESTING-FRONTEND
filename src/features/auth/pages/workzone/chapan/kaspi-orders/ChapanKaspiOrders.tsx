@@ -294,7 +294,14 @@ function ConnectionHistoryPanel() {
 }
 
 function StageRegistryPanel() {
-  const { data: summary } = useKaspiOrdersSummary();
+  const summaryQuery = useKaspiOrdersSummary();
+  const summary = summaryQuery.data;
+  const renderStageCount = (stageKey: (typeof KASPI_STAGE_META)[number]['key']) => {
+    if (summaryQuery.isLoading || summaryQuery.isError) {
+      return '\u2014';
+    }
+    return getKaspiStageCount(summary, stageKey);
+  };
 
   return (
     <section className={styles.panel}>
@@ -306,6 +313,19 @@ function StageRegistryPanel() {
           </div>
         </div>
       </div>
+
+      {summaryQuery.isLoading && (
+        <div className={styles.toolbarNote}>
+          <RefreshCw size={14} />
+          <span>{'\u0417\u0430\u0433\u0440\u0443\u0437\u043a\u0430 summary \u043f\u043e Kaspi...'}</span>
+        </div>
+      )}
+
+      {summaryQuery.isError && (
+        <div className={styles.toolbarNote}>
+          <span>{'\u041d\u0435 \u0443\u0434\u0430\u043b\u043e\u0441\u044c \u0437\u0430\u0433\u0440\u0443\u0437\u0438\u0442\u044c summary. \u0415\u0441\u043b\u0438 \u043a\u043d\u043e\u043f\u043a\u0430 sync \u0434\u0430\u0451\u0442 timeout, \u044d\u0442\u043e \u0442\u0435\u043f\u0435\u0440\u044c \u043e\u0442\u0434\u0435\u043b\u044c\u043d\u043e \u0432\u0438\u0434\u043d\u043e, \u0430 \u043d\u0435 \u043c\u0430\u0441\u043a\u0438\u0440\u0443\u0435\u0442\u0441\u044f \u043d\u0443\u043b\u044f\u043c\u0438.'}</span>
+        </div>
+      )}
 
       <div className={styles.recordTableWrap}>
         <table className={styles.compactTable}>
@@ -324,7 +344,7 @@ function StageRegistryPanel() {
                     {item.label}
                   </NavLink>
                 </td>
-                <td>{getKaspiStageCount(summary, item.key)}</td>
+                <td>{renderStageCount(item.key)}</td>
                 <td>{item.description}</td>
               </tr>
             ))}
@@ -340,7 +360,7 @@ function StageRegistryPanel() {
             className={({ isActive }) => `${styles.sectionPill} ${isActive ? styles.sectionPillActive : ''}`}
           >
             <span>{item.label}</span>
-            <strong>{getKaspiStageCount(summary, item.key)}</strong>
+            <strong>{renderStageCount(item.key)}</strong>
           </NavLink>
         ))}
       </nav>

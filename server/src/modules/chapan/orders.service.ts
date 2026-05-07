@@ -15,7 +15,7 @@ import {
   sortOrderItemsByPosition,
 } from './order-item-number.js';
 
-// Async fire-and-forget helper ? never throws, never blocks the main flow
+// Async fire-and-forget helper: never throws, never blocks the main flow.
 function fireSheetSync(orgId: string, orderId: string) {
   syncOrderToSheets(orgId, orderId).then(result => {
     if (!result.ok) console.warn('[sheets.sync] non-blocking error:', result.error);
@@ -155,10 +155,10 @@ async function buildOrderItemVariantSnapshot(
   });
 
   const ATTR_KEY_RU: Record<string, string> = {
-    color: '????', gender: '???', size: '??????', length: '?????',
+    color: 'Цвет', gender: 'Пол', size: 'Размер', length: 'Длина',
   };
   const ATTR_VAL_RU: Record<string, string> = {
-    female: '???????', male: '???????',
+    female: 'Женский', male: 'Мужской',
   };
 
   const rawAttributes = Object.fromEntries(
@@ -206,10 +206,10 @@ function buildCanonicalReservationActivityContent(summary: {
     .join('; ');
 
   if (summary.mode === 'skipped') {
-    return `Canonical ?????? ?????? ????????: ${summary.reason ?? 'unknown_reason'}.`;
+    return `Canonical резервирование склада пропущено: ${summary.reason ?? 'unknown_reason'}.`;
   }
 
-  return `Canonical ?????? ??????: ??????? ${summary.reservedCount}, ???????? ???????????? ${summary.replayedCount}, ????????? ${summary.skippedCount}, ?????? ${summary.failedCount}${details ? `. ??????: ${details}` : ''}`;
+  return `Canonical резервирование склада: зарезервировано ${summary.reservedCount}, повторно обработано ${summary.replayedCount}, пропущено ${summary.skippedCount}, ошибок ${summary.failedCount}${details ? `. Детали: ${details}` : ''}`;
 }
 
 function hasWarehouseFulfillmentItems(items: Array<{ fulfillmentMode: string }>) {
@@ -245,7 +245,7 @@ async function nextOrderNumber(orgId: string, tx: Prisma.TransactionClient): Pro
   const row = rows[0];
   if (!row) throw new Error(`Chapan profile not found for org ${orgId}`);
   const { order_counter, order_prefix } = row;
-  const prefix = (order_prefix ?? '??').trim().slice(0, 6).toUpperCase();
+  const prefix = (order_prefix ?? 'ЧП').trim().slice(0, 6).toUpperCase();
   return `${prefix}-${String(order_counter).padStart(3, '0')}`;
 }
 
@@ -256,25 +256,25 @@ function computePaymentStatus(paidAmount: number, totalAmount: number): string {
 }
 
 function getOrderStatusLabel(status: string) {
-  if (status === 'new') return '?????';
-  if (status === 'confirmed') return '??????????';
-  if (status === 'in_production') return '? ????????????';
-  if (status === 'ready') return '??????';
-  if (status === 'transferred') return '???????';
-  if (status === 'on_warehouse') return '?? ??????';
-  if (status === 'shipped') return '?????????';
-  if (status === 'completed') return '????????';
-  if (status === 'cancelled') return '??????';
+  if (status === 'new') return 'Новый';
+  if (status === 'confirmed') return 'Подтвержден';
+  if (status === 'in_production') return 'В производстве';
+  if (status === 'ready') return 'Готов';
+  if (status === 'transferred') return 'Передан';
+  if (status === 'on_warehouse') return 'На складе';
+  if (status === 'shipped') return 'Отгружен';
+  if (status === 'completed') return 'Завершен';
+  if (status === 'cancelled') return 'Отменен';
   return status;
 }
 
 function formatPaymentMethod(method: string) {
-  if (method === 'cash') return '????????';
-  if (method === 'card') return '?????';
+  if (method === 'cash') return 'Наличные';
+  if (method === 'card') return 'Карта';
   if (method === 'kaspi_qr') return 'Kaspi QR';
-  if (method === 'kaspi_terminal') return 'Kaspi ????????';
-  if (method === 'transfer') return '???????';
-  if (method === 'mixed') return '????????? ??????';
+  if (method === 'kaspi_terminal') return 'Kaspi терминал';
+  if (method === 'transfer') return 'Перевод';
+  if (method === 'mixed') return 'Смешанная оплата';
   return method;
 }
 
@@ -293,7 +293,7 @@ function normalizePaymentBreakdown(breakdown: Record<string, number> | undefined
 function buildMixedPaymentNote(breakdown: Record<string, number>) {
   const parts = Object.entries(breakdown)
     .filter(([, amount]) => amount > 0)
-    .map(([method, amount]) => `${formatPaymentMethod(method)}: ${amount.toLocaleString('ru-RU')} ?`);
+    .map(([method, amount]) => `${formatPaymentMethod(method)}: ${amount.toLocaleString('ru-RU')} ₸`);
   return parts.length > 0 ? parts.join('; ') : undefined;
 }
 
@@ -381,10 +381,10 @@ async function resolveOrderClient(
   const clientPhoneForeign = data.clientPhoneForeign?.trim() || undefined;
 
   if (!clientName) {
-    throw new ValidationError('??????? ??? ???????');
+    throw new ValidationError('Имя клиента обязательно');
   }
   if (!clientPhone && !clientPhoneForeign) {
-    throw new ValidationError('??????? ??????? ???????');
+    throw new ValidationError('Телефон клиента обязателен');
   }
 
   // For client lookup use KZ phone if available, otherwise the foreign phone
@@ -396,7 +396,7 @@ async function resolveOrderClient(
     });
 
     if (!client) {
-      throw new ValidationError('????????? ?????? ?? ?????? ? ??????? ???????????');
+      throw new ValidationError('Указанный клиент не найден в текущей организации');
     }
 
     return {
@@ -591,7 +591,7 @@ export async function returnToReady(
   const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (order.status !== 'on_warehouse') {
-    throw new ValidationError('????? ?? ????????? ?? ??????');
+    throw new ValidationError('Заказ не находится на складе');
   }
   await prisma.$transaction(async (tx) => {
     await tx.chapanOrder.update({ where: { id }, data: { status: 'ready' } });
@@ -599,7 +599,7 @@ export async function returnToReady(
       data: {
         orderId: id,
         type: 'status_change',
-        content: `?? ?????? > ?????? (??????? ?? ??????): ${reason}`,
+        content: `Со склада > готово (причина возврата): ${reason}`,
         authorId,
         authorName,
       },
@@ -625,13 +625,13 @@ export async function create(orgId: string, authorId: string, authorName: string
 
   const mapped = await prisma.$transaction(async (tx) => {
     // Order number is incremented atomically inside the transaction so that
-    // a rollback also rolls back the counter ? no skipped numbers, no races.
+    // a rollback also rolls back the counter - no skipped numbers, no races.
     const orderNumber = await nextOrderNumber(orgId, tx);
     const client = await resolveOrderClient(tx, orgId, data);
     const activityEntries: Prisma.ChapanActivityCreateWithoutOrderInput[] = [
       {
         type: 'system',
-        content: '????? ??????',
+        content: 'Заказ создан',
         authorId,
         authorName,
       },
@@ -640,7 +640,7 @@ export async function create(orgId: string, authorId: string, authorName: string
     if (prepayment > 0) {
       activityEntries.push({
         type: 'payment',
-        content: `?????????? ${prepayment.toLocaleString('ru-RU')} ? (${formatPaymentMethod(paymentMethod)})`,
+        content: `Предоплата ${prepayment.toLocaleString('ru-RU')} ₸ (${formatPaymentMethod(paymentMethod)})`,
         authorId,
         authorName,
       });
@@ -758,8 +758,8 @@ export async function create(orgId: string, authorId: string, authorName: string
     timeout: 20_000,
   });
 
-  // P3: ??????????? ????????? ??????????? ?????? ??? ???????? ?????? (????? ??????????).
-  // ??????????? ????? ??????? ??????????, non-fatal ? ?? ?????? ??????????? ???????? ??????.
+  // P3: Автосоздание складских резервов при создании заказа (неблокирующий шаг).
+  // Ошибка в синхронизации склада не должна останавливать создание заказа.
   try {
     const { autoCreateFromOrder, reserveNewOrderItems, createOrderTransitEntries } =
       await import('../warehouse/warehouse.service.js');
@@ -778,7 +778,7 @@ export async function create(orgId: string, authorId: string, authorName: string
     await autoCreateFromOrder(orgId, warehouseItems, mapped.id, authorName || 'system');
     await reserveNewOrderItems(orgId, mapped.id, warehouseItems);
     await createOrderTransitEntries(orgId, mapped.id, warehouseItems);
-  } catch { /* non-fatal: ?? ?????? ??????????? ???????? ?????? */ }
+  } catch { /* non-fatal: не блокируем основной поток */ }
 
   // Sprint 10: async sync to Google Sheets ? fire-and-forget, never blocks
   fireSheetSync(orgId, mapped.id);
@@ -804,7 +804,7 @@ async function applyItemRouting(
 
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (order.status !== 'new') {
-    throw new ValidationError('????????????? ??????? ????? ?????? ?????? ??? ?????? ??????');
+    throw new ValidationError('Подтверждать распределение можно только для заказа в статусе «новый»');
   }
 
   const requestedModes = new Map<string, FulfillmentMode>();
@@ -813,12 +813,12 @@ async function applyItemRouting(
   }
 
   if (requestedModes.size !== order.items.length) {
-    throw new ValidationError('????? ??????? ??????? ??? ?????? ??????? ??????');
+    throw new ValidationError('Все позиции заказа должны иметь способ выполнения');
   }
 
   for (const item of order.items) {
     if (!requestedModes.has(item.id)) {
-      throw new ValidationError('????? ??????? ??????? ??? ?????? ??????? ??????');
+      throw new ValidationError('Не указан способ выполнения для одной из позиций заказа');
     }
   }
 
@@ -826,7 +826,7 @@ async function applyItemRouting(
   const productionItems = order.items.filter((item) => requestedModes.get(item.id) === 'production');
 
   if (warehouseItems.length === 0 && productionItems.length === 0) {
-    throw new ValidationError('???????? ???? ?? ???? ??????? ??? ?????? ??? ????????????');
+    throw new ValidationError('Нельзя оставить все позиции без маршрута');
   }
 
   const nextStatus = productionItems.length > 0 ? 'confirmed' : 'ready';
@@ -889,7 +889,7 @@ async function applyItemRouting(
       data: {
         orderId: id,
         type: 'system',
-        content: `??????? ???????: ?? ????? ${warehouseItems.length}, ? ???????????? ${productionItems.length}.`,
+        content: `Распределение заказа: на склад ${warehouseItems.length}, в производство ${productionItems.length}.`,
         authorId,
         authorName,
       },
@@ -926,7 +926,7 @@ async function applyItemRouting(
         data: {
           orderId: id,
           type: 'system',
-          content: 'Canonical ?????? ?????? ?? ???????? ??-?? ?????? ??????????.',
+          content: 'Canonical резервирование склада не удалось выполнить из-за ошибки интеграции.',
           authorId,
           authorName,
         },
@@ -995,7 +995,7 @@ export async function updateStatus(orgId: string, id: string, status: string, au
     },
   });
   if (!order) throw new NotFoundError('ChapanOrder', id);
-  if (order.isArchived) throw new ValidationError('??????? ???????????? ????? ?? ??????');
+  if (order.isArchived) throw new ValidationError('Заказ уже архивирован');
 
   // Centralized status transition validation
   const productionTasks = await prisma.chapanProductionTask.findMany({
@@ -1037,13 +1037,13 @@ export async function updateStatus(orgId: string, id: string, status: string, au
       data: {
         orderId: id,
         type: 'system',
-        content: `? ??????? ????????? ???????????? ????? (???????: ${balance.toLocaleString('ru-KZ')} ?).`,
+        content: `У заказа есть задолженность по оплате (остаток: ${balance.toLocaleString('ru-KZ')} ₸).`,
         authorId,
         authorName,
       },
     });
 
-    throw new ValidationError('?????? ????????? ????? ? ???????????? ????????.');
+    throw new ValidationError('Нельзя отгружать заказ с неполной оплатой');
   }
 
   const now = new Date();
@@ -1167,7 +1167,7 @@ export async function addPayment(orgId: string, orderId: string, authorId: strin
       data: {
         orderId,
         type: 'payment',
-        content: `?????? ${data.amount.toLocaleString('ru-RU')} ? (${formatPaymentMethod(data.method)})`,
+        content: `Платеж ${data.amount.toLocaleString('ru-RU')} ₸ (${formatPaymentMethod(data.method)})`,
         authorId,
         authorName,
       },
@@ -1237,7 +1237,7 @@ export async function confirmTransfer(orgId: string, orderId: string, by: 'manag
         data: {
           orderId,
           type: 'transfer',
-          content: '???????? ????????????',
+          content: 'Заказ передан',
           authorId,
           authorName,
         },
@@ -1292,10 +1292,10 @@ export async function update(orgId: string, id: string, authorId: string, author
   const order = await prisma.chapanOrder.findFirst({ where: { id, orgId }, include: { items: true } });
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (['completed', 'cancelled'].includes(order.status)) {
-    throw new ValidationError('??????????? ??? ????????? ????? ?????? ?????????????');
+    throw new ValidationError('Нельзя изменять завершенный или отмененный заказ');
   }
   if (data.items && !['new', 'confirmed'].includes(order.status)) {
-    throw new ValidationError('??????? ????? ???????? ?????? ?? ?????? ????????????');
+    throw new ValidationError('Изменять состав заказа можно только в статусах «новый» и «подтвержден»');
   }
 
   return prisma.$transaction(async (tx) => {
@@ -1303,7 +1303,7 @@ export async function update(orgId: string, id: string, authorId: string, author
     if (data.clientName) {
       const clientName = normalizeClientName(data.clientName);
       if (!clientName) {
-        throw new ValidationError('??????? ??? ???????');
+        throw new ValidationError('Имя клиента обязательно');
       }
       updateData.clientName = clientName;
     }
@@ -1412,7 +1412,7 @@ export async function update(orgId: string, id: string, authorId: string, author
     });
 
     await tx.chapanActivity.create({
-      data: { orderId: id, type: 'edit', content: '????? ??????????????', authorId, authorName },
+      data: { orderId: id, type: 'edit', content: 'Заказ обновлен', authorId, authorName },
     });
 
     return mapOrder(updated);
@@ -1427,7 +1427,7 @@ export async function restore(orgId: string, id: string, authorId: string, autho
   const isCancelled = order.status === 'cancelled' || order.status === 'canceled';
   const isArchived = order.isArchived;
   if (!isCancelled && !isArchived) {
-    throw new ValidationError('?????? ????????? ??? ???????? ?????? ????? ????????????');
+    throw new ValidationError('Можно восстановить только отмененный или архивный заказ');
   }
 
   await prisma.$transaction(async (tx) => {
@@ -1459,7 +1459,7 @@ export async function restore(orgId: string, id: string, authorId: string, autho
     });
 
     await tx.chapanActivity.create({
-      data: { orderId: id, type: 'status_change', content: '????? ???????????? > ?????', authorId, authorName },
+      data: { orderId: id, type: 'status_change', content: 'Заказ восстановлен', authorId, authorName },
     });
   });
 }
@@ -1470,7 +1470,7 @@ export async function archive(orgId: string, id: string, authorId: string, autho
   const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (!['completed', 'cancelled'].includes(order.status)) {
-    throw new ValidationError('???????????? ????? ?????? ??????????? ??? ????????? ??????');
+    throw new ValidationError('Архивировать можно только завершенный или отмененный заказ');
   }
 
   await prisma.$transaction(async (tx) => {
@@ -1481,7 +1481,7 @@ export async function archive(orgId: string, id: string, authorId: string, autho
     });
 
     await tx.chapanActivity.create({
-      data: { orderId: id, type: 'system', content: '????? ????????? ? ?????', authorId, authorName },
+      data: { orderId: id, type: 'system', content: 'Заказ помещен в архив', authorId, authorName },
     });
   });
 }
@@ -1500,9 +1500,9 @@ export async function close(orgId: string, id: string, authorId: string, authorN
     },
   });
   if (!order) throw new NotFoundError('ChapanOrder', id);
-  if (order.isArchived) throw new ValidationError('????? ??? ????????? ? ??????');
+  if (order.isArchived) throw new ValidationError('Заказ уже в архиве');
   if (!['ready', 'transferred', 'on_warehouse', 'shipped', 'completed'].includes(order.status)) {
-    throw new ValidationError('??????? ?????? ????? ?????? ?? ???????? ??????');
+    throw new ValidationError('Закрыть можно только заказ в статусе «готов», «передан», «на складе», «отгружен» или «завершен»');
   }
 
   const now = new Date();
@@ -1542,7 +1542,7 @@ export async function close(orgId: string, id: string, authorId: string, authorN
       data: {
         orderId: id,
         type: 'system',
-        content: '?????? ???????, ????? ???????? ? ????????? ? ?????',
+        content: 'Заказ закрыт, остатки и отгрузка обработаны',
         authorId,
         authorName,
       },
@@ -1554,7 +1554,7 @@ export async function close(orgId: string, id: string, authorId: string, authorN
         data: {
           orderId: id,
           type: 'system',
-          content: `? ?????? ??????? ? ???????????? ????????: ${balance.toLocaleString('ru-KZ')} ? (??????: ${order.paymentStatus === 'not_paid' ? '?? ???????' : '???????? ???????'})`,
+          content: `У заказа осталась задолженность по оплате: ${balance.toLocaleString('ru-KZ')} ₸ (статус: ${order.paymentStatus === 'not_paid' ? 'не оплачен' : 'оплачен частично'})`,
           authorId,
           authorName,
         },
@@ -1597,7 +1597,7 @@ export async function shipOrder(
   });
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (order.status !== 'on_warehouse') {
-    throw new ValidationError('????????? ????? ?????? ????? ?? ???????? ??? ??????');
+    throw new ValidationError('Отгружать можно только заказ в статусе «на складе»');
   }
   if (order.paymentStatus !== 'paid') {
     const balance = order.totalAmount - order.paidAmount;
@@ -1606,20 +1606,20 @@ export async function shipOrder(
       data: {
         orderId: id,
         type: 'system',
-        content: `? ??????? ???????? ????????????? ?????? (???????: ${balance.toLocaleString('ru-KZ')} ?). ????????? ?????????.`,
+        content: `У заказа есть задолженность по оплате (остаток: ${balance.toLocaleString('ru-KZ')} ₸). Отгрузка запрещена.`,
         authorId,
         authorName,
       },
     });
-    throw new ValidationError('????? ?? ???????. ???????? ??????????, ????????? ?????????.');
+    throw new ValidationError('Заказ не оплачен. Сначала закройте задолженность, затем повторите операцию');
   }
 
   await prisma.$transaction(async (tx) => {
     const noteLines: string[] = [];
-    if (shippingData?.courierType) noteLines.push(`??????: ${shippingData.courierType}`);
-    if (shippingData?.recipientName) noteLines.push(`??????????: ${shippingData.recipientName}`);
-    if (shippingData?.recipientAddress) noteLines.push(`?????: ${shippingData.recipientAddress}`);
-    if (shippingData?.shippingNote) noteLines.push(`???????????: ${shippingData.shippingNote}`);
+    if (shippingData?.courierType) noteLines.push(`Курьер: ${shippingData.courierType}`);
+    if (shippingData?.recipientName) noteLines.push(`Получатель: ${shippingData.recipientName}`);
+    if (shippingData?.recipientAddress) noteLines.push(`Адрес: ${shippingData.recipientAddress}`);
+    if (shippingData?.shippingNote) noteLines.push(`Примечание к доставке: ${shippingData.shippingNote}`);
     const compiledNote = noteLines.length > 0 ? noteLines.join(' | ') : undefined;
 
     await applyWarehouseOrderTransitionSideEffectsTxV2(tx, orgId, {
@@ -1654,8 +1654,8 @@ export async function shipOrder(
         orderId: id,
         type: 'system',
         content: compiledNote
-          ? `????? ????????? ??????? ? ${compiledNote}`
-          : '????? ????????? ???????',
+          ? `Заказ отгружен: ${compiledNote}`
+          : 'Заказ отгружен',
         authorId,
         authorName,
       },
@@ -1712,13 +1712,13 @@ export async function requestItemChange(
   const order = await prisma.chapanOrder.findFirst({ where: { id: orderId, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', orderId);
   if (order.status !== 'in_production') {
-    throw new ValidationError('?????? ?? ????????? ???????? ?????? ??? ??????? ? ????????????');
+    throw new ValidationError('Запрос на изменение можно отправить только для заказа в производстве');
   }
 
   // Cancel any previous pending request for this order
   await prisma.chapanChangeRequest.updateMany({
     where: { orderId, status: 'pending' },
-    data: { status: 'rejected', rejectReason: '?????? ????? ????????', resolvedBy: authorName },
+    data: { status: 'rejected', rejectReason: 'Запрос заменен новым', resolvedBy: authorName },
   });
 
   const changeRequest = await prisma.chapanChangeRequest.create({
@@ -1735,7 +1735,7 @@ export async function requestItemChange(
     data: {
       orderId,
       type: 'system',
-      content: `???????? ${authorName} ???????? ????????? ??????? ??????. ??????? ???????????? ????.`,
+      content: `Менеджер ${authorName} отправил запрос на изменение состава заказа. Заказ ожидает подтверждения.`,
       authorId,
       authorName,
     },
@@ -1868,14 +1868,14 @@ export async function approveChangeRequest(
     });
 
     const addedSummary = addedItems.length > 0
-      ? `????????? ????? ???????: ${addedItems.map((i) => `${i.productName} / ${i.size}`).join(', ')}.`
-      : '???????? ?????? ???????????? ???????.';
+      ? `Добавлены новые позиции: ${addedItems.map((i) => `${i.productName} / ${i.size}`).join(', ')}.`
+      : 'Новых позиций не добавлено.';
 
     await tx.chapanActivity.create({
       data: {
         orderId: order.id,
         type: 'system',
-        content: `??? ?????????? ????????? ??????? (${authorName}). ${addedSummary} ???????????? ????????????.`,
+        content: `Запрос на изменение состава заказа от ${authorName}. ${addedSummary} Производственные задания сохранены.`,
         authorId,
         authorName,
       },
@@ -1905,7 +1905,7 @@ export async function rejectChangeRequest(
       data: {
         orderId: changeRequest.orderId,
         type: 'system',
-        content: `??? ???????? ????????? ??????? (${authorName}): ${rejectReason.trim()}`,
+        content: `Запрос на изменение заказа отклонен (${authorName}): ${rejectReason.trim()}`,
         authorId,
         authorName,
       },
@@ -1932,7 +1932,7 @@ export async function routeSingleItem(
   });
   if (!order) throw new NotFoundError('ChapanOrder', orderId);
   if (!['new', 'confirmed', 'in_production'].includes(order.status)) {
-    throw new ValidationError('????????????? ??????? ????? ?????? ?????? ??? ??????, ?????????????? ?????? ??? ?????? ? ????????????');
+    throw new ValidationError('Распределять позиции можно только для заказов в статусах «новый», «подтвержден» и «в производстве»');
   }
   const item = order.items.find((i) => i.id === itemId);
   if (!item) throw new NotFoundError('ChapanOrderItem', itemId);
@@ -1973,12 +1973,12 @@ export async function routeSingleItem(
       await tx.chapanOrder.update({ where: { id: orderId }, data: { status: 'confirmed' } });
     }
 
-    const label = fulfillmentMode === 'production' ? '?????????? ? ???' : '?????????? ???????? ?? ?????';
+    const label = fulfillmentMode === 'production' ? 'в производство' : 'на склад';
     await tx.chapanActivity.create({
       data: {
         orderId,
         type: 'system',
-        content: `??????? ?${item.productName} / ${item.size}? ${label} (${authorName}).`,
+        content: `Позиция "${item.productName} / ${item.size}" переведена ${label} (${authorName}).`,
         authorId,
         authorName,
       },
@@ -2000,7 +2000,7 @@ export async function routeSingleItem(
 export async function trashOrder(orgId: string, id: string, authorId: string, authorName: string) {
   const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', id);
-  if (order.deletedAt) throw new ValidationError('????? ??? ? ???????.');
+  if (order.deletedAt) throw new ValidationError('Заказ уже в корзине');
   if (['completed', 'cancelled'].includes(order.status)) {
     // Allow trashing completed/cancelled orders
   }
@@ -2011,7 +2011,7 @@ export async function trashOrder(orgId: string, id: string, authorId: string, au
       data: { deletedAt: new Date() },
     });
     await tx.chapanActivity.create({
-      data: { orderId: id, type: 'edit', content: '????? ????????? ? ???????', authorId, authorName },
+      data: { orderId: id, type: 'edit', content: 'Заказ перемещен в корзину', authorId, authorName },
     });
   });
 
@@ -2022,7 +2022,7 @@ export async function trashOrder(orgId: string, id: string, authorId: string, au
 export async function restoreFromTrash(orgId: string, id: string, authorId: string, authorName: string) {
   const order = await prisma.chapanOrder.findFirst({ where: { id, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', id);
-  if (!order.deletedAt) throw new ValidationError('????? ?? ? ???????.');
+  if (!order.deletedAt) throw new ValidationError('Заказ не находится в корзине');
 
   await prisma.$transaction(async (tx) => {
     await tx.chapanOrder.update({
@@ -2030,7 +2030,7 @@ export async function restoreFromTrash(orgId: string, id: string, authorId: stri
       data: { deletedAt: null },
     });
     await tx.chapanActivity.create({
-      data: { orderId: id, type: 'edit', content: '????? ???????????? ?? ???????', authorId, authorName },
+      data: { orderId: id, type: 'edit', content: 'Заказ восстановлен из корзины', authorId, authorName },
     });
   });
 
@@ -2046,7 +2046,7 @@ export async function permanentDelete(orgId: string, id: string) {
   if (!order) throw new NotFoundError('ChapanOrder', id);
   if (!order.deletedAt) {
     throw new ValidationError(
-      '????? ?? ? ???????. ??????? ??????????? ??? ? ???????.',
+      'Заказ должен быть в корзине. Сначала переместите его в корзину.',
     );
   }
 
@@ -2082,7 +2082,7 @@ export async function reassignManager(
   const order = await prisma.chapanOrder.findFirst({ where: { id: orderId, orgId } });
   if (!order) throw new NotFoundError('ChapanOrder', orderId);
 
-  const prevManagerName = order.managerName ?? '?? ????????';
+  const prevManagerName = order.managerName ?? 'Не назначен';
 
   await prisma.$transaction(async (tx) => {
     await tx.chapanOrder.update({
@@ -2094,7 +2094,7 @@ export async function reassignManager(
       data: {
         orderId,
         type: 'manager_reassign',
-        content: `???????? ??????: ${prevManagerName} > ${newManagerName}`,
+        content: `Менеджер изменен: ${prevManagerName} > ${newManagerName}`,
         authorId: actorId,
         authorName: actorName,
       },

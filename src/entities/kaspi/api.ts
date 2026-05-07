@@ -27,7 +27,11 @@ export const kaspiApi = {
     api.post<{ ok: true; checkedAt: string; sampleOrders: number }>('/integrations/kaspi/connection/test', {}),
 
   syncOrders: () =>
-    api.post<SyncKaspiOrdersResponse>('/integrations/kaspi/sync', {}),
+    apiClient.post<SyncKaspiOrdersResponse>(
+      '/integrations/kaspi/sync',
+      {},
+      { timeout: 180000 },
+    ).then((response) => response.data),
 
   listOrders: (params?: ListKaspiOrdersParams) =>
     api.get<KaspiOrdersListResponse>('/integrations/kaspi/orders', params),
