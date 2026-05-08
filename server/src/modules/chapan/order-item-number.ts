@@ -1,11 +1,18 @@
-const ORDER_ITEM_SUFFIX_RE = /-(\d+)$/;
+const ORDER_ITEM_SUFFIX_RE = /^(.*-\d+)-(\d+)$/;
 
 function trimOrderNumber(value: string): string {
   return value.trim().replace(/^#/, '').replace(/\s+/g, ' ');
 }
 
 export function stripOrderItemSuffix(orderNumber: string): string {
-  return trimOrderNumber(orderNumber).replace(ORDER_ITEM_SUFFIX_RE, '');
+  const normalized = trimOrderNumber(orderNumber);
+  const match = normalized.match(ORDER_ITEM_SUFFIX_RE);
+
+  if (!match) {
+    return normalized;
+  }
+
+  return match[1] ?? normalized;
 }
 
 export function formatOrderItemNumber(orderNumber: string, position?: number | null): string {
@@ -27,13 +34,13 @@ export function parseOrderItemNumber(orderItemNumber: string): { orderNumber: st
     return { orderNumber: normalized, position: null };
   }
 
-  const position = Number(match[1]);
+  const position = Number(match[2]);
   if (!Number.isFinite(position) || position <= 0) {
     return { orderNumber: normalized, position: null };
   }
 
   return {
-    orderNumber: normalized.slice(0, -match[0].length),
+    orderNumber: match[1] ?? normalized,
     position: Math.trunc(position),
   };
 }
