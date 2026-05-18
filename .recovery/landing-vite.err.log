@@ -1,9 +1,0 @@
-out-file : Процесс не может получить доступ к файлу 
-"C:\Users\user\Documents\EXPERIMENTAL\KORT-TESTING-FRONTEND\.recovery\landing-vite.log", так как этот файл 
-используется другим процессом.
-строка:1 знак:76
-+ ... -FRONTEND'; npm run dev -- --host 127.0.0.1 --port 4173 *> '.recovery ...
-+                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    + CategoryInfo          : OpenError: (:) [Out-File], IOException
-    + FullyQualifiedErrorId : FileOpenFailure,Microsoft.PowerShell.Commands.OutFileCommand
- 
