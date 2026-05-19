@@ -20,7 +20,6 @@ import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { formatMoney } from '../../../shared/utils/format';
-import { AiAssistant } from '../../../widgets/ai-assistant/AiAssistant';
 import { useDocumentTitle } from '../../../shared/hooks/useDocumentTitle';
 import { useUIStore } from '../../../shared/stores/ui';
 import styles from './CustomerProfile.module.css';
@@ -448,9 +447,6 @@ export default function CustomerProfilePage() {
 
         {/* Sidebar */}
         <div className={styles.sidebar}>
-          {/* AI Assistant */}
-          <AiAssistant entityType="customer" entityId={id!} />
-
           {/* Tags */}
           {(customer.tags ?? []).length > 0 && (
             <div className={styles.sideSection}>
