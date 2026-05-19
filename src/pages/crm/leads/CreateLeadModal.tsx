@@ -1,1 +1,1 @@
-export * from '../../../features/auth/pages/crm/leads/CreateLeadModal';
+export * from '@/features/auth/pages/crm/leads/CreateLeadModal';

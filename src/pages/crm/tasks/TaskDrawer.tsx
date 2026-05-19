@@ -1,1 +1,1 @@
-export * from '../../../features/auth/pages/crm/tasks/TaskDrawer';
+export * from '@/features/auth/pages/crm/tasks/TaskDrawer';

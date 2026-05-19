@@ -1,1 +1,1 @@
-export * from '../../../../features/auth/pages/workzone/chapan/warehouse/AddItemDrawer';
+export * from '@/features/auth/pages/workzone/chapan/warehouse/AddItemDrawer';

@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { apiClient } from '../../../../shared/api/client';
 import { useAuthStore } from '../../../../shared/stores/auth';
-import { useChapanUiStore } from '../../../../features/workzone/chapan/store';
+import { useChapanUiStore } from '@/features/workzone/chapan/store';
 import { buildItemLine } from '../../../../shared/utils/itemLine';
 import { calculateChapanOrderFinancials, getChapanOrderBalance } from '@/shared/lib/chapanFinancials';
 import { formatOrderItemNumber } from '../../../../../../shared/utils/orderItemNumber';

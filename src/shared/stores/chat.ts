@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { ChatMessage } from '../../features/chat/types';
+import type { ChatMessage } from '@/features/chat/types';
 
 type PresenceStatus = 'online' | 'offline';
 

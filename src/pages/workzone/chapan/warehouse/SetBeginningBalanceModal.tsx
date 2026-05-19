@@ -1,1 +1,1 @@
-export * from '../../../../features/auth/pages/workzone/chapan/warehouse/SetBeginningBalanceModal';
+export * from '@/features/auth/pages/workzone/chapan/warehouse/SetBeginningBalanceModal';

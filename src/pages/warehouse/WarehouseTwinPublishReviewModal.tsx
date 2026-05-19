@@ -1,1 +1,1 @@
-export * from '../../features/auth/pages/warehouse/WarehouseTwinPublishReviewModal';
+export * from '@/features/auth/pages/warehouse/WarehouseTwinPublishReviewModal';

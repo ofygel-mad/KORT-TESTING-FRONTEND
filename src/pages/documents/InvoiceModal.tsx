@@ -1,1 +1,1 @@
-export * from '../../features/auth/pages/documents/InvoiceModal';
+export * from '@/features/auth/pages/documents/InvoiceModal';

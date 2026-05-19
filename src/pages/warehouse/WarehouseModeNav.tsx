@@ -1,1 +1,1 @@
-export * from '../../features/auth/pages/warehouse/WarehouseModeNav';
+export * from '@/features/auth/pages/warehouse/WarehouseModeNav';

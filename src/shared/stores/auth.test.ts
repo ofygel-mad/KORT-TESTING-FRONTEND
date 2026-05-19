@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resolvePostAuthPath } from '../../features/auth/navigation';
+import { resolvePostAuthPath } from '@/features/auth/navigation';
 import { DEFAULT_MEMBERSHIP, useAuthStore, type Membership, type Org, type User } from './auth';
 
 const MOCK_USER: User = {

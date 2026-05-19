@@ -1,1 +1,1 @@
-export * from '../../features/auth/pages/launch/Launch';
+export * from '@/features/auth/pages/launch/Launch';

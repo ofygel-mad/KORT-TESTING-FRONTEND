@@ -16,16 +16,16 @@ async function loadCanvasChunk<T>(loader: () => Promise<T>) {
 
 const WorkspaceCanvas = lazy(() =>
   loadCanvasChunk(() =>
-    import('../../features/workspace/components/WorkspaceCanvas').then((m) => ({ default: m.WorkspaceCanvas })),
+    import('@/features/workspace/components/WorkspaceCanvas').then((m) => ({ default: m.WorkspaceCanvas })),
   ),
 );
 const WorkspaceAddMenu = lazy(() =>
   loadCanvasChunk(() =>
-    import('../../features/workspace/components/WorkspaceAddMenu').then((m) => ({ default: m.WorkspaceAddMenu })),
+    import('@/features/workspace/components/WorkspaceAddMenu').then((m) => ({ default: m.WorkspaceAddMenu })),
   ),
 );
-import { useWorkspaceStore } from '../../features/workspace/model/store';
-import type { WorkspaceWidgetKind } from '../../features/workspace/model/types';
+import { useWorkspaceStore } from '@/features/workspace/model/store';
+import type { WorkspaceWidgetKind } from '@/features/workspace/model/types';
 import { usePlan, planIncludes } from '../../shared/hooks/usePlan';
 import { useIsMobile } from '../../shared/hooks/useIsMobile';
 import { useAuthStore } from '../../shared/stores/auth';

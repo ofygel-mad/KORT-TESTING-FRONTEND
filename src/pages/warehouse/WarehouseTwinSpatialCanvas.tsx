@@ -1,1 +1,1 @@
-export * from '../../features/auth/pages/warehouse/WarehouseTwinSpatialCanvas';
+export * from '@/features/auth/pages/warehouse/WarehouseTwinSpatialCanvas';

@@ -1,1 +1,1 @@
-export * from '../../../../features/auth/pages/workzone/chapan/warehouse/warehouseGrouping';
+export * from '@/features/auth/pages/workzone/chapan/warehouse/warehouseGrouping';

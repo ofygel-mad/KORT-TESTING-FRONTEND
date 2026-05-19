@@ -1,1 +1,1 @@
-export * from '../../features/auth/pages/warehouse/WarehouseCatalog';
+export * from '@/features/auth/pages/warehouse/WarehouseCatalog';

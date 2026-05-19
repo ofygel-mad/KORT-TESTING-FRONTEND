@@ -1,1 +1,1 @@
-export * from '../../../features/auth/pages/crm/deals/DealDrawer';
+export * from '@/features/auth/pages/crm/deals/DealDrawer';

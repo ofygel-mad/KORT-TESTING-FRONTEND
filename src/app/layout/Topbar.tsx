@@ -14,9 +14,9 @@ import { useCommandPalette } from '../../shared/stores/commandPalette';
 import { useAuthStore } from '../../shared/stores/auth';
 import { useProfileStore, ONLINE_STATUSES, getComputedOnlineStatus } from '../../shared/stores/profile';
 import { usePlan, PLAN_LABELS, PLAN_COLORS } from '../../shared/hooks/usePlan';
-import { PlanUpgradeModal } from '../../features/plan';
-import { useSharedBus } from '../../features/shared-bus';
-import type { GlobalNotifEvent } from '../../features/shared-bus';
+import { PlanUpgradeModal } from '@/features/plan';
+import { useSharedBus } from '@/features/shared-bus';
+import type { GlobalNotifEvent } from '@/features/shared-bus';
 import styles from './Topbar.module.css';
 
 interface Notification {

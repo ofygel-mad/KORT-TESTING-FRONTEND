@@ -7,7 +7,7 @@ import { useAuthStore } from '@/shared/stores/auth';
 import { buildItemLine } from '../../../../shared/utils/itemLine';
 import { calculateChapanOrderFinancials } from '@/shared/lib/chapanFinancials';
 import { formatOrderItemNumber } from '../../../../../../shared/utils/orderItemNumber';
-import { useChapanUiStore } from '../../../../features/workzone/chapan/store';
+import { useChapanUiStore } from '@/features/workzone/chapan/store';
 import ChapanInvoicePreviewModal from '../invoices/ChapanInvoicePreviewModal';
 import styles from './ChapanReady.module.css';
 
