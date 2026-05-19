@@ -1,8 +1,8 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthModal } from '../../../features/auth/AuthModal';
-import { AuthRouteLayout } from '../../../features/auth/AuthRouteLayout';
-import { resolvePostAuthPath } from '../../../features/auth/navigation';
+import { AuthModal } from '../../../AuthModal';
+import { AuthRouteLayout } from '../../../AuthRouteLayout';
+import { resolvePostAuthPath } from '../../../navigation';
 import { DEV_RUNTIME_BLOCKERS_DISABLED } from '../../../shared/config/devAccess';
 import { useAuthStore } from '../../../shared/stores/auth';
 

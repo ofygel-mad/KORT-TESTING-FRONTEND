@@ -4,8 +4,8 @@ import { WorkspaceCanvas } from '../../features/workspace/components/WorkspaceCa
 import { WorkspaceAddMenu } from '../../features/workspace/components/WorkspaceAddMenu';
 import { WorkspaceSpotlight } from '../../features/workspace/components/WorkspaceSpotlight';
 import { useWorkspaceStore } from '../../features/workspace/model/store';
-import { WorkspaceLock } from '../../features/auth/WorkspaceLock';
-import { resolvePostAuthPath } from '../../features/auth/navigation';
+import { WorkspaceLock } from '../../WorkspaceLock';
+import { resolvePostAuthPath } from '../../navigation';
 import { DEV_RUNTIME_BLOCKERS_DISABLED } from '../../shared/config/devAccess';
 import { useAuthStore } from '../../shared/stores/auth';
 import { useUIStore } from '../../shared/stores/ui';

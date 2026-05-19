@@ -4,7 +4,7 @@
  * Эту страницу можно удалить, когда бэкенд деактивирует все старые токены.
  */
 import { useNavigate } from 'react-router-dom';
-import { AuthRouteLayout, AuthRouteStatusCard } from '../../../features/auth/AuthRouteLayout';
+import { AuthRouteLayout, AuthRouteStatusCard } from '../../../AuthRouteLayout';
 
 export default function AcceptInvitePage() {
   const navigate = useNavigate();
