@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ChapanOrder } from '../../../../entities/order/types';
+import type { ChapanOrder } from '@/entities/order/types';
 import ChapanOrdersPage from './ChapanOrders';
 
 const navigateMock = vi.fn();

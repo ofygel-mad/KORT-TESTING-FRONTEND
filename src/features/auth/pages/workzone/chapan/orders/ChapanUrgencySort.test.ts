@@ -3,7 +3,7 @@
  * Tests the sort comparator used in ChapanOrders and ChapanProduction.
  */
 import { describe, expect, it } from 'vitest';
-import type { ChapanOrder } from '../../../../entities/order/types';
+import type { ChapanOrder } from '@/entities/order/types';
 
 // Mirrors the sort logic in ChapanOrders.tsx
 function sortByUrgency(orders: Pick<ChapanOrder, 'urgency' | 'priority'>[]): typeof orders {

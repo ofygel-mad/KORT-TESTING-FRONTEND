@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Activity, PackageSearch, RefreshCw } from 'lucide-react';
-import { useKaspiOrders } from '../../../../../../entities/kaspi/queries';
-import type { KaspiOrder } from '../../../../../../entities/kaspi/types';
+import { useKaspiOrders } from '@/entities/kaspi/queries';
+import type { KaspiOrder } from '@/entities/kaspi/types';
 import {
   buildKaspiIssueLabel,
   formatKaspiDateTime,

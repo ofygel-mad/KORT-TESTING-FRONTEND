@@ -1,8 +1,8 @@
 import { useDeferredValue, useEffect, useRef, useState, type CSSProperties, type ElementType } from 'react';
 import { AlertTriangle, Bell, Check, CheckCheck, CheckCircle2, CheckSquare, Clock, Download, Eye, FileText, LayoutGrid, Layers, List, Plus, RotateCcw, Search, Star, Warehouse, X, XCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { useArchiveOrder, useChangeOrderStatus, useConfirmSeamstress, useCreateInvoice, useOrders, usePreviewInvoiceDocument, useInvoices } from '../../../../entities/order/queries';
-import type { ChapanOrder, InvoiceDocumentPayload, OrderStatus, Priority, Urgency } from '../../../../entities/order/types';
+import { useArchiveOrder, useChangeOrderStatus, useConfirmSeamstress, useCreateInvoice, useOrders, usePreviewInvoiceDocument, useInvoices } from '@/entities/order/queries';
+import type { ChapanOrder, InvoiceDocumentPayload, OrderStatus, Priority, Urgency } from '@/entities/order/types';
 import { useAuthStore } from '@/shared/stores/auth';
 import { buildItemLine } from '../../../../shared/utils/itemLine';
 import { calculateChapanOrderFinancials } from '@/shared/lib/chapanFinancials';

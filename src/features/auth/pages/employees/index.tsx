@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Plus, UserX, Key, Edit2, X, Trash2, ShieldCheck } from 'lucide-react';
 import { useViewportProfile } from '../../shared/hooks/useViewportProfile';
-import { useEmployees, useCreateEmployee, useUpdateEmployee, useDismissEmployee, useResetPassword, useRemoveEmployee } from '../../entities/employee/queries';
-import type { Employee, CreateEmployeeDto, UpdateEmployeeDto, EmployeePermission } from '../../entities/employee/types';
-import { PERMISSION_LABEL, PERMISSION_DESCRIPTION, BASE_PERMISSIONS, CHAPAN_PERMISSIONS } from '../../entities/employee/types';
+import { useEmployees, useCreateEmployee, useUpdateEmployee, useDismissEmployee, useResetPassword, useRemoveEmployee } from '@/entities/employee/queries';
+import type { Employee, CreateEmployeeDto, UpdateEmployeeDto, EmployeePermission } from '@/entities/employee/types';
+import { PERMISSION_LABEL, PERMISSION_DESCRIPTION, BASE_PERMISSIONS, CHAPAN_PERMISSIONS } from '@/entities/employee/types';
 import { isKazakhPhoneComplete, normalizeKazakhPhone } from '../../shared/utils/kz';
 import { PhoneInput } from '../../shared/ui/PhoneInput';
 import { Skeleton } from '../../shared/ui/Skeleton';

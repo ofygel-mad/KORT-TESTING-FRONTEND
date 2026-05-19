@@ -1,4 +1,4 @@
-import type { OrderFormCatalog, OrderFormField, WarehouseFieldDefinition } from '../../../../entities/warehouse/types';
+import type { OrderFormCatalog, OrderFormField, WarehouseFieldDefinition } from '@/entities/warehouse/types';
 
 export type PurchaseProductFieldMap = Record<string, OrderFormField[]>;
 

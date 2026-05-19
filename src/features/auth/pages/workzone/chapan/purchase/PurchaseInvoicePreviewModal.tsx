@@ -8,10 +8,10 @@ import {
   useManualInvoice,
   useRestoreManualInvoice,
   useUpdateManualInvoice,
-} from '../../../../entities/purchase/queries';
-import type { ManualInvoice, PurchaseType } from '../../../../entities/purchase/types';
-import { purchaseApi } from '../../../../entities/purchase/api';
-import { useCatalogDefinitions, useOrderFormCatalog } from '../../../../entities/warehouse/queries';
+} from '@/entities/purchase/queries';
+import type { ManualInvoice, PurchaseType } from '@/entities/purchase/types';
+import { purchaseApi } from '@/entities/purchase/api';
+import { useCatalogDefinitions, useOrderFormCatalog } from '@/entities/warehouse/queries';
 import { useCurrency } from '../../../../shared/hooks/useCurrency';
 import { getFilenameFromContentDisposition, triggerBrowserDownload } from '../../../../shared/lib/browserDownload';
 import { SearchableSelect } from '../../../../shared/ui/SearchableSelect';

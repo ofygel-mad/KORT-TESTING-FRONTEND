@@ -7,12 +7,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AlertCircle, AlertTriangle, ImagePlus, Pencil, Plus, Star, Trash2, Calculator, Paperclip, X } from 'lucide-react';
 import { useId } from 'react';
-import { useCreateOrder, useChapanCatalogs, useChapanProfile, useUpdateBankCommission } from '../../../../entities/order/queries';
+import { useCreateOrder, useChapanCatalogs, useChapanProfile, useUpdateBankCommission } from '@/entities/order/queries';
 import { useAuthStore } from '../../../../shared/stores/auth';
-import { useProductsAvailability, useVariantAvailability, useOrderFormCatalog, useCatalogDefinitions } from '../../../../entities/warehouse/queries';
-import type { OrderFormField } from '../../../../entities/warehouse/types';
-import { attachmentsApi } from '../../../../entities/order/api';
-import type { Urgency } from '../../../../entities/order/types';
+import { useProductsAvailability, useVariantAvailability, useOrderFormCatalog, useCatalogDefinitions } from '@/entities/warehouse/queries';
+import type { OrderFormField } from '@/entities/warehouse/types';
+import { attachmentsApi } from '@/entities/order/api';
+import type { Urgency } from '@/entities/order/types';
 import {
   buildDeliveryOptions,
   buildMixedBreakdownRows,

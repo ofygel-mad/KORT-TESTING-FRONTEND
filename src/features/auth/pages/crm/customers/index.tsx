@@ -1,6 +1,6 @@
 import { useState, useDeferredValue } from 'react';
 import { Plus, Search, X, Phone, Mail, MapPin, Calendar } from 'lucide-react';
-import { useCustomers, useCreateCustomer } from '../../../entities/customer/queries';
+import { useCustomers, useCreateCustomer } from '@/entities/customer/queries';
 import { api } from '../../../shared/api/client';
 import { useQuery } from '@tanstack/react-query';
 import { PhoneInput } from '../../../shared/ui/PhoneInput';

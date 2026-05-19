@@ -5,8 +5,8 @@ import {
   useInvoices,
   useConfirmWarehouse,
   useRejectInvoice,
-} from '../../../../entities/order/queries';
-import type { ChapanInvoice, InvoiceStatus } from '../../../../entities/order/types';
+} from '@/entities/order/queries';
+import type { ChapanInvoice, InvoiceStatus } from '@/entities/order/types';
 import { useChapanPermissions } from '../../../../shared/hooks/useChapanPermissions';
 import styles from './ChapanInvoices.module.css';
 

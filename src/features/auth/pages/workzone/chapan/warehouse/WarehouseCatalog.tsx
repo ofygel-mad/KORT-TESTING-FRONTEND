@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import { ChevronDown, Package } from 'lucide-react';
-import { useWarehouseItems } from '../../../../entities/warehouse/queries';
-import type { WarehouseItem } from '../../../../entities/warehouse/types';
-import { getStockStatus } from '../../../../entities/warehouse/types';
+import { useWarehouseItems } from '@/entities/warehouse/queries';
+import type { WarehouseItem } from '@/entities/warehouse/types';
+import { getStockStatus } from '@/entities/warehouse/types';
 import { Skeleton } from '../../../../shared/ui/Skeleton';
 import { EmptyState } from '../../../../shared/ui/EmptyState';
 import { StatusChip } from '../../../../shared/ui/StatusChip';

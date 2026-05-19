@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { useWarehouseItems } from '../../../../entities/warehouse/queries';
-import { getQtyAvailable, type WarehouseItem } from '../../../../entities/warehouse/types';
+import { useWarehouseItems } from '@/entities/warehouse/queries';
+import { getQtyAvailable, type WarehouseItem } from '@/entities/warehouse/types';
 import { EmptyState } from '../../../../shared/ui/EmptyState';
 import { Skeleton } from '../../../../shared/ui/Skeleton';
 import { StatusChip, type ChipStatus } from '../../../../shared/ui/StatusChip';

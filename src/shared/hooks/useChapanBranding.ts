@@ -1,4 +1,4 @@
-import { useChapanProfile } from '../../entities/order/queries';
+import { useChapanProfile } from '@/entities/order/queries';
 import { resolveChapanBranding } from '../lib/chapanBranding';
 
 export function useChapanBranding() {

@@ -10,15 +10,15 @@ import {
   useRejectChangeRequest,
   useUpdateProductionStatus,
   useWorkshopTasks,
-} from '../../../../entities/order/queries';
-import type { ChapanChangeRequest, ProductionStatus, ProductionTask } from '../../../../entities/order/types';
+} from '@/entities/order/queries';
+import type { ChapanChangeRequest, ProductionStatus, ProductionTask } from '@/entities/order/types';
 import { useAuthStore } from '@/shared/stores/auth';
 import { useChapanPermissions } from '@/shared/hooks/useChapanPermissions';
 import { buildItemLine } from '../../../../shared/utils/itemLine';
 import WorkshopTaskCard from './WorkshopTaskCard';
 import WorkshopCardView from './WorkshopCardView';
 import { sortWorkshopTasks } from './workshopSort';
-import { useWorkshopPhotoMap } from '../../../../entities/warehouse/queries';
+import { useWorkshopPhotoMap } from '@/entities/warehouse/queries';
 import styles from './ChapanProduction.module.css';
 
 type WorkshopViewMode = 'table' | 'card';

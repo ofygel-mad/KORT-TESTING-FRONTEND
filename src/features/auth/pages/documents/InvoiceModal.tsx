@@ -1,8 +1,8 @@
 import { createPortal } from 'react-dom';
 import { useState } from 'react';
 import { X, FileText, Sparkles, ArrowLeft, Download, Loader2, User, Phone, Calendar, Package } from 'lucide-react';
-import { useOrders } from '../../entities/order/queries';
-import type { ChapanOrder } from '../../entities/order/types';
+import { useOrders } from '@/entities/order/queries';
+import type { ChapanOrder } from '@/entities/order/types';
 import { apiClient } from '../../shared/api/client';
 import { useAuthStore } from '../../shared/stores/auth';
 import { calculateChapanOrderFinancials } from '@/shared/lib/chapanFinancials';

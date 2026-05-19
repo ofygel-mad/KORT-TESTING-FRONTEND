@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { useAuthStore } from '../../../../shared/stores/auth';
 import { useEmployeePermissions } from '../../../../shared/hooks/useEmployeePermissions';
-import { useChapanCatalogs, useChapanProfile, useSaveCatalogs, useSaveProfile, useChapanClients, useChangeEmail } from '../../../../entities/order/queries';
+import { useChapanCatalogs, useChapanProfile, useSaveCatalogs, useSaveProfile, useChapanClients, useChangeEmail } from '@/entities/order/queries';
 import { AlertCircle, Plus, RefreshCw, Save, X } from 'lucide-react';
-import type { ChapanCatalogs } from '../../../../entities/order/types';
+import type { ChapanCatalogs } from '@/entities/order/types';
 import {
   buildSizeCatalog,
   normalizePaymentCatalog,

@@ -1,4 +1,4 @@
-import type { OrderFormField } from '../../entities/warehouse/types';
+import type { OrderFormField } from '@/entities/warehouse/types';
 import { buildCanonicalVariantKey } from './variantKey';
 
 export interface VariantAvailabilityInput {

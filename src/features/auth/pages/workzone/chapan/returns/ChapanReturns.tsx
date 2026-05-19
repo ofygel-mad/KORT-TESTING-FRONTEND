@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
-import { useReturns } from '../../../../entities/order/queries';
-import type { ReturnReason } from '../../../../entities/order/types';
-import { RETURN_REASON_LABELS } from '../../../../entities/order/types';
+import { useReturns } from '@/entities/order/queries';
+import type { ReturnReason } from '@/entities/order/types';
+import { RETURN_REASON_LABELS } from '@/entities/order/types';
 import styles from './ChapanReturns.module.css';
 
 function fmt(n: number) {

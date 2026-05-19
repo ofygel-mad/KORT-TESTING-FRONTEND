@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { X } from 'lucide-react';
-import { useCreateItem, useOrderFormCatalog } from '../../../../entities/warehouse/queries';
-import type { CreateItemDto } from '../../../../entities/warehouse/types';
+import { useCreateItem, useOrderFormCatalog } from '@/entities/warehouse/queries';
+import type { CreateItemDto } from '@/entities/warehouse/types';
 import styles from '../../../warehouse/Warehouse.module.css';
 
 interface Props {

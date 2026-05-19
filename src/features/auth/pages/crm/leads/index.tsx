@@ -1,7 +1,7 @@
 import { useState, useDeferredValue } from 'react';
 import { Plus, LayoutList, Columns3, Search, AlertCircle } from 'lucide-react';
-import { useLeads, useUpdateLead, useCreateLead } from '../../../entities/lead/queries';
-import type { Lead, LeadStage, LeadPipeline } from '../../../entities/lead/types';
+import { useLeads, useUpdateLead, useCreateLead } from '@/entities/lead/queries';
+import type { Lead, LeadStage, LeadPipeline } from '@/entities/lead/types';
 import { LeadDrawer } from './LeadDrawer';
 import { CreateLeadModal } from './CreateLeadModal';
 import { useViewportProfile } from '../../../shared/hooks/useViewportProfile';

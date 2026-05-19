@@ -32,8 +32,8 @@ import {
   useWarehouseFoundationSites,
   useWarehouseFoundationStatus,
   useWarehouseFoundationVariants,
-} from '../../entities/warehouse/queries';
-import { useWarehouseFoundationLiveSync } from '../../entities/warehouse/live';
+} from '@/entities/warehouse/queries';
+import { useWarehouseFoundationLiveSync } from '@/entities/warehouse/live';
 import { WarehouseModeNav } from './WarehouseModeNav';
 import { WarehouseTwinPanel } from './WarehouseTwinPanel';
 import { localizeAttrSummary } from '../../shared/lib/attrLocalize';

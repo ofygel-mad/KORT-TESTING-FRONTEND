@@ -11,9 +11,9 @@ import {
   useAddFieldOption, useUpdateFieldOption, useDeleteFieldOption,
   useCreateProduct, useUpdateProduct, useDeleteProduct, useSetProductFields,
   useProductPhotos, useUploadProductPhoto, useDeleteProductPhoto,
-} from '../../../../entities/warehouse/queries';
-import { productPhotosApi } from '../../../../entities/warehouse/api';
-import type { WarehouseFieldDefinition, WarehouseProductCatalog } from '../../../../entities/warehouse/types';
+} from '@/entities/warehouse/queries';
+import { productPhotosApi } from '@/entities/warehouse/api';
+import type { WarehouseFieldDefinition, WarehouseProductCatalog } from '@/entities/warehouse/types';
 import { SearchInput } from '../../../../shared/ui/SearchInput';
 import styles from './ChapanCatalog.module.css';
 import s from '../../../warehouse/WarehouseCatalog.module.css';

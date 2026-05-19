@@ -4,7 +4,7 @@ import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, Legend,
 } from 'recharts';
 import { AlertCircle, BarChart2, LayoutGrid, TrendingUp } from 'lucide-react';
-import { useChapanAnalytics } from '../../../../entities/analytics/queries';
+import { useChapanAnalytics } from '@/entities/analytics/queries';
 import styles from './ChapanAnalytics.module.css';
 
 type ViewMode = 'overview' | 'charts';

@@ -1,8 +1,8 @@
 import { useDeferredValue, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, CircleCheck, Check, X, AlertCircle, ExternalLink } from 'lucide-react';
-import { useOrders } from '../../../../entities/order/queries';
-import type { ChapanOrder, OrderStatus } from '../../../../entities/order/types';
+import { useOrders } from '@/entities/order/queries';
+import type { ChapanOrder, OrderStatus } from '@/entities/order/types';
 import { calculateChapanOrderFinancials } from '@/shared/lib/chapanFinancials';
 import styles from './ChapanArchive.module.css';
 

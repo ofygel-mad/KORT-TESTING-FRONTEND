@@ -5,8 +5,8 @@ import {
 } from 'lucide-react';
 import {
   useOrder, useShipOrder, useCloseOrder, useReturnToReady,
-} from '../../../../entities/order/queries';
-import type { ChapanOrder } from '../../../../entities/order/types';
+} from '@/entities/order/queries';
+import type { ChapanOrder } from '@/entities/order/types';
 import { useChapanPermissions } from '../../../../shared/hooks/useChapanPermissions';
 import { calculateChapanOrderFinancials, getChapanOrderBalance } from '@/shared/lib/chapanFinancials';
 import { formatOrderItemNumber } from '../../../../../../shared/utils/orderItemNumber';

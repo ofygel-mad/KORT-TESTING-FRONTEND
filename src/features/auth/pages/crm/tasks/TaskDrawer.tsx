@@ -1,5 +1,5 @@
-import { useTask, useUpdateTaskStatus, useUpdateTask } from '../../../entities/task/queries';
-import type { TaskStatus, TaskPriority } from '../../../entities/task/types';
+import { useTask, useUpdateTaskStatus, useUpdateTask } from '@/entities/task/queries';
+import type { TaskStatus, TaskPriority } from '@/entities/task/types';
 import { Drawer } from '../../../shared/ui/Drawer';
 import styles from './TaskDrawer.module.css';
 

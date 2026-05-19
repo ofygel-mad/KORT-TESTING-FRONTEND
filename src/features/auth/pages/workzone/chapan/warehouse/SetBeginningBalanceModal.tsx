@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { AlertTriangle, CheckCircle2, X } from 'lucide-react';
-import { useItemFormula, useSetBeginningBalance } from '../../../../entities/warehouse/queries';
-import type { WarehouseItem } from '../../../../entities/warehouse/types';
+import { useItemFormula, useSetBeginningBalance } from '@/entities/warehouse/queries';
+import type { WarehouseItem } from '@/entities/warehouse/types';
 import { localizeAttrSummary } from '../../../../shared/lib/attrLocalize';
 import styles from '../../../warehouse/Warehouse.module.css';
 

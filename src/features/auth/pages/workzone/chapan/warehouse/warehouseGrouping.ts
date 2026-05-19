@@ -1,4 +1,4 @@
-import type { WarehouseItem } from '../../../../entities/warehouse/types';
+import type { WarehouseItem } from '@/entities/warehouse/types';
 
 export interface ProductGroup {
   name: string;

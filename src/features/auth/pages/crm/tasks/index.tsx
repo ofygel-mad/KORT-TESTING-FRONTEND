@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, X } from 'lucide-react';
-import { useTasks, useCreateTask, useUpdateTaskStatus } from '../../../entities/task/queries';
-import type { Task, TaskStatus, TaskPriority } from '../../../entities/task/types';
+import { useTasks, useCreateTask, useUpdateTaskStatus } from '@/entities/task/queries';
+import type { Task, TaskStatus, TaskPriority } from '@/entities/task/types';
 import { TaskDrawer } from './TaskDrawer';
 import { useViewportProfile } from '../../../shared/hooks/useViewportProfile';
 import styles from './Tasks.module.css';

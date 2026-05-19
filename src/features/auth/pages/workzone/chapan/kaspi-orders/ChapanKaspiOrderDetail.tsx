@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, Store } from 'lucide-react';
-import { useKaspiOrder } from '../../../../../../entities/kaspi/queries';
-import type { KaspiOrderDetail } from '../../../../../../entities/kaspi/types';
+import { useKaspiOrder } from '@/entities/kaspi/queries';
+import type { KaspiOrderDetail } from '@/entities/kaspi/types';
 import styles from './ChapanKaspiOrders.module.css';
 
 const MONEY = new Intl.NumberFormat('ru-KZ', { maximumFractionDigits: 0 });

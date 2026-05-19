@@ -1,10 +1,10 @@
 import { useDeferredValue, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, ExternalLink, Package, Search, Truck } from 'lucide-react';
-import { useOrders } from '../../../../entities/order/queries';
-import { useTransitEntries } from '../../../../entities/warehouse/queries';
-import type { ChapanOrder, OrderStatus } from '../../../../entities/order/types';
-import type { WarehouseTransitEntry } from '../../../../entities/warehouse/types';
+import { useOrders } from '@/entities/order/queries';
+import { useTransitEntries } from '@/entities/warehouse/queries';
+import type { ChapanOrder, OrderStatus } from '@/entities/order/types';
+import type { WarehouseTransitEntry } from '@/entities/warehouse/types';
 import { calculateChapanOrderFinancials } from '@/shared/lib/chapanFinancials';
 import styles from './ChapanShipping.module.css';
 

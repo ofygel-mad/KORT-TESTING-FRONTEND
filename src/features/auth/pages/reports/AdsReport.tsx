@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarDays, FileSpreadsheet, Pencil, Plus, RefreshCw, Save, Trash2, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { adsApi } from '../../entities/ads/api';
+import { adsApi } from '@/entities/ads/api';
 import { readApiErrorMessage } from '../../shared/api/errors';
 import {
   useAdsDashboard,
@@ -10,8 +10,8 @@ import {
   useRefreshUsdKztRate,
   useUpdateAdCampaign,
   useUpsertAdMetric,
-} from '../../entities/ads/queries';
-import type { AdCampaignReport, AdChannel, AdDailyMetric, AdSummary } from '../../entities/ads/types';
+} from '@/entities/ads/queries';
+import type { AdCampaignReport, AdChannel, AdDailyMetric, AdSummary } from '@/entities/ads/types';
 import { Skeleton } from '../../shared/ui/Skeleton';
 import styles from './Reports.module.css';
 

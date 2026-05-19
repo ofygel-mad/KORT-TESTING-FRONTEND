@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { useDeal, useUpdateDeal, useDealActivities, useAddDealActivity } from '../../../entities/deal/queries';
-import type { DealStage } from '../../../entities/deal/types';
+import { useDeal, useUpdateDeal, useDealActivities, useAddDealActivity } from '@/entities/deal/queries';
+import type { DealStage } from '@/entities/deal/types';
 import { Drawer } from '../../../shared/ui/Drawer';
 import styles from './DealDrawer.module.css';
 

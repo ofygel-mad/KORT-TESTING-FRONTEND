@@ -6,8 +6,8 @@ import {
   useCreateDefinition, useDeleteDefinition, useUpdateDefinition,
   useAddFieldOption, useUpdateFieldOption, useDeleteFieldOption,
   useCreateProduct, useUpdateProduct, useDeleteProduct, useSetProductFields,
-} from '../../entities/warehouse/queries';
-import type { WarehouseFieldDefinition, WarehouseProductCatalog } from '../../entities/warehouse/types';
+} from '@/entities/warehouse/queries';
+import type { WarehouseFieldDefinition, WarehouseProductCatalog } from '@/entities/warehouse/types';
 import styles from './WarehouseCatalog.module.css';
 
 // ── Inline edit helper ─────────────────────────────────────────────────────────

@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Phone, Mail, Tag, User, MessageSquare, ArrowRight } from 'lucide-react';
-import { useLead, useUpdateLead, useAddLeadHistory } from '../../../entities/lead/queries';
-import { useCreateDeal } from '../../../entities/deal/queries';
-import type { LeadStage } from '../../../entities/lead/types';
+import { useLead, useUpdateLead, useAddLeadHistory } from '@/entities/lead/queries';
+import { useCreateDeal } from '@/entities/deal/queries';
+import type { LeadStage } from '@/entities/lead/types';
 import { toast } from 'sonner';
 import { Drawer } from '../../../shared/ui/Drawer';
 import styles from './LeadDrawer.module.css';

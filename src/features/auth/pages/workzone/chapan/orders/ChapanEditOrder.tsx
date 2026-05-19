@@ -5,10 +5,10 @@ import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { AlertTriangle, Calculator, Pencil, Plus, Star, Trash2, X } from 'lucide-react';
-import { useOrder, useUpdateOrder, useChapanCatalogs, useChapanProfile, useRequestItemChange, useUpdateBankCommission } from '../../../../entities/order/queries';
+import { useOrder, useUpdateOrder, useChapanCatalogs, useChapanProfile, useRequestItemChange, useUpdateBankCommission } from '@/entities/order/queries';
 import { useEmployeePermissions } from '../../../../shared/hooks/useEmployeePermissions';
 import { useRole } from '../../../../shared/hooks/useRole';
-import type { Urgency } from '../../../../entities/order/types';
+import type { Urgency } from '@/entities/order/types';
 import { formatPersonNameInput } from '../../../../shared/utils/person';
 import { formatKazakhPhoneInput, isKazakhPhoneComplete } from '../../../../shared/utils/kz';
 import {

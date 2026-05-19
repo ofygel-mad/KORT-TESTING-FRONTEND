@@ -1,6 +1,6 @@
 import { useDeferredValue, useState, useCallback } from 'react';
 import { exportWarehouseToExcel } from './exportWarehouse';
-import { useWarehouseItems, useWarehouseSummary, useWarehouseAlerts } from '../../../../entities/warehouse/queries';
+import { useWarehouseItems, useWarehouseSummary, useWarehouseAlerts } from '@/entities/warehouse/queries';
 import { WarehouseHeader } from './WarehouseHeader';
 import { WarehouseStats } from './WarehouseStats';
 import { WarehouseCatalog as WarehouseInventoryCatalog } from './WarehouseCatalog';

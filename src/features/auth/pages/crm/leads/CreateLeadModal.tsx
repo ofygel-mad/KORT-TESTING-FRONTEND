@@ -3,8 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { X } from 'lucide-react';
-import { useCreateLead } from '../../../entities/lead/queries';
-import type { LeadPipeline } from '../../../entities/lead/types';
+import { useCreateLead } from '@/entities/lead/queries';
+import type { LeadPipeline } from '@/entities/lead/types';
 import { PhoneInput } from '../../../shared/ui/PhoneInput';
 import styles from './CreateLeadModal.module.css';
 

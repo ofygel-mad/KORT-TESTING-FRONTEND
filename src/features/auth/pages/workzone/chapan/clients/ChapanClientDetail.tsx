@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Mail, Phone, Building2 } from 'lucide-react';
-import { useChapanClientDetail } from '../../../../entities/order/queries';
+import { useChapanClientDetail } from '@/entities/order/queries';
 import { formatPhoneNumber, formatDistanceToNow } from '../../../../shared/lib/formatting';
 import { calculateChapanOrderFinancials } from '@/shared/lib/chapanFinancials';
 import styles from './ChapanClientDetail.module.css';

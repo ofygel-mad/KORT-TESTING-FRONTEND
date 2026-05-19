@@ -2,7 +2,7 @@ import { useMemo, useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Grid, Line, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
-import type { WarehouseLayoutNode, WarehouseSiteMapBinHeat, WarehouseSiteMapZoneHeat, WarehouseTwinRouteOverlay } from '../../entities/warehouse/types';
+import type { WarehouseLayoutNode, WarehouseSiteMapBinHeat, WarehouseSiteMapZoneHeat, WarehouseTwinRouteOverlay } from '@/entities/warehouse/types';
 
 type CameraMode = 'overview' | 'tasks' | 'exceptions' | 'routes';
 type HeatLayer = 'none' | 'occupancy' | 'reservation' | 'tasks' | 'exceptions' | 'forecast';

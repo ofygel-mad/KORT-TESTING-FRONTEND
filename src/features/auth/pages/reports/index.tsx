@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Download, TrendingUp, Users, Factory, Megaphone } from 'lucide-react';
-import { useLeads } from '../../entities/lead/queries';
-import { useDeals } from '../../entities/deal/queries';
-import { useOrders } from '../../entities/order/queries';
+import { useLeads } from '@/entities/lead/queries';
+import { useDeals } from '@/entities/deal/queries';
+import { useOrders } from '@/entities/order/queries';
 import { Skeleton } from '../../shared/ui/Skeleton';
 import { exportToCSV } from '../../shared/lib/export';
 import { calculateChapanOrderFinancials } from '@/shared/lib/chapanFinancials';

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ClipboardList, X, FileText, Check, Clock, Download } from 'lucide-react';
-import { useInvoices, useConfirmSeamstress, useConfirmWarehouse, useArchiveInvoice } from '../../../../entities/order/queries';
-import type { ChapanInvoice, InvoiceStatus } from '../../../../entities/order/types';
+import { useInvoices, useConfirmSeamstress, useConfirmWarehouse, useArchiveInvoice } from '@/entities/order/queries';
+import type { ChapanInvoice, InvoiceStatus } from '@/entities/order/types';
 import { useChapanPermissions } from '../../../../shared/hooks/useChapanPermissions';
 import { useAuthStore } from '../../../../shared/stores/auth';
 import ChapanInvoicePreviewModal from './ChapanInvoicePreviewModal';

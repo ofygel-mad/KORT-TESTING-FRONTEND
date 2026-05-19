@@ -22,9 +22,9 @@ import {
   useWarehouseFoundationSites,
   useWarehouseFoundationTaskTimeline,
   useWarehouseFoundationTwinRuntime,
-} from '../../entities/warehouse/queries';
-import { useWarehouseFoundationLiveSync } from '../../entities/warehouse/live';
-import type { WarehouseExceptionEntity, WarehouseLayoutNode, WarehouseSiteMapBinHeat, WarehouseSiteMapZoneHeat, WarehouseTask } from '../../entities/warehouse/types';
+} from '@/entities/warehouse/queries';
+import { useWarehouseFoundationLiveSync } from '@/entities/warehouse/live';
+import type { WarehouseExceptionEntity, WarehouseLayoutNode, WarehouseSiteMapBinHeat, WarehouseSiteMapZoneHeat, WarehouseTask } from '@/entities/warehouse/types';
 import { WarehouseModeNav } from './WarehouseModeNav';
 import { WarehouseTwinPublishReviewModal } from './WarehouseTwinPublishReviewModal';
 import { WarehouseTwinSpatialCanvas } from './WarehouseTwinSpatialCanvas';

@@ -14,7 +14,7 @@ import type {
   WarehouseSiteMapBinHeat,
   WarehouseSiteMapZoneHeat,
   WarehouseSiteStructure,
-} from '../../entities/warehouse/types';
+} from '@/entities/warehouse/types';
 import styles from './Warehouse.module.css';
 
 type OverlayMode = 'activity' | 'reservation' | 'replenishment' | 'exceptions' | 'occupancy';

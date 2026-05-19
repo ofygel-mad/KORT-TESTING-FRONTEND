@@ -10,8 +10,8 @@ import {
   useSaveKaspiConnection,
   useSyncKaspiOrders,
   useTestKaspiConnection,
-} from '../../../../../../entities/kaspi/queries';
-import type { SaveKaspiConnectionDto } from '../../../../../../entities/kaspi/types';
+} from '@/entities/kaspi/queries';
+import type { SaveKaspiConnectionDto } from '@/entities/kaspi/types';
 import { useRole } from '../../../../../../shared/hooks/useRole';
 import {
   formatKaspiDateTime,

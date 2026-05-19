@@ -1,4 +1,4 @@
-import type { KaspiOrder, KaspiOrderItem, KaspiOrdersSummary } from '../../../../../../entities/kaspi/types';
+import type { KaspiOrder, KaspiOrderItem, KaspiOrdersSummary } from '@/entities/kaspi/types';
 
 export type KaspiStageKey = 'new' | 'in_progress' | 'completed' | 'cancelled' | 'issues' | 'stock';
 

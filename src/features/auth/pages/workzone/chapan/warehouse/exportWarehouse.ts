@@ -1,6 +1,6 @@
 import type { Alignment, Borders, Cell, Fill, Workbook, Worksheet } from 'exceljs';
-import { warehouseApi } from '../../../../entities/warehouse/api';
-import type { WarehouseItem, WarehouseSummary } from '../../../../entities/warehouse/types';
+import { warehouseApi } from '@/entities/warehouse/api';
+import type { WarehouseItem, WarehouseSummary } from '@/entities/warehouse/types';
 import { useAuthStore } from '../../../../shared/stores/auth';
 
 const MIME_XLSX = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';

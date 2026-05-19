@@ -5,7 +5,7 @@ import type {
   WarehouseLayoutPublishAuditEntry,
   WarehouseLayoutVersion,
   WarehouseLayoutVersionCompareResult,
-} from '../../entities/warehouse/types';
+} from '@/entities/warehouse/types';
 import styles from './Warehouse.module.css';
 
 type CompareOption = {

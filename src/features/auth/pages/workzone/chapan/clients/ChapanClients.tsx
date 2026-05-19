@@ -1,7 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Search, ChevronRight } from 'lucide-react';
-import { useChapanClientsList } from '../../../../entities/order/queries';
+import { useChapanClientsList } from '@/entities/order/queries';
 import { formatPhoneNumber, formatDistanceToNow } from '../../../../shared/lib/formatting';
 import styles from './ChapanClients.module.css';
 
