@@ -12,14 +12,14 @@ const downloadMock = vi.fn();
 const triggerBrowserDownloadMock = vi.fn();
 const getFilenameFromContentDispositionMock = vi.fn(() => 'zakup_MN-0001.xlsx');
 
-vi.mock('../../../../entities/purchase/queries', () => ({
+vi.mock('@/entities/purchase/queries', () => ({
   useManualInvoices: (type?: string, archived?: boolean) => useManualInvoicesMock(type, archived),
   useArchiveManualInvoice: () => ({ mutate: archiveMutateMock, isPending: false }),
   useRestoreManualInvoice: () => ({ mutate: restoreMutateMock, isPending: false }),
   useDeleteManualInvoice: () => ({ mutate: deleteMutateMock, isPending: false }),
 }));
 
-vi.mock('../../../../entities/purchase/api', () => ({
+vi.mock('@/entities/purchase/api', () => ({
   purchaseApi: {
     download: (...args: unknown[]) => downloadMock(...args),
   },
