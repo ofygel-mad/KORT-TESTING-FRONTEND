@@ -336,7 +336,7 @@ function searchResults(query: string) {
         type: 'customer',
         label: customer.full_name,
         sublabel: customer.company_name || customer.phone,
-        path: `/customers/${customer.id}/`,
+        path: '/crm/customers',
       })),
     ...mockDeals
       .filter((deal) => deal.title.toLowerCase().includes(q))
@@ -346,7 +346,7 @@ function searchResults(query: string) {
         type: 'deal',
         label: deal.title,
         sublabel: deal.customer_name,
-        path: `/deals/${deal.id}/`,
+        path: '/crm/deals',
       })),
     ...mockTasks
       .filter((task) => task.title.toLowerCase().includes(q))
@@ -356,7 +356,7 @@ function searchResults(query: string) {
         type: 'task',
         label: task.title,
         sublabel: task.priority,
-        path: '/tasks',
+        path: '/crm/tasks',
       })),
   ];
   return { count: results.length, results };

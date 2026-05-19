@@ -4,8 +4,8 @@ import { overlayVariants, commandInvoke } from '../../shared/motion/presets';
 import { useNavigate } from 'react-router-dom';
 import {
   Search, Users, Briefcase, CheckSquare, Settings,
-  BarChart2, Zap, Upload, Shield, Clock, Loader2,
-  ArrowRight, Plus, Activity, MessageSquare, Sparkles, Command, Wand2, CornerDownLeft, X,
+  BarChart2, Zap, Upload, Clock, Loader2,
+  ArrowRight, Plus, MessageSquare, Sparkles, Command, Wand2, CornerDownLeft, X,
 } from 'lucide-react';
 import { useCommandPalette } from '../../shared/stores/commandPalette';
 import { useUIStore } from '../../shared/stores/ui';
@@ -27,16 +27,13 @@ interface Result {
 }
 
 const NAV_COMMANDS = [
-  { id: 'go-customers', label: 'Клиенты', sub: 'Перейти', icon: <Users size={14} />, path: '/customers' },
-  { id: 'go-deals', label: 'Сделки', sub: 'Перейти', icon: <Briefcase size={14} />, path: '/deals' },
-  { id: 'go-tasks', label: 'Задачи', sub: 'Перейти', icon: <CheckSquare size={14} />, path: '/tasks' },
-  { id: 'go-feed', label: 'Лента событий', sub: 'Перейти', icon: <Activity size={14} />, path: '/feed' },
+  { id: 'go-customers', label: 'Клиенты', sub: 'Перейти', icon: <Users size={14} />, path: '/crm/customers' },
+  { id: 'go-deals', label: 'Сделки', sub: 'Перейти', icon: <Briefcase size={14} />, path: '/crm/deals' },
+  { id: 'go-tasks', label: 'Задачи', sub: 'Перейти', icon: <CheckSquare size={14} />, path: '/crm/tasks' },
   { id: 'go-templates', label: 'Шаблоны сообщений', sub: 'Перейти', icon: <MessageSquare size={14} />, path: '/settings/templates' },
   { id: 'go-reports', label: 'Отчёты', sub: 'Перейти', icon: <BarChart2 size={14} />, path: '/reports' },
   { id: 'go-settings', label: 'Настройки', sub: 'Перейти', icon: <Settings size={14} />, path: '/settings' },
-  { id: 'go-auto', label: 'Автоматизации', sub: 'Перейти', icon: <Zap size={14} />, path: '/automations' },
   { id: 'go-import', label: 'Импорт', sub: 'Перейти', icon: <Upload size={14} />, path: '/crm/customers' },
-  { id: 'go-audit', label: 'Аудит', sub: 'Перейти', icon: <Shield size={14} />, path: '/audit' },
 ];
 
 const RECENT_KEY = 'kort:recent-items';
@@ -128,29 +125,35 @@ export function CommandPalette() {
     })
       .then((data: any) => {
         if (cancelled) return;
-        const results: Result[] = (data.results ?? []).map((r: any) => ({
-          id: `api-${r.type}-${r.id}`,
-          type: r.type,
-          label: r.label,
-          sub: r.sublabel,
-          path: r.path,
-          meta: r.meta,
-          icon: r.type === 'customer' ? <Users size={14} /> : r.type === 'deal' ? <Briefcase size={14} /> : <CheckSquare size={14} />,
-          color: r.type === 'customer' ? 'var(--fill-info-text)' : r.type === 'deal' ? 'var(--fill-warning-text)' : 'var(--text-accent)',
-          action: () => {
-            pushRecent({
-              id: `api-${r.type}-${r.id}`,
-              type: r.type,
-              label: r.label,
-              sub: r.sublabel,
-              path: r.path,
-              icon: null,
-              color: undefined,
-              meta: r.meta,
-            });
-            navigate(r.path);
-          },
-        }));
+        const results: Result[] = (data.results ?? []).map((r: any) => {
+          const route = r.type === 'customer' ? '/crm/customers'
+                      : r.type === 'deal'     ? '/crm/deals'
+                      : r.type === 'task'     ? '/crm/tasks'
+                      : r.path;
+          return {
+            id: `api-${r.type}-${r.id}`,
+            type: r.type,
+            label: r.label,
+            sub: r.sublabel,
+            path: route,
+            meta: r.meta,
+            icon: r.type === 'customer' ? <Users size={14} /> : r.type === 'deal' ? <Briefcase size={14} /> : <CheckSquare size={14} />,
+            color: r.type === 'customer' ? 'var(--fill-info-text)' : r.type === 'deal' ? 'var(--fill-warning-text)' : 'var(--text-accent)',
+            action: () => {
+              pushRecent({
+                id: `api-${r.type}-${r.id}`,
+                type: r.type,
+                label: r.label,
+                sub: r.sublabel,
+                path: route,
+                icon: null,
+                color: undefined,
+                meta: r.meta,
+              });
+              navigate(route);
+            },
+          };
+        });
         setApiRes(results);
       })
       .catch(() => setApiRes([]))
@@ -191,9 +194,7 @@ export function CommandPalette() {
     }));
 
     NAV_COMMANDS.filter((n) => {
-      if (n.path === '/automations') return canRunAutomations;
-      if (n.path === '/crm/customers') return can('customers.import');
-      if (n.path === '/audit') return canViewAudit;
+      if (n.id === 'go-import') return can('customers.import');
       return true;
     }).forEach((n, i) => results.push({
       id: n.id,
@@ -220,9 +221,7 @@ export function CommandPalette() {
     apiRes.forEach((r, i) => results.push({ ...r, _section: i === 0 ? 'Результаты' : undefined }));
 
     NAV_COMMANDS.filter((n) => n.label.toLowerCase().includes(query.toLowerCase())).filter((n) => {
-      if (n.path === '/automations') return canRunAutomations;
-      if (n.path === '/crm/customers') return can('customers.import');
-      if (n.path === '/audit') return canViewAudit;
+      if (n.id === 'go-import') return can('customers.import');
       return true;
     }).forEach((n, i) => results.push({
       id: n.id,

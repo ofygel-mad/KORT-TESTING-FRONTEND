@@ -200,25 +200,17 @@ function useDynamicCrumb(enabled: boolean): { parent: string; parentPath: string
 
 const BREADCRUMBS: Record<string, string> = {
   '/': 'Главная',
-  '/feed': 'Лента',
   '/crm/leads': 'Лиды',
   '/crm/deals': 'Сделки',
   '/crm/customers': 'Клиенты',
   '/crm/tasks': 'Задачи',
   '/warehouse': 'Склад',
   '/reports': 'Отчёты',
-  '/automations': 'Автоматизации',
   '/settings': 'Настройки',
-  '/audit': 'Аудит',
-  '/admin': 'Управление',
 };
 
 function resolveBackTarget(pathname: string) {
-  if (pathname.startsWith('/customers/')) return '/customers';
-  if (pathname.startsWith('/deals/')) return '/deals';
   if (pathname.startsWith('/settings')) return '/';
-  if (pathname.startsWith('/admin')) return '/';
-  if (pathname.startsWith('/imports')) return '/';
   return '/';
 }
 
